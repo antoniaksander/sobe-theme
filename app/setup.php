@@ -17,7 +17,10 @@ use function Roots\view;
  */
 add_action('init', function () {
     $pfx = config('theme.prefix');
-    $custom_blocks = ['hero', 'callout', 'product-feature', 'product-carousel', 'brand-carousel', 'faq'];
+    $manifest_path = resource_path('blocks/blocks-manifest.json');
+    $custom_blocks = is_readable($manifest_path)
+        ? array_keys(json_decode(file_get_contents($manifest_path), true) ?? [])
+        : [];
 
     foreach ($custom_blocks as $block_slug) {
         $asset_uri = \Roots\asset('resources/blocks/' . $block_slug . '/index.jsx')->uri();
@@ -157,15 +160,15 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
     return $allowed;
 }, 10, 2);
 
+// When adding a category here, also update VALID_CATEGORIES in resources/scripts/make-block.js.
 add_filter('block_categories_all', function ($categories) {
-    $pfx = config('theme.prefix');
-    array_unshift($categories, [
-        'slug'  => "{$pfx}-blocks",
-        'title' => ucfirst($pfx) . ' Components',
-        'icon'  => 'star-filled',
-    ]);
-
-    return $categories;
+    $custom = [
+        ['slug' => 'sobe-general',     'title' => __('Sobe General', 'sobe'),     'icon' => 'layout'],
+        ['slug' => 'sobe-woocommerce', 'title' => __('Sobe WooCommerce', 'sobe'), 'icon' => 'cart'],
+        ['slug' => 'sobe-sliders',     'title' => __('Sobe Sliders', 'sobe'),     'icon' => 'slides'],
+        ['slug' => 'sobe-content',     'title' => __('Sobe Content', 'sobe'),     'icon' => 'text'],
+    ];
+    return array_merge($custom, $categories);
 });
 
 add_action('enqueue_block_editor_assets', function () {

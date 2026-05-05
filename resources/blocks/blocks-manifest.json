@@ -1,0 +1,20 @@
+{
+  "hero": {
+    "category": "sobe-general"
+  },
+  "callout": {
+    "category": "sobe-general"
+  },
+  "faq": {
+    "category": "sobe-general"
+  },
+  "product-feature": {
+    "category": "sobe-woocommerce"
+  },
+  "product-carousel": {
+    "category": "sobe-woocommerce"
+  },
+  "brand-carousel": {
+    "category": "sobe-sliders"
+  }
+}
