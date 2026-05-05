@@ -42,7 +42,7 @@ Template for displaying product content in the loop.
   
   {{-- Custom YITH Wrapper (Only renders if the plugin is active) --}}
   @if (shortcode_exists('yith_wcwl_add_to_wishlist'))
-    <div class="sobe-wishlist-wrapper absolute top-1 right-1 z-20">
+    <div class="sobe-wishlist-wrapper absolute top-0 right-0 z-20">
       {!! do_shortcode('[yith_wcwl_add_to_wishlist product_id="' . $product->get_id() . '"]') !!}
     </div>
   @endif

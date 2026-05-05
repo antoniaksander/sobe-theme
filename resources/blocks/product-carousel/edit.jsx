@@ -96,8 +96,10 @@ export default function Edit({ attributes, setAttributes }) {
             <RangeControl
               label={__('Number of Products', 'sage')}
               value={count}
-              onChange={(val) => setAttributes({ count: val })}
-              min={3}
+              onChange={(val) =>
+                setAttributes({ count: Math.min(Math.max(val ?? 8, 1), 12) })
+              }
+              min={1}
               max={12}
               __nextHasNoMarginBottom
             />

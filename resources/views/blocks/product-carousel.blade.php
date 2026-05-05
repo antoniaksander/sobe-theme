@@ -7,6 +7,8 @@
   $linkText   = $attributes['linkText']  ?? '';
   $linkUrl    = $attributes['linkUrl']   ?? '';
   $linkType   = $attributes['linkType']  ?? 'btn-dark';
+  $count = max(1, min($count, 12));
+
   // Whitelist orderBy to prevent injection.
   $allowedOrderBy = ['latest', 'featured', 'best_selling', 'top_rated', 'on_sale', 'random'];
   $orderBy = in_array($orderBy, $allowedOrderBy, true) ? $orderBy : 'latest';

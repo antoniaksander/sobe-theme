@@ -25,7 +25,8 @@ add_action('init', function () {
 });
 
 // ── REST API access control ───────────────────────────────────────────────────
-// Block unauthenticated REST access, whitelisting WooCommerce store routes.
+// Block unauthenticated REST access, whitelisting only the public WooCommerce
+// Store API routes required for cart/checkout UX.
 //
 // WHY rest_pre_dispatch instead of rest_authentication_errors:
 // rest_authentication_errors runs at priority 10, before WordPress validates
@@ -44,8 +45,17 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
         return null;
     }
 
-    // WooCommerce Store API (blocks cart/checkout) and WC REST API
-    if (str_starts_with($request->get_route(), '/wc/')) {
+    $route = $request->get_route();
+    $public_wc_store_routes = [
+        '/wc/store/v1/cart',
+        '/wc/store/v1/cart/add-item',
+    ];
+
+    if (in_array($route, $public_wc_store_routes, true)) {
+        return null;
+    }
+
+    if (preg_match('#^/wc/store/v1/cart/items/[^/]+$#', $route) === 1) {
         return null;
     }
 

@@ -5,6 +5,35 @@ import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules';
 // does not automatically load.
 
 document.addEventListener('DOMContentLoaded', () => {
+  const isSafeHttpUrl = (value) => {
+    if (typeof value !== 'string' || value.length === 0) return false;
+
+    try {
+      const url = new URL(value, window.location.origin);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
+  const createVariationSlide = ({ src, srcset, alt, full }) => {
+    const slide = document.createElement('div');
+    slide.className = 'swiper-slide';
+    slide.dataset.full = full;
+
+    const img = document.createElement('img');
+    img.src = src;
+    if (srcset) {
+      img.srcset = srcset;
+    }
+    img.alt = alt;
+    img.loading = 'lazy';
+
+    slide.appendChild(img);
+
+    return slide;
+  };
+
   const mainEl = document.getElementById('pdp-swiper-main');
   const thumbEl = document.getElementById('pdp-swiper-thumbs');
   if (!mainEl || !thumbEl) return;
@@ -149,6 +178,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const src = variation.image.src;
     const full = variation.image.full_src || src;
 
+    if (!isSafeHttpUrl(src) || !isSafeHttpUrl(full)) return;
+
     // Remove previously injected variation slide first
     if (variationSlideIndex !== null) {
       mainSwiper.removeSlide(variationSlideIndex);
@@ -173,13 +204,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     mainSwiper.addSlide(
       newIdx,
-      `<div class="swiper-slide" data-full="${full}"><img src="${src}"${
-        srcset ? ` srcset="${srcset}"` : ''
-      } alt="${alt}" loading="lazy" /></div>`,
+      createVariationSlide({ src, srcset, alt, full }),
     );
     thumbsSwiper.addSlide(
       newIdx,
-      `<div class="swiper-slide"><img src="${src}" alt="${alt}" loading="lazy" /></div>`,
+      createVariationSlide({ src, srcset: '', alt, full: src }),
     );
 
     variationSlideIndex = newIdx;
