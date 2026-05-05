@@ -32,8 +32,16 @@
   --c-heading: #0f0f1c;
 
   --c-border: #e2e2dc;
-  --c-ring: inherit;
+  --c-ring: var(--c-accent);
   --c-overlay: rgba(0, 0, 0, 0.5);
+
+  /* ── Fixed light overlay tokens (glass effects on dark/photo backgrounds —
+     intentionally NOT overridden in .dark; these sit on images/dark surfaces) ── */
+  --c-overlay-light-low: rgba(255, 255, 255, 0.1);
+  --c-overlay-light-mid: rgba(255, 255, 255, 0.3);
+  --c-overlay-light-high: rgba(255, 255, 255, 0.6);
+  --c-overlay-light-strong: rgba(255, 255, 255, 0.85);
+  --c-overlay-light-full: #ffffff;
 
   --c-primary: #1a1a2e;
   --c-primary-fg: #fafaf8;
