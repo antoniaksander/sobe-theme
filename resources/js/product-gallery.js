@@ -34,12 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return slide;
   };
 
-  const mainEl = document.getElementById('pdp-swiper-main');
-  const thumbEl = document.getElementById('pdp-swiper-thumbs');
-  if (!mainEl || !thumbEl) return;
-
-  if (!mainEl.querySelectorAll('.swiper-slide').length) return;
-
   // ── Quantity +/− buttons ──────────────────────────────────────────────────
   const qtyWrapper = document.querySelector('form.cart .quantity');
   if (qtyWrapper) {
@@ -81,6 +75,12 @@ document.addEventListener('DOMContentLoaded', () => {
       qtyWrapper.appendChild(plus);
     }
   }
+
+  const mainEl = document.getElementById('pdp-swiper-main');
+  const thumbEl = document.getElementById('pdp-swiper-thumbs');
+  if (!mainEl || !thumbEl) return;
+
+  if (!mainEl.querySelectorAll('.swiper-slide').length) return;
 
   // ── Swiper: Thumbs (must init first for sync) ─────────────────────────────
   const thumbsSwiper = new Swiper(thumbEl, {
