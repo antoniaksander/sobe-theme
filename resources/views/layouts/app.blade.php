@@ -3,6 +3,59 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    @php
+      // Baseline SEO meta — skipped automatically when a dedicated SEO plugin is active.
+      // Supported: Yoast SEO, Rank Math, All in One SEO, SEOPress.
+      $sobe_seo_active = defined('WPSEO_VERSION')
+                      || defined('RANK_MATH_VERSION')
+                      || defined('AIOSEO_VERSION')
+                      || function_exists('seopress_init')
+                      || apply_filters('sobe_disable_baseline_seo', false);
+      if (! $sobe_seo_active) {
+        $sobe_title       = wp_get_document_title();
+        $sobe_desc        = is_singular() && has_excerpt()
+                              ? wp_strip_all_tags(get_the_excerpt())
+                              : get_bloginfo('description');
+        $sobe_url         = is_singular()
+                              ? get_permalink()
+                              : (is_home() || is_front_page() ? home_url('/') : home_url(add_query_arg([])));
+        $sobe_type        = is_single() ? 'article' : 'website';
+        $sobe_site_name   = get_bloginfo('name');
+        $sobe_image       = is_singular() && has_post_thumbnail()
+                              ? get_the_post_thumbnail_url(null, 'large')
+                              : get_site_icon_url(512);
+      }
+    @endphp
+    @if (! $sobe_seo_active)
+      <link rel="canonical" href="{{ esc_url($sobe_url) }}">
+      <meta name="description" content="{{ esc_attr($sobe_desc) }}">
+      <meta property="og:title" content="{{ esc_attr($sobe_title) }}">
+      <meta property="og:description" content="{{ esc_attr($sobe_desc) }}">
+      <meta property="og:url" content="{{ esc_url($sobe_url) }}">
+      <meta property="og:type" content="{{ $sobe_type }}">
+      <meta property="og:site_name" content="{{ esc_attr($sobe_site_name) }}">
+      @if ($sobe_image)
+        <meta property="og:image" content="{{ esc_url($sobe_image) }}">
+        <meta name="twitter:image" content="{{ esc_url($sobe_image) }}">
+      @endif
+      @if ($sobe_type === 'article')
+        <meta property="article:published_time" content="{{ get_the_date('c') }}">
+        <meta property="article:modified_time" content="{{ get_the_modified_date('c') }}">
+        @if (get_the_author())
+          <meta property="article:author" content="{{ esc_attr(get_the_author()) }}">
+        @endif
+      @endif
+      <meta name="twitter:card" content="summary_large_image">
+      <meta name="twitter:title" content="{{ esc_attr($sobe_title) }}">
+      <meta name="twitter:description" content="{{ esc_attr($sobe_desc) }}">
+      @if (is_front_page())
+        @php
+          $sobe_schema = ['@context' => 'https://schema.org', '@type' => 'Organization', 'name' => $sobe_site_name, 'url' => home_url('/')];
+          if ($sobe_image) $sobe_schema['logo'] = $sobe_image;
+        @endphp
+        <script type="application/ld+json">{!! wp_json_encode($sobe_schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
+      @endif
+    @endif
     @php do_action('get_header'); @endphp
     @php wp_head(); @endphp
     @vite(['resources/css/app.css', 'resources/js/app.js'])
