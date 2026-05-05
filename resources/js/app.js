@@ -73,6 +73,7 @@ function buildStoreApiPayload(form) {
   const productId =
     variationId ||
     parseInt(formData.get('add-to-cart') || formData.get('product_id') || '0', 10) ||
+    parseInt(form.querySelector('button[name="add-to-cart"]')?.value || '0', 10) ||
     0;
 
   if (!productId) {
