@@ -125,7 +125,7 @@
      from here — one change propagates to Tailwind utilities and theme.json.    */
   --layout-content: 80rem; /* Gutenberg content column */
   --layout-wide: 80rem; /* Gutenberg wide column */
-  --layout-reading: 40rem; /* Prose / article max-width */
+  --layout-reading: 60rem; /* Prose / article max-width */
   --layout-standard: 80rem; /* Default page container (aliases wide) */
   --layout-grid: 96rem; /* Full product grid outer bound */
 }
