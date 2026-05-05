@@ -652,7 +652,7 @@
 @media (hover: hover) {
   .single-product .single_add_to_cart_button.button:hover {
     background-color: var(--c-text) !important;
-    color: var(--c-bg, #fff) !important;
+    color: var(--c-background) !important;
   }
 }
 
@@ -663,14 +663,14 @@
 
 /* Explicit dark overrides — belt-and-suspenders in case --c-text token doesn't invert */
 .dark .single-product .single_add_to_cart_button.button {
-  border-color: #fff !important;
-  color: #fff !important;
+  border-color: var(--c-primary) !important;
+  color: var(--c-primary) !important;
 }
 
 @media (hover: hover) {
   .dark .single-product .single_add_to_cart_button.button:hover {
-    background-color: #fff !important;
-    color: #111827 !important;
+    background-color: var(--c-primary) !important;
+    color: var(--c-primary-fg) !important;
   }
 }
 
@@ -845,7 +845,7 @@
   flex-shrink: 0;
   background: transparent !important;
   color: inherit !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border: 1px solid var(--c-overlay-light-mid) !important;
   padding: 0.5rem 1rem !important;
   border-radius: 0.25rem !important;
   font-size: 0.75rem !important;
@@ -859,8 +859,8 @@
 .woocommerce-message .button:hover,
 .woocommerce-error .button:hover,
 .woocommerce-info .button:hover {
-  background: rgba(255, 255, 255, 0.1) !important;
-  border-color: rgba(255, 255, 255, 0.6) !important;
+  background: var(--c-overlay-light-low) !important;
+  border-color: var(--c-overlay-light-high) !important;
 }
 
 @keyframes toastSlideUp {
@@ -916,7 +916,7 @@
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  background: rgba(255, 255, 255, 0.85);
+  background: var(--c-overlay-light-strong);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -929,7 +929,7 @@
 
 .sobe-wishlist-btn:hover {
   color: var(--c-accent);
-  background: #fff;
+  background: var(--c-overlay-light-full);
 }
 
 /* ── "Now" prefix on sale price ── */
@@ -1025,7 +1025,7 @@
 .woo-variation-swatches .variable-items-wrapper .variable-item {
   list-style: none !important;
   margin: 0 !important; /* Overrides default plugin margins */
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--c-border);
   border-radius: 0 !important;
   box-shadow: none !important;
   background-color: transparent;
