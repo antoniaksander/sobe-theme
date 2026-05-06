@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Quality checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install PHP dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Build (bundle size check runs inside Vite)
+        run: npm run build
+
+      - name: PHPStan
+        run: composer analyse
+
+      - name: Jest
+        run: npm test
+
+      - name: Pattern allowlist
+        run: npm run check:patterns
