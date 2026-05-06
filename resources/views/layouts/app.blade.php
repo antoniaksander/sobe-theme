@@ -74,7 +74,7 @@
     @if (function_exists('is_checkout') && is_checkout())
       @include('sections.checkout-header')
     @else
-      @include('sections.' . get_theme_mod(config('theme.prefix') . '_header_layout', 'header-1'))
+      {!! \App\sobe_render_layout_pattern('header', get_theme_mod(config('theme.prefix') . '_header_layout', 'header-1')) !!}
     @endif
 
     <main id="main" class="relative z-10 pt-16">

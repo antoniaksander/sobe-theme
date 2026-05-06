@@ -16,5 +16,11 @@
   },
   "brand-carousel": {
     "category": "sobe-sliders"
+  },
+  "site-header": {
+    "category": "sobe-layout"
+  },
+  "site-footer": {
+    "category": "sobe-layout"
   }
 }
