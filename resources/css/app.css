@@ -101,12 +101,6 @@ body.single-post {
   --font-size-6xl: clamp(4.5rem, calc(3.972rem + 2.254vw), 6rem);
   --font-size-7xl: clamp(6rem, calc(5.296rem + 3.005vw), 8rem);
 
-  /* ── Fonts ── */
-  --font-sans: var(--font-sans);
-  --font-heading: var(--font-heading);
-  --font-serif: var(--font-serif);
-  --font-mono: var(--font-mono);
-
   /* ── Line heights ── */
   --leading-none: 1;
   --leading-tight: 1.1;
@@ -231,8 +225,9 @@ body.single-post {
 
   :focus-visible {
     outline: 2px solid var(--c-ring);
-    outline-offset: 3px;
+    outline-offset: 2px;
     border-radius: 2px;
+    box-shadow: 0 0 0 4px var(--c-background);
   }
 
   ::selection {
@@ -722,7 +717,8 @@ body.single-post {
 
   .btn:focus-visible {
     outline: 2px solid var(--c-ring);
-    outline-offset: 3px;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px var(--c-background);
   }
 
   .btn-dark {
@@ -837,8 +833,9 @@ body.single-post {
 
   .btn-link-dark:focus-visible {
     outline: 2px solid var(--c-ring);
-    outline-offset: 3px;
+    outline-offset: 2px;
     border-radius: 2px;
+    box-shadow: 0 0 0 4px var(--c-background);
   }
 
   .btn-link-light {
@@ -876,8 +873,9 @@ body.single-post {
 
   .btn-link-light:focus-visible {
     outline: 2px solid var(--c-ring);
-    outline-offset: 3px;
+    outline-offset: 2px;
     border-radius: 2px;
+    box-shadow: 0 0 0 4px var(--c-background);
   }
 
   @media (prefers-reduced-motion: reduce) {
