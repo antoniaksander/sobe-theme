@@ -1,0 +1,23 @@
+includes:
+  - vendor/szepeviktor/phpstan-wordpress/extension.neon
+
+parameters:
+  level: 2
+  paths:
+    - app
+
+  bootstrapFiles:
+    - vendor/autoload.php
+
+  scanFiles:
+    - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+    - vendor/php-stubs/woocommerce-stubs/woocommerce-packages-stubs.php
+
+  ignoreErrors:
+    # Acorn/Laravel path helpers (resource_path, public_path, config) are runtime
+    # functions loaded by the framework — no static stubs available.
+    - '#Function (resource_path|public_path|config) not found\.#'
+
+    # Vite facade uses __callStatic magic — only suppress when it appears.
+    - message: '#Call to an undefined static method Illuminate\\Support\\Facades\\Vite::#'
+      reportUnmatched: false

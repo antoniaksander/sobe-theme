@@ -17,7 +17,10 @@
     "roots/acorn": "^6.0"
   },
   "require-dev": {
-    "laravel/pint": "^1.20"
+    "laravel/pint": "^1.20",
+    "php-stubs/woocommerce-stubs": "^10.7",
+    "phpstan/phpstan": "^2.1",
+    "szepeviktor/phpstan-wordpress": "2.0.3"
   },
   "suggest": {
     "log1x/sage-directives": "A collection of useful Blade directives for WordPress and Sage (^1.0)."
@@ -32,6 +35,7 @@
   "scripts": {
     "post-autoload-dump": [
       "Roots\\Acorn\\ComposerScripts::postAutoloadDump"
-    ]
+    ],
+    "analyse": "phpstan analyse --memory-limit=2G"
   }
 }
