@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 import { wordpressPlugin, wordpressThemeJson } from '@roots/vite-plugin';
+import { getBlockEntries } from './resources/scripts/blocks-entries.js';
 
 // Set APP_URL if it doesn't exist for Laravel Vite plugin
 if (!process.env.APP_URL) {
@@ -30,27 +31,7 @@ export default defineConfig({
         'resources/js/editor.js',
         'resources/css/woocommerce.css',
         'resources/js/product-gallery.js',
-        'resources/blocks/callout/index.jsx',
-        'resources/blocks/callout/editor.scss',
-        'resources/blocks/callout/style.scss',
-        'resources/blocks/product-feature/index.jsx',
-        'resources/blocks/product-feature/editor.scss',
-        'resources/blocks/product-feature/style.scss',
-        'resources/blocks/hero/index.jsx',
-        'resources/blocks/hero/editor.scss',
-        'resources/blocks/hero/style.scss',
-        'resources/blocks/hero/view.js',
-        'resources/blocks/brand-carousel/index.jsx',
-        'resources/blocks/brand-carousel/editor.scss',
-        'resources/blocks/brand-carousel/style.scss',
-        'resources/blocks/faq/index.jsx',
-        'resources/blocks/faq/editor.scss',
-        'resources/blocks/faq/style.scss',
-        'resources/blocks/faq/view.js',
-        'resources/blocks/product-carousel/index.jsx',
-        'resources/blocks/product-carousel/editor.scss',
-        'resources/blocks/product-carousel/style.scss',
-        'resources/blocks/product-carousel/view.js',
+        ...getBlockEntries(),
       ],
       refresh: true,
       assets: ['resources/images/**', 'resources/fonts/**'],
