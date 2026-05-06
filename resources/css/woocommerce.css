@@ -874,6 +874,14 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .woocommerce-message,
+  .woocommerce-error,
+  .woocommerce-info {
+    animation: none;
+  }
+}
+
 /* ── Image hover swap (sobe_product_card_hover = swap) ── */
 
 .sobe-product-image-wrapper {
@@ -1056,7 +1064,7 @@
 .woo-variation-swatches .variable-items-wrapper .variable-item.selected {
   border-color: var(--c-heading);
   background-color: var(--c-heading);
-  color: var(--c-surface); /* White text */
+  color: var(--c-surface-1);
 }
 
 /* Out of Stock State */
@@ -1175,7 +1183,7 @@
 .woo-variation-swatches .variable-item.active {
   border-color: var(--c-text) !important;
   background-color: var(--c-text) !important;
-  color: var(--c-bg) !important;
+  color: var(--c-background) !important;
   box-shadow: none !important;
 }
 
