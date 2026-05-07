@@ -471,6 +471,11 @@ window.Alpine = Alpine;
 Alpine.start();
 
 gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
+  const smoothScrollMobile = document.body.dataset.smoothScrollMobile;
+  const isPointerFine = window.matchMedia('(pointer: fine)').matches;
+
+  if (smoothScrollMobile !== 'true' && !isPointerFine) return;
+
   lenis = new Lenis({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
@@ -488,7 +493,13 @@ const scheduleIdle = (fn) =>
     ? requestIdleCallback(fn, { timeout: 2000 })
     : setTimeout(fn, 100);
 
+const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
 scheduleIdle(() => {
-  initAnimationBus();
   initStickyHeader();
+  if (!isMobile) initAnimationBus();
 });
+
+if (isMobile) {
+  setTimeout(initAnimationBus, 300);
+}

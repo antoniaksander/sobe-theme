@@ -959,3 +959,13 @@ body.single-post {
     color: var(--c-border) !important;
   }
 }
+
+[data-animate]:not([data-animated]) {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-animate]:not([data-animated]) {
+    opacity: 1;
+  }
+}

@@ -82,151 +82,174 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (!mainEl.querySelectorAll('.swiper-slide').length) return;
 
-  // ── Swiper: Thumbs (must init first for sync) ─────────────────────────────
-  const thumbsSwiper = new Swiper(thumbEl, {
-    modules: [FreeMode],
-    spaceBetween: 8,
-    slidesPerView: 'auto',
-    freeMode: true,
-    watchSlidesProgress: true,
-  });
-
-  // ── Swiper: Main slider ───────────────────────────────────────────────────
-  const mainSwiper = new Swiper(mainEl, {
-    modules: [Navigation, Pagination, Thumbs],
-    slidesPerView: 1.5,
-    spaceBetween: 6,
-    slidesPerGroupSkip: 1,
-    slidesOffsetBefore: 16,
-    // centeredSlides: true,
-    grabCursor: true,
-    touchReleaseOnEdges: true,
-    rewind: true,
-    roundLengths: true,
-
-    navigation: {
-      nextEl: mainEl.querySelector('.swiper-button-next'),
-      prevEl: mainEl.querySelector('.swiper-button-prev'),
-    },
-    pagination: {
-      el: mainEl.querySelector('.swiper-pagination'),
-      type: 'fraction',
-    },
-    thumbs: {
-      swiper: thumbsSwiper,
-    },
-  });
-
-  // ── PhotoSwipe bridge ─────────────────────────────────────────────────────
-  mainEl.style.cursor = 'zoom-in';
-
-  mainEl.addEventListener('click', (e) => {
-    const slide = e.target.closest('.swiper-slide');
-    if (!slide) return;
-    if (
-      typeof PhotoSwipe === 'undefined' ||
-      typeof PhotoSwipeUI_Default === 'undefined'
-    )
-      return;
-
-    const slides = [
-      ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
-    ];
-    const items = slides.map((s) => {
-      const img = s.querySelector('img');
-      return {
-        src: s.dataset.full,
-        w: img?.naturalWidth || 1800,
-        h: img?.naturalHeight || 1800,
-      };
+  const initSwiperGallery = () => {
+    // ── Swiper: Thumbs (must init first for sync) ───────────────────────────
+    const thumbsSwiper = new Swiper(thumbEl, {
+      modules: [FreeMode],
+      spaceBetween: 8,
+      slidesPerView: 'auto',
+      freeMode: true,
+      watchSlidesProgress: true,
     });
 
-    const pswpEl = document.querySelector('.pswp');
-    if (!pswpEl) return;
+    // ── Swiper: Main slider ─────────────────────────────────────────────────
+    const mainSwiper = new Swiper(mainEl, {
+      modules: [Navigation, Pagination, Thumbs],
+      slidesPerView: 1.5,
+      spaceBetween: 6,
+      slidesPerGroupSkip: 1,
+      slidesOffsetBefore: 16,
+      // centeredSlides: true,
+      grabCursor: true,
+      touchReleaseOnEdges: true,
+      rewind: true,
+      roundLengths: true,
 
-    new PhotoSwipe(pswpEl, PhotoSwipeUI_Default, items, {
-      index: mainSwiper.realIndex,
-      bgOpacity: 0.9,
-      shareEl: false,
-    }).init();
-  });
+      navigation: {
+        nextEl: mainEl.querySelector('.swiper-button-next'),
+        prevEl: mainEl.querySelector('.swiper-button-prev'),
+      },
+      pagination: {
+        el: mainEl.querySelector('.swiper-pagination'),
+        type: 'fraction',
+      },
+      thumbs: {
+        swiper: thumbsSwiper,
+      },
+    });
 
-  // ── jQuery required for WC variation events ───────────────────────────────
-  const $ = window.jQuery;
-  if (!$) return;
+    // ── PhotoSwipe bridge ───────────────────────────────────────────────────
+    mainEl.style.cursor = 'zoom-in';
 
-  let variationSlideIndex = null;
+    mainEl.addEventListener('click', (e) => {
+      const slide = e.target.closest('.swiper-slide');
+      if (!slide) return;
+      if (
+        typeof PhotoSwipe === 'undefined' ||
+        typeof PhotoSwipeUI_Default === 'undefined'
+      )
+        return;
 
-  // Static price element — updated in-place on variation select so the price always
-  // appears in the correct position (after title/reviews, before swatches).
-  // The variation price inside .single_variation is hidden via CSS.
-  const staticPriceEl = document.querySelector(
-    '.pdp-summary p.price, .pdp-summary span.price',
-  );
-  let originalPriceHTML = null;
+      const slides = [
+        ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
+      ];
+      const items = slides.map((s) => {
+        const img = s.querySelector('img');
+        return {
+          src: s.dataset.full,
+          w: img?.naturalWidth || 1800,
+          h: img?.naturalHeight || 1800,
+        };
+      });
 
-  $(document).on('found_variation', '.variations_form', (_e, variation) => {
-    // Update static price with variation-specific price HTML
-    if (staticPriceEl && variation.price_html) {
-      if (originalPriceHTML === null)
-        originalPriceHTML = staticPriceEl.innerHTML;
-      staticPriceEl.innerHTML = variation.price_html;
-    }
+      const pswpEl = document.querySelector('.pswp');
+      if (!pswpEl) return;
 
-    if (!variation.image || !variation.image.src) return;
+      new PhotoSwipe(pswpEl, PhotoSwipeUI_Default, items, {
+        index: mainSwiper.realIndex,
+        bgOpacity: 0.9,
+        shareEl: false,
+      }).init();
+    });
 
-    const src = variation.image.src;
-    const full = variation.image.full_src || src;
+    // ── jQuery required for WC variation events ─────────────────────────────
+    const $ = window.jQuery;
+    if (!$) return;
 
-    if (!isSafeHttpUrl(src) || !isSafeHttpUrl(full)) return;
+    let variationSlideIndex = null;
 
-    // Remove previously injected variation slide first
-    if (variationSlideIndex !== null) {
-      mainSwiper.removeSlide(variationSlideIndex);
-      thumbsSwiper.removeSlide(variationSlideIndex);
-      variationSlideIndex = null;
-    }
-
-    // Reuse existing slide if image already in the gallery
-    const slides = [
-      ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
-    ];
-    const existingIdx = slides.findIndex((s) => s.dataset.full === full);
-    if (existingIdx !== -1) {
-      mainSwiper.slideTo(existingIdx);
-      return;
-    }
-
-    // Inject a temporary variation slide
-    const srcset = variation.image.srcset || '';
-    const alt = variation.image.alt || '';
-    const newIdx = mainSwiper.slides.length;
-
-    mainSwiper.addSlide(
-      newIdx,
-      createVariationSlide({ src, srcset, alt, full }),
+    // Static price element — updated in-place on variation select so the price always
+    // appears in the correct position (after title/reviews, before swatches).
+    // The variation price inside .single_variation is hidden via CSS.
+    const staticPriceEl = document.querySelector(
+      '.pdp-summary p.price, .pdp-summary span.price',
     );
-    thumbsSwiper.addSlide(
-      newIdx,
-      createVariationSlide({ src, srcset: '', alt, full: src }),
-    );
+    let originalPriceHTML = null;
 
-    variationSlideIndex = newIdx;
-    mainSwiper.slideTo(newIdx);
-  });
+    $(document).on('found_variation', '.variations_form', (_e, variation) => {
+      // Update static price with variation-specific price HTML
+      if (staticPriceEl && variation.price_html) {
+        if (originalPriceHTML === null)
+          originalPriceHTML = staticPriceEl.innerHTML;
+        staticPriceEl.innerHTML = variation.price_html;
+      }
 
-  $(document).on('reset_data', '.variations_form', () => {
-    // Restore original range price
-    if (staticPriceEl && originalPriceHTML !== null) {
-      staticPriceEl.innerHTML = originalPriceHTML;
-      originalPriceHTML = null;
-    }
+      if (!variation.image || !variation.image.src) return;
 
-    if (variationSlideIndex !== null) {
-      mainSwiper.removeSlide(variationSlideIndex);
-      thumbsSwiper.removeSlide(variationSlideIndex);
-      variationSlideIndex = null;
-    }
-    mainSwiper.slideTo(0);
-  });
+      const src = variation.image.src;
+      const full = variation.image.full_src || src;
+
+      if (!isSafeHttpUrl(src) || !isSafeHttpUrl(full)) return;
+
+      // Remove previously injected variation slide first
+      if (variationSlideIndex !== null) {
+        mainSwiper.removeSlide(variationSlideIndex);
+        thumbsSwiper.removeSlide(variationSlideIndex);
+        variationSlideIndex = null;
+      }
+
+      // Reuse existing slide if image already in the gallery
+      const slides = [
+        ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
+      ];
+      const existingIdx = slides.findIndex((s) => s.dataset.full === full);
+      if (existingIdx !== -1) {
+        mainSwiper.slideTo(existingIdx);
+        return;
+      }
+
+      // Inject a temporary variation slide
+      const srcset = variation.image.srcset || '';
+      const alt = variation.image.alt || '';
+      const newIdx = mainSwiper.slides.length;
+
+      mainSwiper.addSlide(
+        newIdx,
+        createVariationSlide({ src, srcset, alt, full }),
+      );
+      thumbsSwiper.addSlide(
+        newIdx,
+        createVariationSlide({ src, srcset: '', alt, full: src }),
+      );
+
+      variationSlideIndex = newIdx;
+      mainSwiper.slideTo(newIdx);
+    });
+
+    $(document).on('reset_data', '.variations_form', () => {
+      // Restore original range price
+      if (staticPriceEl && originalPriceHTML !== null) {
+        staticPriceEl.innerHTML = originalPriceHTML;
+        originalPriceHTML = null;
+      }
+
+      if (variationSlideIndex !== null) {
+        mainSwiper.removeSlide(variationSlideIndex);
+        thumbsSwiper.removeSlide(variationSlideIndex);
+        variationSlideIndex = null;
+      }
+      mainSwiper.slideTo(0);
+    });
+  };
+
+  // Defer Swiper init until the browser is idle or the user first interacts —
+  // whichever comes first. The gallery is above-fold so IntersectionObserver
+  // fires immediately; idle/interaction deferral is the correct strategy here.
+  let swiperInitialized = false;
+  const initOnce = () => {
+    if (swiperInitialized) return;
+    swiperInitialized = true;
+    document.removeEventListener('touchstart', initOnce);
+    document.removeEventListener('scroll', initOnce);
+    document.removeEventListener('mousemove', initOnce);
+    initSwiperGallery();
+  };
+
+  document.addEventListener('touchstart', initOnce, { once: true, passive: true });
+  document.addEventListener('scroll', initOnce, { once: true, passive: true });
+  document.addEventListener('mousemove', initOnce, { once: true, passive: true });
+
+  'requestIdleCallback' in window
+    ? requestIdleCallback(initOnce, { timeout: 500 })
+    : setTimeout(initOnce, 200);
 });

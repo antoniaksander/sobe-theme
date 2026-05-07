@@ -44,52 +44,72 @@ function initAnimationBus() {
       }
 
       if (type === 'product-feature') {
-        gsap.from(el.querySelectorAll(':scope > div'), {
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 80%',
-            toggleActions: 'play none none reverse',
+        gsap.fromTo(
+          el.querySelectorAll(':scope > div'),
+          { y: 40, opacity: 0 },
+          {
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 80%',
+              toggleActions: 'play none none reverse',
+            },
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            stagger: 0.15,
+            ease: 'power2.out',
+            clearProps: 'opacity,transform',
           },
-          y: 40,
-          opacity: 0,
-          duration: 0.8,
-          stagger: 0.15,
-          ease: 'power2.out',
-        });
+        );
         return;
       }
 
       if (type === 'brand-carousel') {
-        gsap.from(el, {
-          scrollTrigger: {
-            trigger: el,
-            start: 'top 85%',
-            toggleActions: 'play none none reverse',
+        gsap.fromTo(
+          el,
+          { y: 60, opacity: 0 },
+          {
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 85%',
+              toggleActions: 'play none none reverse',
+            },
+            y: 0,
+            opacity: 1,
+            duration: 1.2,
+            ease: 'power4.out',
+            clearProps: 'opacity,transform',
           },
-          y: 60,
-          opacity: 0,
-          duration: 1.2,
-          ease: 'power4.out',
-        });
+        );
         return;
       }
 
       const preset = presets[type];
       if (!preset) return;
 
-      gsap.from(el, {
-        scrollTrigger: {
-          trigger: el,
-          start: 'top 85%',
-          toggleActions: 'play none none reverse',
+      gsap.fromTo(
+        el,
+        {
+          y: preset.y ?? 0,
+          x: preset.x ?? 0,
+          scale: preset.scale ?? 1,
+          opacity: preset.opacity ?? 0,
         },
-        y: preset.y ?? 0,
-        x: preset.x ?? 0,
-        scale: preset.scale ?? 1,
-        opacity: preset.opacity ?? 0,
-        duration: preset.duration ?? 0.8,
-        ease: preset.ease ?? 'power2.out',
-      });
+        {
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 85%',
+            toggleActions: 'play none none reverse',
+          },
+          y: 0,
+          x: 0,
+          scale: 1,
+          opacity: 1,
+          duration: preset.duration ?? 0.8,
+          ease: preset.ease ?? 'power2.out',
+          clearProps: 'opacity,transform',
+        },
+      );
     });
   });
 }
