@@ -3,13 +3,30 @@
   $mode    = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
   global $wp_query;
   $total   = (int) $wp_query->max_num_pages;
-  $current = max(1, (int) get_query_var('paged'));
+  // Use $wp_query->get() so it reads the overridden query in AJAX context,
+  // unlike get_query_var() which always reads $wp_the_query (the original request).
+  $current = max(1, (int) ($wp_query->get('paged') ?: 1));
+
+  // Build a reliable base URL that works in both AJAX and normal page context.
+  // get_previous/next_posts_page_link() generate admin-ajax.php URLs in AJAX context.
+  if (wp_doing_ajax()) {
+      $referer = wp_get_referer();
+      $base = $referer
+          ? remove_query_arg('paged', $referer)
+          : get_permalink(wc_get_page_id('shop'));
+  } elseif (is_product_taxonomy()) {
+      $obj  = get_queried_object();
+      $base = ($obj instanceof \WP_Term) ? get_term_link($obj) : get_permalink(wc_get_page_id('shop'));
+  } else {
+      $base = get_permalink(wc_get_page_id('shop'));
+  }
+  $prevUrl = ($current > 1)      ? add_query_arg('paged', $current - 1, $base) : null;
+  $nextUrl = ($current < $total) ? add_query_arg('paged', $current + 1, $base) : null;
 @endphp
 
 @if ($total > 1)
   @if ($mode === 'paginated')
     <nav class="sobe-pagination" aria-label="{{ __('Products pagination', 'sobe') }}">
-      @php $prevUrl = get_previous_posts_page_link(); @endphp
       @if ($prevUrl)
         <a class="sobe-pagination__arrow" href="{{ esc_url($prevUrl) }}" rel="prev"
            aria-label="{{ __('Previous page', 'sobe') }}">←</a>
@@ -22,7 +39,6 @@
         {{ sprintf(__('Page %1$d of %2$d', 'sobe'), $current, $total) }}
       </span>
 
-      @php $nextUrl = get_next_posts_page_link($total); @endphp
       @if ($nextUrl)
         <a class="sobe-pagination__arrow" href="{{ esc_url($nextUrl) }}" rel="next"
            aria-label="{{ __('Next page', 'sobe') }}">→</a>

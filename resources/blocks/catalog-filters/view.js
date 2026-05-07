@@ -51,12 +51,12 @@ import noUiSlider from 'nouislider';
 
   function buildFilterUrl(state) {
     const url = new URL(window.location.href);
-    const keep = ['paged'];
     for (const [k] of url.searchParams.entries()) {
-      if (!keep.includes(k)) url.searchParams.delete(k);
+      url.searchParams.delete(k);
     }
 
     for (const [key, val] of Object.entries(state)) {
+      if (key === 'paged') continue; // handled below
       if (key === 'price_type') {
         if (val && val !== 'all') url.searchParams.set('price_type', val);
         continue;
@@ -67,7 +67,8 @@ import noUiSlider from 'nouislider';
         url.searchParams.set(key, val);
       }
     }
-    url.searchParams.set('paged', '1');
+    const page = parseInt(state.paged, 10) || 1;
+    if (page > 1) url.searchParams.set('paged', String(page));
     return url.toString();
   }
 
@@ -155,6 +156,18 @@ import noUiSlider from 'nouislider';
   }
 
   clearAllBtn?.addEventListener('click', clearAllFilters);
+
+  // ── Pagination click intercept ───────────────────────────────────────────────
+  // Prevent full-page navigation; preserve active filters when changing pages.
+
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('[data-pagination] a');
+    if (!link) return;
+    e.preventDefault();
+    const href = new URL(link.href);
+    const paged = parseInt(href.searchParams.get('paged') || '1', 10);
+    applyFilters({ ...collectState(), paged });
+  });
 
   // ── Interdependent filter counts ─────────────────────────────────────────────
 
@@ -322,7 +335,6 @@ import noUiSlider from 'nouislider';
   const drawer = document.getElementById('sobe-filter-drawer');
   const drawerBody = drawer?.querySelector('.sobe-filter-drawer__body');
   const openBtn = document.querySelector('[data-open-filter-drawer]');
-  const closeBtn = drawer?.querySelector('[data-close-filter-drawer]');
   const sidebar = document.querySelector('.shop-sidebar');
 
   function moveToDrawer() {
@@ -362,23 +374,17 @@ import noUiSlider from 'nouislider';
       drawer.querySelector('button, input, [tabindex]')?.focus();
     });
 
-    closeBtn?.addEventListener('click', () => {
-      drawer.hidden = true;
-      openBtn.setAttribute('aria-expanded', 'false');
-      openBtn.focus();
-    });
-
-    drawer.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
+    drawer.addEventListener('click', (e) => {
+      const panelWidth = Math.min(320, window.innerWidth * 0.85);
+      if (e.target.closest('[data-close-filter-drawer]') || e.clientX > panelWidth) {
         drawer.hidden = true;
         openBtn.setAttribute('aria-expanded', 'false');
         openBtn.focus();
       }
     });
 
-    drawer.addEventListener('click', (e) => {
-      const panelWidth = Math.min(320, window.innerWidth * 0.85);
-      if (e.clientX > panelWidth) {
+    drawer.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
         drawer.hidden = true;
         openBtn.setAttribute('aria-expanded', 'false');
         openBtn.focus();

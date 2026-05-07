@@ -1659,6 +1659,30 @@
   color: var(--c-text);
 }
 
+.sobe-filter-drawer__footer {
+  flex-shrink: 0;
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--c-border);
+}
+
+.sobe-filter-drawer__apply {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--c-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.sobe-filter-drawer__apply:hover {
+  background: var(--c-accent-hover);
+}
+
 /* ── Price type select + filter group label ──────────────────────────────── */
 
 .sobe-filter-group {

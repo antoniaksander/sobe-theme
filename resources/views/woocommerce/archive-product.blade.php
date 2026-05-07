@@ -120,6 +120,13 @@ the readme will list any important changes.
       </button>
     </div>
     <div class="sobe-filter-drawer__body"></div>
+    <div class="sobe-filter-drawer__footer">
+      <button
+        class="sobe-filter-drawer__apply"
+        data-close-filter-drawer
+        type="button"
+      >{{ __('Close', 'sobe') }}</button>
+    </div>
   </div>
   @endif
 @endsection
