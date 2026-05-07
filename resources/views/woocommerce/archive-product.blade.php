@@ -46,6 +46,21 @@ the readme will list any important changes.
         @endphp
       </header>
 
+      @if ($showSidebar)
+      <button
+        class="sobe-filter-mobile-trigger"
+        data-open-filter-drawer
+        type="button"
+        aria-expanded="false"
+        aria-controls="sobe-filter-drawer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+        </svg>
+        {{ __('Filter', 'sobe') }}
+      </button>
+      @endif
+
       @if (woocommerce_product_loop())
         {{-- Flex toolbar keeps result-count + ordering side-by-side without floats --}}
         <div class="flex items-center justify-between mb-6">
@@ -64,10 +79,10 @@ the readme will list any important changes.
           @endwhile
         @endif
 
-        @php
-          woocommerce_product_loop_end();
-          do_action('woocommerce_after_shop_loop');
-        @endphp
+        @php woocommerce_product_loop_end(); @endphp
+        <div data-pagination>
+          @php do_action('woocommerce_after_shop_loop'); @endphp
+        </div>
       @else
         @php
           do_action('woocommerce_no_products_found')
@@ -81,4 +96,37 @@ the readme will list any important changes.
     do_action('woocommerce_after_main_content');
     do_action('get_footer', 'shop');
   @endphp
+
+  @if ($showSidebar)
+  {{-- Mobile filter drawer — rendered at body level so it's not inside any widget wrapper --}}
+  <div
+    id="sobe-filter-drawer"
+    class="sobe-filter-drawer"
+    role="dialog"
+    aria-modal="true"
+    aria-label="{{ __('Product filters', 'sobe') }}"
+    hidden
+  >
+    <div class="sobe-filter-drawer__header">
+      <span>{{ __('Filter products', 'sobe') }}</span>
+      <button
+        class="sobe-filter-drawer__close"
+        data-close-filter-drawer
+        aria-label="{{ __('Close filters', 'sobe') }}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="sobe-filter-drawer__body"></div>
+    <div class="sobe-filter-drawer__footer">
+      <button
+        class="sobe-filter-drawer__apply"
+        data-close-filter-drawer
+        type="button"
+      >{{ __('Close', 'sobe') }}</button>
+    </div>
+  </div>
+  @endif
 @endsection

@@ -46,6 +46,8 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
     }
 
     $route = $request->get_route();
+    $pfx = config('theme.prefix');
+
     $public_wc_store_routes = [
         '/wc/store/v1/cart',
         '/wc/store/v1/cart/add-item',
@@ -56,6 +58,11 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
     }
 
     if (preg_match('#^/wc/store/v1/cart/items/[^/]+$#', $route) === 1) {
+        return null;
+    }
+
+    // Theme search endpoint — public, product titles/prices only.
+    if ($route === "/{$pfx}/v1/search") {
         return null;
     }
 

@@ -28,7 +28,7 @@ class App extends Composer
      */
     public function logo(): ?string
     {
-        $logoId = get_theme_mod(config('theme.prefix') . '_logo');
+        $logoId = get_theme_mod(config('theme.prefix').'_logo');
         if (! $logoId) {
             return null;
         }
@@ -42,7 +42,7 @@ class App extends Composer
      */
     public function darkLogo(): ?string
     {
-        $logoId = get_theme_mod(config('theme.prefix') . '_dark_logo');
+        $logoId = get_theme_mod(config('theme.prefix').'_dark_logo');
         if (! $logoId) {
             return null;
         }

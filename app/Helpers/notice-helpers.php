@@ -4,7 +4,7 @@ namespace App\Helpers;
 
 function sobe_is_side_cart_enabled(): bool
 {
-    return (bool) \get_theme_mod(\config('theme.prefix') . '_enable_side_cart', true);
+    return (bool) \get_theme_mod(\config('theme.prefix').'_enable_side_cart', true);
 }
 
 function sobe_get_notices_for_toast(): array
@@ -24,7 +24,7 @@ function sobe_get_notices_for_toast(): array
             }
 
             $filtered[] = [
-                'id' => 'toast-' . \wp_rand(100000, 999999),
+                'id' => 'toast-'.\wp_rand(100000, 999999),
                 'type' => $type,
                 'message' => $message,
             ];

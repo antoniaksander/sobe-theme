@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Title: Header Layout 2
  * Slug: sobe/header-layout-2

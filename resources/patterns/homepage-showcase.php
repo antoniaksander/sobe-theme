@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Homepage Showcase Pattern
  *
@@ -6,7 +7,7 @@
  * Follows Five Laws: semantic markup, Tailwind utilities, no div soup.
  */
 
-return <<<PATTERN
+return <<<'PATTERN'
 <!-- wp:sobe/hero {"heading":"Crafting Digital Excellence","paragraph":"We build high-performance WordPress experiences with modern tools and thoughtful design.","ctaText":"View Our Work","ctaUrl":"#","alignment":"center","height":"100vh","align":"full","enableWebgl":false,"headingSize":"xl","ctaType":"btn-light","headingColor":"fg","paragraphColor":"fg-muted"} /-->
 
 <!-- wp:sobe/brand-carousel {"align":"wide","speed":"30s","pauseOnHover":true} /-->

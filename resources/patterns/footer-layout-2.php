@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Title: Footer Layout 2
  * Slug: sobe/footer-layout-2
