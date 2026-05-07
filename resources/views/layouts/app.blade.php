@@ -91,6 +91,8 @@
       <x-toast-container />
     </div>
 
+    @include('partials.search-overlay')
+
     @php do_action('get_footer'); @endphp
     @php wp_footer(); @endphp
   </body>

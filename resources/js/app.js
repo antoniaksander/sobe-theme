@@ -466,6 +466,82 @@ Alpine.data('app', () => ({
   },
 }));
 
+function debounce(fn, ms) {
+  let timer;
+  return (...args) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+Alpine.data('searchOverlay', () => ({
+  open: false,
+  query: '',
+  results: [],
+  loading: false,
+  activeIndex: -1,
+
+  get searchPageUrl() {
+    return window.sobeSearchParams?.searchPageUrl ?? '/';
+  },
+
+  get restUrl() {
+    return window.sobeSearchParams?.restUrl ?? '/wp-json/';
+  },
+
+  get namespace() {
+    return window.sobeSearchParams?.namespace ?? 'sobe/v1';
+  },
+
+  init() {
+    this.$watch(
+      'query',
+      debounce(async (q) => {
+        if (q.length < 2) {
+          this.results = [];
+          return;
+        }
+        this.loading = true;
+        try {
+          const res = await fetch(
+            `${this.restUrl}${this.namespace}/search?q=${encodeURIComponent(q)}&limit=5`,
+          );
+          this.results = await res.json();
+        } catch {
+          this.results = [];
+        } finally {
+          this.loading = false;
+          this.activeIndex = -1;
+        }
+      }, 300),
+    );
+  },
+
+  openOverlay() {
+    this.open = true;
+    this.$nextTick(() => this.$refs.searchInput?.focus());
+  },
+
+  close() {
+    this.open = false;
+    this.query = '';
+    this.results = [];
+    this.activeIndex = -1;
+  },
+
+  handleKey(e) {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      this.activeIndex = Math.min(this.activeIndex + 1, this.results.length - 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      this.activeIndex = Math.max(this.activeIndex - 1, -1);
+    } else if (e.key === 'Enter' && this.activeIndex >= 0) {
+      window.location.href = this.results[this.activeIndex].url;
+    }
+  },
+}));
+
 Alpine.plugin(focus);
 window.Alpine = Alpine;
 Alpine.start();

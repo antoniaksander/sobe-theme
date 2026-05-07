@@ -1,5 +1,6 @@
 @import './tokens.css';
 @import 'swiper/css/bundle';
+@import 'nouislider/dist/nouislider.css';
 
 /* ────────────────────────────────────────────────────────────────────────────
    WOOCOMMERCE DESIGN SYSTEM OVERRIDES
@@ -14,8 +15,8 @@
   /* clear: both ensures this grid starts below the floated result-count/ordering toolbar */
   clear: both;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.2rem;
+  grid-template-columns: repeat(var(--shop-cols, 2), 1fr);
+  gap: var(--space-lg);
   list-style: none;
   padding: 0;
   margin: 0 0 2rem;
@@ -45,53 +46,31 @@
   display: none !important;
 }
 
-/* Responsive product-grid: mobile (< 768px) via Customizer body classes */
+/* ── Product grid columns — Customizer body-class injection ─────────────── */
+/* Each breakpoint sets --shop-cols; the base .products rule uses it.
+   All class strings are static (no concatenation) — Tailwind constraint met. */
+
+/* Mobile (< 768px) */
 @media (max-width: 767.98px) {
-  body.sobe-catalog-mobile-columns-1 .woocommerce ul.products {
-    grid-template-columns: 1fr;
-  }
-
-  body.sobe-catalog-mobile-columns-2 .woocommerce ul.products {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  body.sobe-catalog-mobile-columns-1 .woocommerce ul.products { --shop-cols: 1; }
+  body.sobe-catalog-mobile-columns-2 .woocommerce ul.products { --shop-cols: 2; }
 }
 
-/* Responsive product-grid: tablet (768px – 1023px) via Customizer body classes */
+/* Tablet (768px – 1023px) */
 @media (min-width: 768px) and (max-width: 1023.98px) {
-  body.sobe-catalog-tablet-columns-1 .woocommerce ul.products {
-    grid-template-columns: 1fr;
-  }
-
-  body.sobe-catalog-tablet-columns-2 .woocommerce ul.products {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  body.sobe-catalog-tablet-columns-3 .woocommerce ul.products {
-    grid-template-columns: repeat(3, 1fr);
-  }
+  body.sobe-catalog-tablet-columns-1 .woocommerce ul.products { --shop-cols: 1; }
+  body.sobe-catalog-tablet-columns-2 .woocommerce ul.products { --shop-cols: 2; }
+  body.sobe-catalog-tablet-columns-3 .woocommerce ul.products { --shop-cols: 3; }
 }
 
-/* Responsive product-grid: desktop (≥ 1024px) via WooCommerce .columns-N class */
+/* Desktop (≥ 1024px) — Customizer-controlled, replaces WC .columns-N approach */
 @media (min-width: 1024px) {
-  .woocommerce ul.products.columns-1 {
-    grid-template-columns: 1fr;
-  }
-
-  .woocommerce ul.products.columns-2 {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .woocommerce ul.products.columns-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .woocommerce ul.products.columns-4 {
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .woocommerce ul.products.columns-5 {
-    grid-template-columns: repeat(5, 1fr);
-  }
+  body.sobe-catalog-desktop-columns-1 .woocommerce ul.products { --shop-cols: 1; }
+  body.sobe-catalog-desktop-columns-2 .woocommerce ul.products { --shop-cols: 2; }
+  body.sobe-catalog-desktop-columns-3 .woocommerce ul.products { --shop-cols: 3; }
+  body.sobe-catalog-desktop-columns-4 .woocommerce ul.products { --shop-cols: 4; }
+  body.sobe-catalog-desktop-columns-5 .woocommerce ul.products { --shop-cols: 5; }
+  body.sobe-catalog-desktop-columns-6 .woocommerce ul.products { --shop-cols: 6; }
 }
 
 .woocommerce ul.products li.product:hover {
@@ -110,6 +89,43 @@
 
 .woocommerce ul.products li.product:hover a img {
   transform: scale(1.04);
+}
+
+/* ── Shop pagination ───────────────────────────────────────────────────── */
+
+.sobe-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-xl) 0;
+}
+
+.sobe-pagination__arrow {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  color: var(--c-text);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+.sobe-pagination__arrow:hover { color: var(--c-accent); }
+.sobe-pagination__arrow--disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.sobe-pagination__current {
+  font-size: var(--text-sm);
+  color: var(--c-text-muted);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
 }
 
 /* ── Product card details ── */
@@ -1256,4 +1272,300 @@
   to {
     transform: translateY(-50%) rotate(360deg);
   }
+}
+
+/* ── Catalog filters ──────────────────────────────────────────────────────── */
+
+/* Accordion */
+.sobe-accordion {
+  border-bottom: 1px solid var(--c-border);
+}
+
+.sobe-accordion summary {
+  list-style: none;
+}
+
+.sobe-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.sobe-accordion__trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--c-text);
+  cursor: pointer;
+  user-select: none;
+}
+
+.sobe-accordion__trigger::after {
+  content: '+';
+  flex-shrink: 0;
+  font-size: var(--text-base);
+  transition: transform var(--transition-fast);
+}
+
+.sobe-accordion[open] > .sobe-accordion__trigger::after {
+  transform: rotate(45deg);
+}
+
+.sobe-accordion__panel {
+  padding-bottom: var(--space-md);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* Filter search */
+.sobe-filter-search {
+  margin-bottom: var(--space-sm);
+}
+
+.sobe-filter-search__input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--c-surface-1);
+  color: var(--c-text);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.sobe-filter-search__input:focus {
+  border-color: var(--c-accent);
+}
+
+/* Filter list */
+.sobe-filter-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sobe-filter-list__item {
+  padding: var(--space-xs) 0;
+}
+
+/* Radio */
+.sobe-radio {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.sobe-radio__input {
+  accent-color: var(--c-accent);
+  cursor: pointer;
+}
+
+/* Checkbox */
+.sobe-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.sobe-checkbox__input {
+  accent-color: var(--c-accent);
+  cursor: pointer;
+}
+
+.sobe-filter-count {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  color: var(--c-text-muted);
+}
+
+/* Active filter chips */
+.sobe-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+  min-height: 0;
+}
+
+.sobe-filter-chips:empty {
+  margin-bottom: 0;
+}
+
+.sobe-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--c-primary-subtle);
+  color: var(--c-primary);
+  border-radius: var(--radius-full);
+  font-size: var(--text-xs);
+  border: none;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.sobe-filter-chip:hover {
+  background: var(--c-surface-hover);
+}
+
+.sobe-filter-chip__remove {
+  line-height: 1;
+  font-size: var(--text-base);
+}
+
+/* noUiSlider token overrides */
+.sobe-range-slider {
+  padding: var(--space-sm) 0;
+}
+
+.sobe-range-slider .noUi-connect {
+  background: var(--c-accent);
+}
+
+.sobe-range-slider .noUi-handle {
+  border: 2px solid var(--c-accent);
+  background: var(--c-surface-1);
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+}
+
+.sobe-range-slider__inputs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.sobe-range-slider__input {
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--c-surface-1);
+  color: var(--c-text);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.sobe-range-slider__input:focus {
+  border-color: var(--c-accent);
+}
+
+/* Swatches */
+.sobe-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  padding: var(--space-xs) 0;
+}
+
+.sobe-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color var(--transition-fast);
+}
+
+.sobe-swatch.is-active {
+  border-color: var(--c-accent);
+}
+
+.sobe-swatch--color {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background: var(--swatch-color);
+}
+
+.sobe-swatch--text {
+  min-width: 40px;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+  background: var(--c-surface-raised);
+  color: var(--c-text);
+}
+
+.sobe-swatch--image {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+/* Mobile filter drawer trigger */
+.sobe-filter-drawer-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  background: var(--c-surface-1);
+  color: var(--c-text);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.sobe-filter-drawer-trigger:hover {
+  background: var(--c-surface-hover);
+}
+
+/* Mobile filter drawer */
+.sobe-filter-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  background: var(--c-surface-1);
+}
+
+.sobe-filter-drawer[hidden] {
+  display: none;
+}
+
+.sobe-filter-drawer__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--c-border);
+  font-weight: var(--font-semibold);
+  flex-shrink: 0;
+}
+
+.sobe-filter-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md) var(--space-lg);
+}
+
+.sobe-filter-drawer__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+
+.sobe-filter-drawer__close:hover {
+  color: var(--c-text);
 }

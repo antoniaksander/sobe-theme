@@ -98,7 +98,15 @@ add_action('wp_enqueue_scripts', function () {
     }
 }, 100);
 
-add_filter('loop_shop_columns', fn () => config('theme.wc_columns.desktop'));
+add_filter('loop_shop_columns', function (): int {
+    $pfx = config('theme.prefix');
+    return (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", 4);
+});
+
+add_filter('loop_shop_per_page', function (): int {
+    $pfx = config('theme.prefix');
+    return (int) get_theme_mod("{$pfx}_products_per_page", 12);
+});
 
 /**
  * Load WooCommerce frontend scripts conditionally by page context.
@@ -180,8 +188,14 @@ add_filter('body_class', function (array $classes): array {
         $tabletColumns = '3';
     }
 
+    $desktopColumns = get_theme_mod("{$pfx}_product_catalog_desktop_columns", '4');
+    if (! in_array($desktopColumns, ['1', '2', '3', '4', '5', '6'], true)) {
+        $desktopColumns = '4';
+    }
+
     $classes[] = "{$pfx}-catalog-mobile-columns-{$mobileColumns}";
     $classes[] = "{$pfx}-catalog-tablet-columns-{$tabletColumns}";
+    $classes[] = "{$pfx}-catalog-desktop-columns-{$desktopColumns}";
 
     return $classes;
 });
@@ -312,6 +326,112 @@ add_action('wp_enqueue_scripts', function (): void {
     );
 });
 
+// ── Shop pagination ────────────────────────────────────────────────────────
+
+add_action('after_setup_theme', function (): void {
+    remove_action('woocommerce_after_shop_loop', 'woocommerce_pagination', 10);
+    add_action('woocommerce_after_shop_loop', function (): void {
+        echo view('woocommerce.loop.pagination')->render();
+    }, 10);
+}, 22);
+
+add_action('wp_enqueue_scripts', function (): void {
+    if (! (is_shop() || is_product_taxonomy() || is_product_tag())) {
+        return;
+    }
+
+    $pfx          = config('theme.prefix');
+    $mode         = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
+    $ordering     = WC()->query ? WC()->query->get_catalog_ordering_args() : [];
+    $queried      = get_queried_object();
+
+    $params = [
+        'ajaxUrl'        => admin_url('admin-ajax.php'),
+        'ajaxAction'     => "{$pfx}_load_more_products",
+        'nonce'          => wp_create_nonce("{$pfx}_load_more"),
+        'historyEnabled' => (bool) get_theme_mod("{$pfx}_pagination_history", false),
+        'taxonomy'       => is_product_taxonomy() ? sanitize_key($queried->taxonomy ?? '') : '',
+        'termId'         => is_product_taxonomy() ? (int) ($queried->term_id ?? 0) : 0,
+        'search'         => sanitize_text_field(get_search_query()),
+        'orderby'        => sanitize_key($ordering['orderby'] ?? 'menu_order'),
+        'loadingText'    => __('Loading products…', 'sobe'),
+        'loadedText'     => __('More products loaded', 'sobe'),
+    ];
+    echo '<script>window.sobeLoadMoreParams = ' . \wp_json_encode($params) . ';</script>';
+
+    if ($mode !== 'load-more') {
+        return;
+    }
+
+    wp_enqueue_script(
+        "{$pfx}-shop-load-more",
+        \Roots\asset('resources/js/shop-load-more.js')->uri(),
+        [],
+        null,
+        true
+    );
+}, 20);
+
+$load_more_handler = function (): void {
+    $pfx = config('theme.prefix');
+    check_ajax_referer("{$pfx}_load_more", 'nonce');
+
+    $page     = max(1, (int) ($_POST['page'] ?? 1));
+    $taxonomy = sanitize_key($_POST['taxonomy'] ?? '');
+    $term_id  = (int) ($_POST['term_id'] ?? 0);
+    $search   = sanitize_text_field($_POST['search'] ?? '');
+    $orderby  = sanitize_key($_POST['orderby'] ?? 'menu_order');
+    $per_page = (int) get_theme_mod("{$pfx}_products_per_page", 12);
+
+    $query_args = [
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'paged'          => $page,
+        'posts_per_page' => $per_page,
+        'orderby'        => $orderby,
+    ];
+
+    if ($taxonomy && $term_id) {
+        $query_args['tax_query'] = [[
+            'taxonomy' => $taxonomy,
+            'field'    => 'term_id',
+            'terms'    => $term_id,
+        ]];
+    }
+
+    if ($search) {
+        $query_args['s'] = $search;
+    }
+
+    $query = new \WP_Query($query_args);
+
+    ob_start();
+    if ($query->have_posts()) {
+        wc_setup_loop([
+            'columns' => (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", 4),
+        ]);
+        while ($query->have_posts()) {
+            $query->the_post();
+            wc_get_template_part('content', 'product');
+        }
+        wc_reset_loop();
+    }
+    wp_reset_postdata();
+    $html = ob_get_clean();
+
+    wp_send_json([
+        'html'     => $html,
+        'has_more' => $page < $query->max_num_pages,
+        'next_page' => $page + 1,
+    ]);
+};
+
+$load_more_action = config('theme.prefix') . '_load_more_products';
+add_action("wp_ajax_{$load_more_action}", $load_more_handler);
+add_action("wp_ajax_nopriv_{$load_more_action}", $load_more_handler);
+
+// ── Cart refresh ────────────────────────────────────────────────────────────
+
 $refresh_cart_handler = function () {
     check_ajax_referer('wc_store_api');
     if (! defined('DOING_AJAX')) {
@@ -325,3 +445,166 @@ $refresh_cart_handler = function () {
 $refresh_action = config('theme.prefix') . '_refresh_cart';
 add_action("wp_ajax_{$refresh_action}", $refresh_cart_handler);
 add_action("wp_ajax_nopriv_{$refresh_action}", $refresh_cart_handler);
+
+// ── Catalog filter helpers ────────────────────────────────────────────────────
+
+/**
+ * Pluggable swatch colour fallback chain.
+ *
+ * 1. Native theme meta  (sobe_swatch_value)
+ * 2. YITH WC Swatches   (yith_wccl_value)
+ * 3. Generic colour hex (pa_color_hex)
+ * 4. Developer escape hatch via filter
+ */
+function sobe_get_swatch_value(\WP_Term $term, string $attribute_name): ?string
+{
+    $id = $term->term_id;
+    if ($v = get_term_meta($id, 'sobe_swatch_value', true)) {
+        return (string) $v;
+    }
+    if ($v = get_term_meta($id, 'yith_wccl_value', true)) {
+        return (string) $v;
+    }
+    if ($v = get_term_meta($id, 'pa_color_hex', true)) {
+        return (string) $v;
+    }
+    return apply_filters('sobe_swatch_value', null, $term, $attribute_name);
+}
+
+// ── AJAX catalog filter handler ───────────────────────────────────────────────
+
+$filter_handler = function (): void {
+    $pfx = config('theme.prefix');
+    check_ajax_referer("{$pfx}_nonce", 'nonce');
+
+    $raw_state   = sanitize_text_field(wp_unslash($_POST['filter_state'] ?? '{}'));
+    $filter_state = json_decode($raw_state, true) ?: [];
+
+    $per_page = (int) get_theme_mod("{$pfx}_products_per_page", 12);
+    $paged    = max(1, (int) ($filter_state['paged'] ?? 1));
+
+    $query_args = [
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'posts_per_page' => $per_page,
+        'paged'          => $paged,
+    ];
+
+    // Tax query — categories (single) + filter_* attributes
+    $tax_query = [];
+
+    if (! empty($filter_state['product_cat'])) {
+        $tax_query[] = [
+            'taxonomy' => 'product_cat',
+            'field'    => 'slug',
+            'terms'    => sanitize_text_field($filter_state['product_cat']),
+        ];
+    }
+
+    foreach ($filter_state as $key => $val) {
+        if (strpos($key, 'filter_') !== 0) {
+            continue;
+        }
+        $attr_name = substr($key, 7);
+        $taxonomy  = 'pa_' . sanitize_key($attr_name);
+        $slugs     = array_map('sanitize_text_field', (array) $val);
+        if (! empty($slugs)) {
+            $tax_query[] = [
+                'taxonomy' => $taxonomy,
+                'field'    => 'slug',
+                'terms'    => $slugs,
+                'operator' => 'IN',
+            ];
+        }
+    }
+
+    if (! empty($filter_state[$pfx . '_brands']) || ! empty($filter_state['product_brand'])) {
+        $brand_key = $pfx . '_brands';
+        $slugs = array_map('sanitize_text_field', (array) ($filter_state[$brand_key] ?? $filter_state['product_brand'] ?? []));
+        if (! empty($slugs)) {
+            $tax_query[] = [
+                'taxonomy' => 'product_brand',
+                'field'    => 'slug',
+                'terms'    => $slugs,
+                'operator' => 'IN',
+            ];
+        }
+    }
+
+    if (count($tax_query) > 1) {
+        $tax_query['relation'] = 'AND';
+    }
+    if (! empty($tax_query)) {
+        $query_args['tax_query'] = $tax_query;
+    }
+
+    // Price meta query
+    $meta_query = [];
+    $min_price  = isset($filter_state['min_price']) ? (float) $filter_state['min_price'] : null;
+    $max_price  = isset($filter_state['max_price']) ? (float) $filter_state['max_price'] : null;
+
+    if ($min_price !== null || $max_price !== null) {
+        $price_clause = ['key' => '_price', 'type' => 'NUMERIC'];
+        if ($min_price !== null && $max_price !== null) {
+            $price_clause['value']   = [$min_price, $max_price];
+            $price_clause['compare'] = 'BETWEEN';
+        } elseif ($min_price !== null) {
+            $price_clause['value']   = $min_price;
+            $price_clause['compare'] = '>=';
+        } else {
+            $price_clause['value']   = $max_price;
+            $price_clause['compare'] = '<=';
+        }
+        $meta_query[] = $price_clause;
+    }
+    if (! empty($meta_query)) {
+        $query_args['meta_query'] = $meta_query;
+    }
+
+    $query = new \WP_Query($query_args);
+
+    ob_start();
+    if ($query->have_posts()) {
+        wc_setup_loop(['columns' => (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", 4)]);
+        while ($query->have_posts()) {
+            $query->the_post();
+            wc_get_template_part('content', 'product');
+        }
+        wc_reset_loop();
+    }
+    wp_reset_postdata();
+    $html = ob_get_clean();
+
+    // Pagination HTML
+    $GLOBALS['wp_query'] = $query;
+    $pagination_html = view('woocommerce.loop.pagination')->render();
+
+    wp_send_json([
+        'html'            => $html,
+        'pagination_html' => $pagination_html,
+        'count'           => $query->found_posts,
+    ]);
+};
+
+$filter_action = config('theme.prefix') . '_filter_products';
+add_action("wp_ajax_{$filter_action}", $filter_handler);
+add_action("wp_ajax_nopriv_{$filter_action}", $filter_handler);
+
+// Inline sobeCatalogParams on shop/taxonomy pages
+add_action('wp_enqueue_scripts', function (): void {
+    if (! is_shop() && ! is_product_taxonomy()) {
+        return;
+    }
+    $pfx = config('theme.prefix');
+    $params = [
+        'ajaxUrl'     => admin_url('admin-ajax.php'),
+        'nonce'       => wp_create_nonce("{$pfx}_nonce"),
+        'action'      => "{$pfx}_filter_products",
+        'removeLabel' => __('Remove filter', 'sobe'),
+    ];
+    wp_add_inline_script(
+        'sobe-app',
+        'window.sobeCatalogParams = ' . wp_json_encode($params) . ';',
+        'before'
+    );
+}, 20);

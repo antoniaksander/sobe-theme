@@ -651,6 +651,83 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         ],
     ]);
 
+    $wp_customize->add_setting("{$pfx}_product_catalog_desktop_columns", [
+        'default' => '4',
+        'sanitize_callback' => function ($value) {
+            return in_array($value, ['1', '2', '3', '4', '5', '6'], true) ? $value : '4';
+        },
+        'transport' => 'refresh',
+    ]);
+
+    $wp_customize->add_control("{$pfx}_product_catalog_desktop_columns", [
+        'label' => __('Product Catalog: Desktop Columns', 'sobe'),
+        'description' => __('Choose how many products appear per row on desktop screens.', 'sobe'),
+        'section' => 'woocommerce_product_catalog',
+        'type' => 'select',
+        'choices' => [
+            '1' => __('1 item per row', 'sobe'),
+            '2' => __('2 items per row', 'sobe'),
+            '3' => __('3 items per row', 'sobe'),
+            '4' => __('4 items per row (Default)', 'sobe'),
+            '5' => __('5 items per row', 'sobe'),
+            '6' => __('6 items per row', 'sobe'),
+        ],
+    ]);
+
+    $wp_customize->add_setting("{$pfx}_products_per_page", [
+        'default' => 12,
+        'sanitize_callback' => function ($value) {
+            $v = (int) $value;
+            return ($v >= 4 && $v <= 48) ? $v : 12;
+        },
+        'transport' => 'refresh',
+    ]);
+
+    $wp_customize->add_control("{$pfx}_products_per_page", [
+        'label' => __('Product Catalog: Products Per Page', 'sobe'),
+        'description' => __('Number of products displayed per page (4–48).', 'sobe'),
+        'section' => 'woocommerce_product_catalog',
+        'type' => 'number',
+        'input_attrs' => [
+            'min'  => 4,
+            'max'  => 48,
+            'step' => 1,
+        ],
+    ]);
+
+    // ── Shop Pagination ─────────────────────────────────────────────────
+    $wp_customize->add_setting("{$pfx}_shop_pagination_mode", [
+        'default' => 'paginated',
+        'sanitize_callback' => function ($value) {
+            return in_array($value, ['paginated', 'load-more'], true) ? $value : 'paginated';
+        },
+        'transport' => 'refresh',
+    ]);
+
+    $wp_customize->add_control("{$pfx}_shop_pagination_mode", [
+        'label' => __('Shop Pagination: Mode', 'sobe'),
+        'description' => __('Choose how products paginate on the shop and category pages.', 'sobe'),
+        'section' => 'woocommerce_product_catalog',
+        'type' => 'select',
+        'choices' => [
+            'paginated' => __('Classic (Prev / Page X of Y / Next)', 'sobe'),
+            'load-more' => __('Load More on Scroll (Infinite Scroll)', 'sobe'),
+        ],
+    ]);
+
+    $wp_customize->add_setting("{$pfx}_pagination_history", [
+        'default' => false,
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'transport' => 'refresh',
+    ]);
+
+    $wp_customize->add_control("{$pfx}_pagination_history", [
+        'label' => __('Shop Pagination: Update URL on Load More', 'sobe'),
+        'description' => __('Updates the browser URL (e.g. ?paged=3) as products load, so the back button works. Only applies in Load More mode.', 'sobe'),
+        'section' => 'woocommerce_product_catalog',
+        'type' => 'checkbox',
+    ]);
+
     // ── WooCommerce Shop Sidebar ────────────────────────────────────────
     $wp_customize->add_setting("{$pfx}_shop_sidebar_enabled", [
         'default' => true,
@@ -759,6 +836,72 @@ add_filter('wc_add_to_cart_message_html', function ($message) {
 
     return $message;
 }, 10, 1);
+
+// ── Header search REST endpoint ───────────────────────────────────────────
+
+add_action('rest_api_init', function (): void {
+    $pfx = config('theme.prefix');
+
+    register_rest_route("{$pfx}/v1", '/search', [
+        'methods'             => \WP_REST_Server::READABLE,
+        'callback'            => function (\WP_REST_Request $request): \WP_REST_Response {
+            $pfx   = config('theme.prefix');
+            $q     = sanitize_text_field($request->get_param('q') ?? '');
+            $limit = min(10, max(1, (int) ($request->get_param('limit') ?? 5)));
+
+            if (strlen($q) < 2) {
+                return rest_ensure_response([]);
+            }
+
+            $cache_key = md5("sobe_search_{$q}_{$limit}");
+            $cached    = wp_cache_get($cache_key, 'sobe_search');
+            if ($cached !== false) {
+                return rest_ensure_response($cached);
+            }
+
+            $query = new \WP_Query([
+                'post_type'      => 'product',
+                'post_status'    => 'publish',
+                'posts_per_page' => $limit,
+                's'              => $q,
+            ]);
+
+            $results = [];
+            foreach ($query->posts as $post) {
+                $product = wc_get_product($post->ID);
+                if (! $product) {
+                    continue;
+                }
+                $results[] = [
+                    'id'         => $post->ID,
+                    'title'      => get_the_title($post->ID),
+                    'url'        => get_permalink($post->ID),
+                    'price_html' => $product->get_price_html(),
+                    'thumbnail'  => get_the_post_thumbnail_url($post->ID, 'woocommerce_thumbnail') ?: '',
+                ];
+            }
+
+            wp_cache_set($cache_key, $results, 'sobe_search', 60);
+
+            return rest_ensure_response($results);
+        },
+        'permission_callback' => '__return_true',
+        'args'                => [
+            'q'     => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
+            'limit' => ['type' => 'integer', 'default' => 5, 'sanitize_callback' => 'absint'],
+        ],
+    ]);
+});
+
+add_action('wp_head', function (): void {
+    $pfx = config('theme.prefix');
+    $params = [
+        'restUrl'       => rest_url(),
+        'namespace'     => "{$pfx}/v1",
+        'searchPageUrl' => home_url('/'),
+    ];
+    echo '<script>window.sobeSearchParams = ' . \wp_json_encode($params) . ';</script>';
+}, 5);
 
 add_filter('woocommerce_add_to_cart_redirect', function ($url) {
     if (! \App\Helpers\sobe_is_side_cart_enabled() || \wp_doing_ajax() || ! \is_product()) {
