@@ -24,8 +24,8 @@ return [
     ],
 
     'wc_columns' => [
-        'mobile'  => 1,
-        'tablet'  => 3,
+        'mobile' => 1,
+        'tablet' => 3,
         'desktop' => 3,
     ],
 

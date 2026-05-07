@@ -132,6 +132,7 @@ import noUiSlider from 'nouislider';
         const defaultMax = parseFloat(sliderEl?.dataset.max ?? Infinity);
         return parseFloat(v) < defaultMax;
       }
+      if (k === 'price_type') return v !== 'all';
       return Array.isArray(v) ? v.length > 0 : !!v;
     });
     clearAllBtn.hidden = !hasActive;
@@ -141,6 +142,8 @@ import noUiSlider from 'nouislider';
     root.querySelectorAll('input[type="radio"]:checked').forEach((el) => (el.checked = false));
     root.querySelectorAll('input[type="checkbox"]:checked').forEach((el) => (el.checked = false));
     root.querySelectorAll('[data-filter-select]').forEach((el) => (el.selectedIndex = 0));
+    const allPriceType = root.querySelector('input[type="radio"][name="price_type"][value="all"]');
+    if (allPriceType) allPriceType.checked = true;
     const sliderEl = root.querySelector('[data-range-slider]');
     if (sliderEl?.noUiSlider) {
       sliderEl.noUiSlider.set([
@@ -211,6 +214,7 @@ import noUiSlider from 'nouislider';
 
     for (const [key, val] of Object.entries(state)) {
       if (key === 'min_price' || key === 'max_price') continue;
+      if (key === 'price_type' && val === 'all') continue;
       const values = Array.isArray(val) ? val : [val];
       values.forEach((v) => {
         if (!v) return;
@@ -366,6 +370,15 @@ import noUiSlider from 'nouislider';
 
     drawer.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
+        drawer.hidden = true;
+        openBtn.setAttribute('aria-expanded', 'false');
+        openBtn.focus();
+      }
+    });
+
+    drawer.addEventListener('click', (e) => {
+      const panelWidth = Math.min(320, window.innerWidth * 0.85);
+      if (e.clientX > panelWidth) {
         drawer.hidden = true;
         openBtn.setAttribute('aria-expanded', 'false');
         openBtn.focus();

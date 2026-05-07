@@ -35,12 +35,19 @@ class CatalogFilters extends Composer
 
         $brands = [];
         if ($showBrands && taxonomy_exists($brandsTaxonomy)) {
-            $brandTerms = get_terms([
-                'taxonomy' => $brandsTaxonomy,
-                'hide_empty' => true,
-                'orderby' => 'name',
-            ]);
-            $brands = is_wp_error($brandTerms) ? [] : $brandTerms;
+            if (is_tax($brandsTaxonomy)) {
+                $currentTerm = get_queried_object();
+                $brands = ($currentTerm instanceof \WP_Term && $currentTerm->taxonomy === $brandsTaxonomy)
+                    ? [$currentTerm]
+                    : [];
+            } else {
+                $brandTerms = get_terms([
+                    'taxonomy' => $brandsTaxonomy,
+                    'hide_empty' => true,
+                    'orderby' => 'name',
+                ]);
+                $brands = is_wp_error($brandTerms) ? [] : $brandTerms;
+            }
         }
 
         $attributeGroups = [];

@@ -8,25 +8,32 @@
   aria-label="{{ __('Product filters', 'sobe') }}"
 >
 
-  {{-- Price type dropdown (always visible) --}}
-  <div class="sobe-filter-group">
-    <label class="sobe-filter-label" for="sobe-price-type">
-      {{ __('Price type', 'sobe') }}
-    </label>
-    <select
-      id="sobe-price-type"
-      class="sobe-select"
-      data-filter-select="price_type"
-    >
-      <option value="all">{{ __('All', 'sobe') }}</option>
-      <option value="on_sale" @if(($activeFilters['price_type'] ?? '') === 'on_sale') selected @endif>
-        {{ __('On sale', 'sobe') }}
-      </option>
-      <option value="full_price" @if(($activeFilters['price_type'] ?? '') === 'full_price') selected @endif>
-        {{ __('Full price', 'sobe') }}
-      </option>
-    </select>
-  </div>
+  {{-- Price type (accordion, radio) --}}
+  <details class="sobe-accordion" @if (!$collapseByDefault) open @endif>
+    <summary class="sobe-accordion__trigger">{{ __('Price type', 'sobe') }}</summary>
+    <div class="sobe-accordion__panel">
+      <ul class="sobe-filter-list" role="radiogroup">
+        @foreach([
+          'all'        => __('All', 'sobe'),
+          'on_sale'    => __('On sale', 'sobe'),
+          'full_price' => __('Full price', 'sobe'),
+        ] as $val => $label)
+          <li class="sobe-filter-list__item">
+            <label class="sobe-radio">
+              <input
+                type="radio"
+                name="price_type"
+                value="{{ $val }}"
+                class="sobe-radio__input"
+                @if(($activeFilters['price_type'] ?? 'all') === $val) checked @endif
+              >
+              <span class="sobe-radio__label">{{ $label }}</span>
+            </label>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+  </details>
 
   {{-- Active filter chips --}}
   <div class="sobe-filter-chips" data-filter-chips aria-label="{{ __('Active filters', 'sobe') }}">
@@ -124,7 +131,7 @@
           >
         </div>
       @endif
-      <ul class="sobe-filter-list" data-filter-list="brands">
+      <ul class="sobe-filter-list sobe-filter-list--scrollable" data-filter-list="brands">
         @php $activeBrands = (array) ($activeFilters[$brandsTaxonomy] ?? []); @endphp
         @foreach ($brands as $brand)
           <li class="sobe-filter-list__item">
@@ -262,14 +269,6 @@
   @endif
 
 </div>
-
-{{-- Mobile "Filter" button (hidden on desktop via lg:hidden) --}}
-<button
-  class="sobe-filter-drawer-trigger lg:hidden"
-  data-open-filter-drawer
-  aria-expanded="false"
-  aria-controls="sobe-filter-drawer"
->{{ __('Filter', 'sobe') }}</button>
 
 {{-- Mobile filter drawer --}}
 <div

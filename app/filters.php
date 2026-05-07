@@ -17,7 +17,7 @@ namespace App;
 add_filter('upload_mimes', function (array $mimes) {
     $mimes['svg'] = 'image/svg+xml';
     return $mimes;
-}); 
+});
 */
 
 add_filter('excerpt_length', fn () => config('theme.excerpt_length'), 999);

@@ -46,7 +46,7 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
     }
 
     $route = $request->get_route();
-    $pfx   = config('theme.prefix');
+    $pfx = config('theme.prefix');
 
     $public_wc_store_routes = [
         '/wc/store/v1/cart',

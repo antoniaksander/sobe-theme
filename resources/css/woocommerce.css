@@ -1420,21 +1420,44 @@
   font-size: var(--text-base);
 }
 
-/* noUiSlider token overrides */
+/* noUiSlider minimal style — hollow circles on a dark line */
+
 .sobe-range-slider {
-  padding: var(--space-sm) 0;
+  padding: var(--space-lg) 0 var(--space-sm);
+}
+
+.sobe-range-slider .noUi-target {
+  background: var(--c-border);
+  border: none;
+  box-shadow: none;
+  height: 2px;
+  border-radius: 1px;
 }
 
 .sobe-range-slider .noUi-connect {
-  background: var(--c-accent);
+  background: var(--c-text);
 }
 
 .sobe-range-slider .noUi-handle {
-  border: 2px solid var(--c-accent);
+  width: 18px !important;
+  height: 18px !important;
+  border: 2px solid var(--c-text);
   background: var(--c-surface-1);
-  border-radius: var(--radius-full);
-  box-shadow: var(--shadow-sm);
+  border-radius: 50%;
+  box-shadow: none;
+  right: -9px !important;
+  top: -8px !important;
   cursor: pointer;
+}
+
+.sobe-range-slider .noUi-handle::before,
+.sobe-range-slider .noUi-handle::after {
+  display: none;
+}
+
+.sobe-range-slider .noUi-handle:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
 }
 
 .sobe-range-slider__inputs {
@@ -1504,36 +1527,76 @@
   overflow: hidden;
 }
 
-/* Mobile filter drawer trigger */
-.sobe-filter-drawer-trigger {
-  display: inline-block;
-  padding: 0;
-  border: none;
-  border-bottom: 1px solid currentColor;
+/* Mobile filter trigger button (in shop-main, above product grid) */
+.sobe-filter-mobile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
   font-size: var(--text-sm);
   background: transparent;
-  color: var(--c-text-muted);
-  cursor: pointer;
-  transition: color var(--transition-fast);
-  line-height: 1.4;
-}
-
-.sobe-filter-drawer-trigger:hover {
   color: var(--c-text);
+  cursor: pointer;
+  margin-bottom: var(--space-md);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
-/* Mobile filter drawer */
+.sobe-filter-mobile-trigger:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+}
+
+/* Scrollable filter list */
+.sobe-filter-list--scrollable {
+  max-height: 14rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border) transparent;
+}
+
+/* Mobile filter drawer — slide-in sidebar */
 .sobe-filter-drawer {
+  display: flex !important;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: min(320px, 85vw);
+  z-index: var(--z-modal);
+  background: var(--c-surface-1);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+  visibility: hidden;
+  overflow: hidden;
+}
+
+.sobe-filter-drawer:not([hidden]) {
+  transform: translateX(0);
+  visibility: visible;
+}
+
+/* Backdrop overlay */
+.sobe-filter-drawer::after {
+  content: '';
   position: fixed;
   inset: 0;
-  z-index: var(--z-modal);
-  display: flex;
-  flex-direction: column;
-  background: var(--c-surface-1);
+  left: min(320px, 85vw);
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.sobe-filter-drawer:not([hidden])::after {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .sobe-filter-drawer[hidden] {
-  display: none;
+  display: flex !important;
 }
 
 .sobe-filter-drawer__header {
