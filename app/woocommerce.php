@@ -602,9 +602,5 @@ add_action('wp_enqueue_scripts', function (): void {
         'action'      => "{$pfx}_filter_products",
         'removeLabel' => __('Remove filter', 'sobe'),
     ];
-    wp_add_inline_script(
-        'sobe-app',
-        'window.sobeCatalogParams = ' . wp_json_encode($params) . ';',
-        'before'
-    );
+    echo '<script>window.sobeCatalogParams = ' . \wp_json_encode($params) . ';</script>';
 }, 20);
