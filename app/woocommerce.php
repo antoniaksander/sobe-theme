@@ -82,27 +82,64 @@ add_action('woocommerce_after_main_content', function () {
  */
 add_action('wp_enqueue_scripts', function () {
     if (is_woocommerce() || is_cart() || is_checkout() || is_account_page() || has_block('sobe/product-carousel')) {
+        $handle = config('theme.prefix') . '-woocommerce';
+
         wp_enqueue_style(
-            config('theme.prefix') . '-woocommerce',
+            $handle,
             \Roots\asset('resources/css/woocommerce.css')->uri(),
             ['woocommerce-general', 'woocommerce-layout', 'woocommerce-smallscreen'],
             null
         );
+
+        // Inject the gallery aspect-ratio token so forked projects can override it
+        // from config/theme.php ('wc_gallery_aspect_ratio') without touching CSS.
+        $ratio = sanitize_text_field(config('theme.wc_gallery_aspect_ratio', '1 / 1'));
+        wp_add_inline_style($handle, ':root{--pdp-gallery-aspect-ratio:' . $ratio . '}');
     }
 }, 100);
 
 add_filter('loop_shop_columns', fn () => config('theme.wc_columns.desktop'));
 
 /**
- * Force-load WooCommerce cart fragments script on all pages.
+ * Load WooCommerce frontend scripts conditionally by page context.
  *
- * Enables the mini-cart sidebar to work via AJAX on pages that aren't WooCommerce
- * templates (e.g. Home, Blog, About).
+ * The blanket WC_Frontend_Scripts::load_scripts() call was loading jQuery
+ * (synchronous, head-blocking) + every WC script on every page of the site,
+ * causing TBT > 1 s. This replaces it with page-scoped loading:
+ *
+ * - Product pages: full load_scripts() so variation params/localizations are
+ *   injected correctly, then dequeue scripts replaced by the custom Swiper gallery.
+ * - Cart/Checkout/Account: unchanged — let WC manage its own dependencies.
+ * - Everything else: only wc-cart-fragments for the side-cart fragment refresh.
+ *   If the Alpine side cart fully manages state via Store API, remove that line
+ *   (sub-step 4b) to eliminate jQuery entirely from non-WC pages.
  */
 add_action('wp_enqueue_scripts', function () {
-    if (class_exists('WC_Frontend_Scripts') && ! is_admin()) {
-        // Natively forces all WC scripts + localised params (AJAX, fragments) globally
-        \WC_Frontend_Scripts::load_scripts();
+    if (! is_admin() && class_exists('WC_Frontend_Scripts')) {
+        if (is_product()) {
+            // Full load_scripts() is required here — it also runs wp_localize_script()
+            // for wc_single_product_params and wc_add_to_cart_variation_params, which
+            // variation dropdowns depend on to update prices and images.
+            \WC_Frontend_Scripts::load_scripts();
+
+            // Dequeue scripts this theme replaces with its custom Swiper/PhotoSwipe gallery.
+            wp_dequeue_script('flexslider');
+            wp_dequeue_script('photoswipe');
+            wp_dequeue_script('photoswipe-ui-default');
+            wp_dequeue_script('wc-zoom');
+            return;
+        }
+
+        if (is_cart() || is_checkout() || is_account_page()) {
+            \WC_Frontend_Scripts::load_scripts();
+            return;
+        }
+
+        // Non-WC pages: load only wc-cart-fragments for side-cart fragment refresh.
+        // NOTE: wc-cart-fragments depends on jQuery, so jQuery still loads here.
+        // If the Alpine side cart manages cart state entirely via Store API responses,
+        // remove this line to eliminate jQuery on non-product pages (sub-step 4b).
+        wp_enqueue_script('wc-cart-fragments');
     }
 }, 99);
 

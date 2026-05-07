@@ -483,5 +483,12 @@ gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
   gsap.ticker.lagSmoothing(0);
 });
 
-initAnimationBus();
-initStickyHeader();
+const scheduleIdle = (fn) =>
+  'requestIdleCallback' in window
+    ? requestIdleCallback(fn, { timeout: 2000 })
+    : setTimeout(fn, 100);
+
+scheduleIdle(() => {
+  initAnimationBus();
+  initStickyHeader();
+});

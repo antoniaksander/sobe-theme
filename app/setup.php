@@ -22,7 +22,23 @@ add_action('init', function () {
         ? array_keys(json_decode(file_get_contents($manifest_path), true) ?? [])
         : [];
 
+    $layout_block_slugs = ['site-header', 'site-footer'];
+
     foreach ($custom_blocks as $block_slug) {
+        if (in_array($block_slug, $layout_block_slugs, true)) {
+            $block_args = [
+                'render_callback' => function ($attributes, $content = '') use ($block_slug) {
+                    $variant   = $attributes['variant'] ?? ($block_slug === 'site-header' ? 'header-1' : 'layout-2');
+                    $view_name = $block_slug === 'site-header'
+                        ? 'sections.' . $variant
+                        : 'sections.footer-' . $variant;
+                    return view($view_name)->render();
+                },
+            ];
+            register_block_type(resource_path('blocks/' . $block_slug), $block_args);
+            continue;
+        }
+
         $asset_uri = \Roots\asset('resources/blocks/' . $block_slug . '/index.jsx')->uri();
 
         wp_register_script(
@@ -87,6 +103,39 @@ add_action('init', function () {
         'categories'  => ['sobe-patterns'],
         'content'     => require resource_path('patterns/homepage-showcase.php'),
     ]);
+
+    // Layout patterns — hidden from inserter; rendered programmatically via \App\sobe_render_layout_pattern().
+    register_block_pattern_category('sobe-layout', [
+        'label' => __('Sobe Layout', 'sobe'),
+    ]);
+
+    register_block_pattern("{$pfx}/header-layout-1", [
+        'title'      => __('Header Layout 1', 'sobe'),
+        'categories' => ['sobe-layout'],
+        'inserter'   => false,
+        'content'    => require resource_path('patterns/header-layout-1.php'),
+    ]);
+
+    register_block_pattern("{$pfx}/header-layout-2", [
+        'title'      => __('Header Layout 2', 'sobe'),
+        'categories' => ['sobe-layout'],
+        'inserter'   => false,
+        'content'    => require resource_path('patterns/header-layout-2.php'),
+    ]);
+
+    register_block_pattern("{$pfx}/header-layout-3", [
+        'title'      => __('Header Layout 3', 'sobe'),
+        'categories' => ['sobe-layout'],
+        'inserter'   => false,
+        'content'    => require resource_path('patterns/header-layout-3.php'),
+    ]);
+
+    register_block_pattern("{$pfx}/footer-layout-2", [
+        'title'      => __('Footer Layout 2', 'sobe'),
+        'categories' => ['sobe-layout'],
+        'inserter'   => false,
+        'content'    => require resource_path('patterns/footer-layout-2.php'),
+    ]);
 });
 
 // Isolate module scope for each block to prevent Vite minifier collisions with window._
@@ -149,9 +198,13 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
     ];
 
     $pfx = config('theme.prefix');
-    $registered_blocks = \WP_Block_Type_Registry::get_instance()->get_all_registered();
+    $registered_blocks  = \WP_Block_Type_Registry::get_instance()->get_all_registered();
+    $layout_block_names = ["{$pfx}/site-header", "{$pfx}/site-footer"];
 
     foreach ($registered_blocks as $name => $block) {
+        if (in_array($name, $layout_block_names, true)) {
+            continue;
+        }
         if (strpos($name, "{$pfx}/") === 0) {
             $allowed[] = $name;
         }
@@ -161,12 +214,14 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
 }, 10, 2);
 
 // When adding a category here, also update VALID_CATEGORIES in resources/scripts/make-block.js.
+// sobe-layout is intentionally omitted from VALID_CATEGORIES — layout blocks are not scaffolded.
 add_filter('block_categories_all', function ($categories) {
     $custom = [
         ['slug' => 'sobe-general',     'title' => __('Sobe General', 'sobe'),     'icon' => 'layout'],
         ['slug' => 'sobe-woocommerce', 'title' => __('Sobe WooCommerce', 'sobe'), 'icon' => 'cart'],
         ['slug' => 'sobe-sliders',     'title' => __('Sobe Sliders', 'sobe'),     'icon' => 'slides'],
         ['slug' => 'sobe-content',     'title' => __('Sobe Content', 'sobe'),     'icon' => 'text'],
+        ['slug' => 'sobe-layout',      'title' => __('Sobe Layout', 'sobe'),      'icon' => 'layout'],
     ];
     return array_merge($custom, $categories);
 });
@@ -236,19 +291,54 @@ add_filter('theme_file_path', function ($path, $file) {
 }, 10, 2);
 
 /**
- * Enqueue fonts in head for priority loading.
+ * Preload variable fonts before the @font-face declaration fires.
+ * Priority 0 ensures preload hints land before all other wp_head output,
+ * letting the browser start fetching fonts during HTML parse rather than
+ * waiting for CSS parse — reduces FOUT window and CLS from font-swap reflow.
+ *
+ * Guards with file_exists() so forked projects that replace the boilerplate
+ * fonts don't emit broken preload links pointing to missing files.
  *
  * @return void
  */
 add_action('wp_head', function () {
+    $themeDir = get_stylesheet_directory();
     $themeUrl = get_stylesheet_directory_uri();
-    $satoshiUrl = $themeUrl.'/fonts/Satoshi-Variable.woff2';
-    $satoshiFace = "@font-face{font-family:'Satoshi';src:url('{$satoshiUrl}')format('woff2');font-weight:300 900;font-display:swap;font-style:normal}";
+    $fonts    = ['Satoshi-Variable.woff2', 'CabinetGrotesk-Variable.woff2'];
 
-    $cabinetUrl = $themeUrl.'/fonts/CabinetGrotesk-Variable.woff2';
-    $cabinetFace = "@font-face{font-family:'CabinetGrotesk';src:url('{$cabinetUrl}')format('woff2');font-weight:100 900;font-display:swap;font-style:normal}";
+    foreach ($fonts as $font) {
+        if (file_exists($themeDir . '/fonts/' . $font)) {
+            echo '<link rel="preload" as="font" type="font/woff2" crossorigin href="' . esc_attr($themeUrl . '/fonts/' . $font) . '">';
+        }
+    }
+}, 0);
 
-    echo '<style>'.$satoshiFace.$cabinetFace.'</style>';
+/**
+ * Inline @font-face declarations for fonts bundled at <theme>/fonts/.
+ *
+ * Guards with file_exists() so forked projects that swap out the boilerplate
+ * fonts (or move them to a CDN) don't emit broken @font-face src() URLs.
+ *
+ * @return void
+ */
+add_action('wp_head', function () {
+    $themeDir = get_stylesheet_directory();
+    $themeUrl = get_stylesheet_directory_uri();
+    $faces    = '';
+
+    if (file_exists($themeDir . '/fonts/Satoshi-Variable.woff2')) {
+        $url    = $themeUrl . '/fonts/Satoshi-Variable.woff2';
+        $faces .= "@font-face{font-family:'Satoshi';src:url('{$url}')format('woff2');font-weight:300 900;font-display:swap;font-style:normal}";
+    }
+
+    if (file_exists($themeDir . '/fonts/CabinetGrotesk-Variable.woff2')) {
+        $url    = $themeUrl . '/fonts/CabinetGrotesk-Variable.woff2';
+        $faces .= "@font-face{font-family:'CabinetGrotesk';src:url('{$url}')format('woff2');font-weight:100 900;font-display:swap;font-style:normal}";
+    }
+
+    if ($faces) {
+        echo '<style>' . $faces . '</style>';
+    }
 }, 1);
 
 /**

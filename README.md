@@ -103,6 +103,37 @@ CI enforces strict limits:
 
 If `npm run build` exceeds these limits, CI fails. Optimize images, split chunks, or lazy-load components.
 
+## WooCommerce
+
+### Product gallery
+
+The boilerplate ships with a **custom Swiper/PhotoSwipe product gallery** that replaces WooCommerce's default flexslider. This is a hard dependency: `app/woocommerce.php` dequeues `flexslider`, `photoswipe`, `photoswipe-ui-default`, and `wc-zoom` on single product pages.
+
+**If a client project does not need the custom gallery**, remove the four `wp_dequeue_script()` calls in `app/woocommerce.php` (look for the comment "Dequeue WC scripts this theme replaces").
+
+### Configuring the gallery aspect ratio
+
+The single-product gallery reserves its height before JavaScript initializes to prevent Cumulative Layout Shift (CLS). The reserved aspect ratio must match your `woocommerce_single` image crop setting. Change it in `config/theme.php`:
+
+```php
+'wc_gallery_aspect_ratio' => '1 / 1', // default: square
+// Other common values: '4 / 5', '3 / 4'
+```
+
+Verify the correct ratio: go to WooCommerce → Settings → Products → Product images and note the **Single product image** dimensions. If width and height differ, use `width / height` as the ratio.
+
+### WooCommerce scripts strategy
+
+`app/woocommerce.php` loads WooCommerce scripts conditionally by page context to minimize Total Blocking Time (TBT):
+
+| Context | Strategy |
+| --- | --- |
+| Single product page | Full `WC_Frontend_Scripts::load_scripts()` (required for variation params), then dequeues gallery scripts |
+| Cart / Checkout / Account | Full `WC_Frontend_Scripts::load_scripts()` |
+| All other pages | Only `wc-cart-fragments` for the side-cart fragment refresh |
+
+If your Alpine side cart manages state entirely via the Store API (check `window.themeCartParams.storeApiAddUrl`), you can remove the `wp_enqueue_script('wc-cart-fragments')` line to eliminate jQuery from non-product pages entirely.
+
 ## AI-Ready Development
 
 This repository has `CLAUDE.md` — an orientation document for AI coding assistants. It covers the Five Laws, critical file map, the hybrid hook model, and common anti-patterns. If you use Claude Code, Cursor, or GitHub Copilot, reference this file at the start of each session for grounded context. Send me an email sander@sobe.agency to get the latest version.

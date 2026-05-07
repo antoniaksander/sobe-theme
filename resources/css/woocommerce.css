@@ -486,9 +486,17 @@
 /* Overflow visible so the 1.5-slide peek effect shows adjacent slides.
    The .pdp-gallery wrapper clips at its own edges. */
 .pdp-swiper-main {
+  aspect-ratio: var(--pdp-gallery-aspect-ratio, 1 / 1); /* set via config/theme.php 'wc_gallery_aspect_ratio' */
   border-radius: 0.75rem;
   overflow: visible;
   position: relative;
+}
+
+/* Before Swiper initializes it adds .swiper-initialized. Hide all slides except
+   the first so the browser never stacks N images vertically before JS fires.
+   This prevents the gallery from collapsing (CLS > 1.0) when Swiper applies flex. */
+.pdp-swiper-main:not(.swiper-initialized) .swiper-slide:not(:first-child) {
+  display: none;
 }
 
 .pdp-swiper-main .swiper-slide {
@@ -566,6 +574,13 @@
 
 .pdp-swiper-thumbs {
   margin-top: 0.75rem;
+  min-height: 80px; /* matches slide height — prevents layout shift before JS sets dimensions */
+}
+
+@media (max-width: 479px) {
+  .pdp-swiper-thumbs {
+    min-height: 64px;
+  }
 }
 
 .pdp-swiper-thumbs .swiper-slide {
@@ -874,6 +889,14 @@
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .woocommerce-message,
+  .woocommerce-error,
+  .woocommerce-info {
+    animation: none;
+  }
+}
+
 /* ── Image hover swap (sobe_product_card_hover = swap) ── */
 
 .sobe-product-image-wrapper {
@@ -1056,7 +1079,7 @@
 .woo-variation-swatches .variable-items-wrapper .variable-item.selected {
   border-color: var(--c-heading);
   background-color: var(--c-heading);
-  color: var(--c-surface); /* White text */
+  color: var(--c-surface-1);
 }
 
 /* Out of Stock State */
@@ -1175,7 +1198,7 @@
 .woo-variation-swatches .variable-item.active {
   border-color: var(--c-text) !important;
   background-color: var(--c-text) !important;
-  color: var(--c-bg) !important;
+  color: var(--c-background) !important;
   box-shadow: none !important;
 }
 

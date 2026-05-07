@@ -38,7 +38,8 @@ Template for displaying a single product.
           @php $full = wp_get_attachment_image_url($imgId, 'full'); @endphp
           <div class="swiper-slide" data-full="{{ $full }}">
             {!! wp_get_attachment_image($imgId, 'woocommerce_single', false, [
-                'loading' => $i === 0 ? 'eager' : 'lazy',
+                'loading'       => $i === 0 ? 'eager' : 'lazy',
+                'fetchpriority' => $i === 0 ? 'high'  : 'auto',
             ]) !!}
           </div>
         @endforeach

@@ -28,4 +28,10 @@ return [
         'tablet'  => 3,
         'desktop' => 3,
     ],
+
+    // Aspect ratio for the single-product Swiper gallery container.
+    // Must match the woocommerce_single image crop dimensions set in
+    // WooCommerce → Settings → Products → Product images.
+    // Common values: '1 / 1' (square), '4 / 5' (portrait), '3 / 4' (portrait).
+    'wc_gallery_aspect_ratio' => '1 / 1',
 ];
