@@ -232,24 +232,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // Defer Swiper init until the browser is idle or the user first interacts —
-  // whichever comes first. The gallery is above-fold so IntersectionObserver
-  // fires immediately; idle/interaction deferral is the correct strategy here.
-  let swiperInitialized = false;
-  const initOnce = () => {
-    if (swiperInitialized) return;
-    swiperInitialized = true;
-    document.removeEventListener('touchstart', initOnce);
-    document.removeEventListener('scroll', initOnce);
-    document.removeEventListener('mousemove', initOnce);
-    initSwiperGallery();
-  };
-
-  document.addEventListener('touchstart', initOnce, { once: true, passive: true });
-  document.addEventListener('scroll', initOnce, { once: true, passive: true });
-  document.addEventListener('mousemove', initOnce, { once: true, passive: true });
-
-  'requestIdleCallback' in window
-    ? requestIdleCallback(initOnce, { timeout: 500 })
-    : setTimeout(initOnce, 200);
+  initSwiperGallery();
 });

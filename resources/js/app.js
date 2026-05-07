@@ -493,13 +493,8 @@ const scheduleIdle = (fn) =>
     ? requestIdleCallback(fn, { timeout: 2000 })
     : setTimeout(fn, 100);
 
-const isMobile = window.matchMedia('(max-width: 768px)').matches;
+initAnimationBus();
 
 scheduleIdle(() => {
   initStickyHeader();
-  if (!isMobile) initAnimationBus();
 });
-
-if (isMobile) {
-  setTimeout(initAnimationBus, 300);
-}
