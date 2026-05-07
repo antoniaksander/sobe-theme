@@ -33,12 +33,11 @@
     },
     "showPriceRange": {
       "type": "boolean",
-      "default": true
+      "default": false
     },
     "collapseByDefault": {
       "type": "boolean",
-      "default": false
+      "default": true
     }
-  },
-  "viewScript": "file:./view.js"
+  }
 }

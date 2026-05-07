@@ -344,6 +344,9 @@ add_action('wp_enqueue_scripts', function (): void {
     $mode         = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
     $ordering     = WC()->query ? WC()->query->get_catalog_ordering_args() : [];
     $queried      = get_queried_object();
+    // WC may return a space-separated compound orderby (e.g. 'menu_order title'); take the first token only.
+    $orderby_raw  = explode(' ', $ordering['orderby'] ?? 'menu_order')[0];
+    $orderby      = sanitize_key($orderby_raw) ?: 'menu_order';
 
     $params = [
         'ajaxUrl'        => admin_url('admin-ajax.php'),
@@ -353,7 +356,7 @@ add_action('wp_enqueue_scripts', function (): void {
         'taxonomy'       => is_product_taxonomy() ? sanitize_key($queried->taxonomy ?? '') : '',
         'termId'         => is_product_taxonomy() ? (int) ($queried->term_id ?? 0) : 0,
         'search'         => sanitize_text_field(get_search_query()),
-        'orderby'        => sanitize_key($ordering['orderby'] ?? 'menu_order'),
+        'orderby'        => $orderby,
         'loadingText'    => __('Loading products…', 'sobe'),
         'loadedText'     => __('More products loaded', 'sobe'),
     ];

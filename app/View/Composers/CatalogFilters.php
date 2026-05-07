@@ -20,8 +20,8 @@ class CatalogFilters extends Composer
         $showCategories  = (bool) ($attrs['showCategories'] ?? true);
         $showBrands      = (bool) ($attrs['showBrands'] ?? true);
         $showAttributes  = (bool) ($attrs['showAttributes'] ?? true);
-        $showPriceRange  = (bool) ($attrs['showPriceRange'] ?? true);
-        $collapseByDefault = (bool) ($attrs['collapseByDefault'] ?? false);
+        $showPriceRange  = (bool) ($attrs['showPriceRange'] ?? false);
+        $collapseByDefault = (bool) ($attrs['collapseByDefault'] ?? true);
 
         $categories = [];
         if ($showCategories) {

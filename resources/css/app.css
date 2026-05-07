@@ -1018,6 +1018,27 @@ body.single-post {
   outline: none;
 }
 
+.sobe-overlay__input::-webkit-search-cancel-button,
+.sobe-overlay__input::-ms-clear {
+  display: none;
+}
+
+.sobe-overlay__clear {
+  flex-shrink: 0;
+  padding: var(--space-xs) var(--space-sm);
+  background: none;
+  border: none;
+  font-size: var(--text-xs);
+  color: var(--c-text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  white-space: nowrap;
+}
+
+.sobe-overlay__clear:hover {
+  color: var(--c-text);
+}
+
 .sobe-overlay__input-row:focus-within {
   border-color: var(--c-accent);
 }

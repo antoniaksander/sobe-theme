@@ -33,6 +33,7 @@
     </nav>
   @elseif ($mode === 'load-more' && $current < $total)
     <div class="sobe-load-more-sentinel"
+         data-load-more-sentinel
          data-page="{{ $current + 1 }}"
          data-total="{{ $total }}"
          aria-hidden="true">

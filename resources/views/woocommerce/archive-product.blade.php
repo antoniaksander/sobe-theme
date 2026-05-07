@@ -64,10 +64,10 @@ the readme will list any important changes.
           @endwhile
         @endif
 
-        @php
-          woocommerce_product_loop_end();
-          do_action('woocommerce_after_shop_loop');
-        @endphp
+        @php woocommerce_product_loop_end(); @endphp
+        <div data-pagination>
+          @php do_action('woocommerce_after_shop_loop'); @endphp
+        </div>
       @else
         @php
           do_action('woocommerce_no_products_found')

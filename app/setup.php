@@ -859,8 +859,11 @@ add_action('rest_api_init', function (): void {
                 return rest_ensure_response($cached);
             }
 
+            $post_types = ['product', 'post', 'page'];
+            $post_types = array_filter($post_types, 'post_type_exists');
+
             $query = new \WP_Query([
-                'post_type'      => 'product',
+                'post_type'      => array_values($post_types),
                 'post_status'    => 'publish',
                 'posts_per_page' => $limit,
                 's'              => $q,
@@ -868,16 +871,21 @@ add_action('rest_api_init', function (): void {
 
             $results = [];
             foreach ($query->posts as $post) {
-                $product = wc_get_product($post->ID);
-                if (! $product) {
-                    continue;
+                $price_html = '';
+                $thumbnail  = get_the_post_thumbnail_url($post->ID, 'thumbnail') ?: '';
+
+                if ($post->post_type === 'product' && function_exists('wc_get_product')) {
+                    $product    = wc_get_product($post->ID);
+                    $price_html = $product ? $product->get_price_html() : '';
+                    $thumbnail  = get_the_post_thumbnail_url($post->ID, 'woocommerce_thumbnail') ?: $thumbnail;
                 }
+
                 $results[] = [
                     'id'         => $post->ID,
                     'title'      => get_the_title($post->ID),
                     'url'        => get_permalink($post->ID),
-                    'price_html' => $product->get_price_html(),
-                    'thumbnail'  => get_the_post_thumbnail_url($post->ID, 'woocommerce_thumbnail') ?: '',
+                    'price_html' => $price_html,
+                    'thumbnail'  => $thumbnail,
                 ];
             }
 

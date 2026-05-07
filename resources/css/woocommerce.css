@@ -1506,21 +1506,20 @@
 
 /* Mobile filter drawer trigger */
 .sobe-filter-drawer-trigger {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-xs) var(--space-md);
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-sm);
+  display: inline-block;
+  padding: 0;
+  border: none;
+  border-bottom: 1px solid currentColor;
   font-size: var(--text-sm);
-  background: var(--c-surface-1);
-  color: var(--c-text);
+  background: transparent;
+  color: var(--c-text-muted);
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: color var(--transition-fast);
+  line-height: 1.4;
 }
 
 .sobe-filter-drawer-trigger:hover {
-  background: var(--c-surface-hover);
+  color: var(--c-text);
 }
 
 /* Mobile filter drawer */
