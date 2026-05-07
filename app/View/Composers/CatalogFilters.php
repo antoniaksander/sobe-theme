@@ -16,19 +16,19 @@ class CatalogFilters extends Composer
 
         $attrs = (array) ($this->data['attributes'] ?? []);
 
-        $brandsTaxonomy  = sanitize_key($attrs['brandsTaxonomy'] ?? 'product_brand');
-        $showCategories  = (bool) ($attrs['showCategories'] ?? true);
-        $showBrands      = (bool) ($attrs['showBrands'] ?? true);
-        $showAttributes  = (bool) ($attrs['showAttributes'] ?? true);
-        $showPriceRange  = (bool) ($attrs['showPriceRange'] ?? false);
+        $brandsTaxonomy = sanitize_key($attrs['brandsTaxonomy'] ?? 'product_brand');
+        $showCategories = (bool) ($attrs['showCategories'] ?? true);
+        $showBrands = (bool) ($attrs['showBrands'] ?? true);
+        $showAttributes = (bool) ($attrs['showAttributes'] ?? true);
+        $showPriceRange = (bool) ($attrs['showPriceRange'] ?? true);
         $collapseByDefault = (bool) ($attrs['collapseByDefault'] ?? true);
 
         $categories = [];
         if ($showCategories) {
             $cats = get_terms([
-                'taxonomy'   => 'product_cat',
+                'taxonomy' => 'product_cat',
                 'hide_empty' => true,
-                'parent'     => 0,
+                'parent' => 0,
             ]);
             $categories = is_wp_error($cats) ? [] : $cats;
         }
@@ -36,9 +36,9 @@ class CatalogFilters extends Composer
         $brands = [];
         if ($showBrands && taxonomy_exists($brandsTaxonomy)) {
             $brandTerms = get_terms([
-                'taxonomy'   => $brandsTaxonomy,
+                'taxonomy' => $brandsTaxonomy,
                 'hide_empty' => true,
-                'orderby'    => 'name',
+                'orderby' => 'name',
             ]);
             $brands = is_wp_error($brandTerms) ? [] : $brandTerms;
         }
@@ -114,6 +114,11 @@ class CatalogFilters extends Composer
         }
         if ($maxPrice !== '') {
             $active['max_price'] = $maxPrice;
+        }
+
+        $priceType = sanitize_key($_GET['price_type'] ?? '');
+        if (in_array($priceType, ['on_sale', 'full_price'], true)) {
+            $active['price_type'] = $priceType;
         }
 
         return $active;

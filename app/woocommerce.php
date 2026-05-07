@@ -82,7 +82,7 @@ add_action('woocommerce_after_main_content', function () {
  */
 add_action('wp_enqueue_scripts', function () {
     if (is_woocommerce() || is_cart() || is_checkout() || is_account_page() || has_block('sobe/product-carousel')) {
-        $handle = config('theme.prefix') . '-woocommerce';
+        $handle = config('theme.prefix').'-woocommerce';
 
         wp_enqueue_style(
             $handle,
@@ -94,17 +94,19 @@ add_action('wp_enqueue_scripts', function () {
         // Inject the gallery aspect-ratio token so forked projects can override it
         // from config/theme.php ('wc_gallery_aspect_ratio') without touching CSS.
         $ratio = sanitize_text_field(config('theme.wc_gallery_aspect_ratio', '1 / 1'));
-        wp_add_inline_style($handle, ':root{--pdp-gallery-aspect-ratio:' . $ratio . '}');
+        wp_add_inline_style($handle, ':root{--pdp-gallery-aspect-ratio:'.$ratio.'}');
     }
 }, 100);
 
 add_filter('loop_shop_columns', function (): int {
     $pfx = config('theme.prefix');
+
     return (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", 4);
 });
 
 add_filter('loop_shop_per_page', function (): int {
     $pfx = config('theme.prefix');
+
     return (int) get_theme_mod("{$pfx}_products_per_page", 12);
 });
 
@@ -135,11 +137,13 @@ add_action('wp_enqueue_scripts', function () {
             wp_dequeue_script('photoswipe');
             wp_dequeue_script('photoswipe-ui-default');
             wp_dequeue_script('wc-zoom');
+
             return;
         }
 
         if (is_cart() || is_checkout() || is_account_page()) {
             \WC_Frontend_Scripts::load_scripts();
+
             return;
         }
 
@@ -155,19 +159,19 @@ add_action('wp_head', function () {
     if (! is_admin() && class_exists('WooCommerce')) {
         $pfx = config('theme.prefix');
         $params = [
-            'ajaxUrl'          => admin_url('admin-ajax.php'),
-            'ajaxAction'       => "{$pfx}_refresh_cart",
-            'storeApiNonce'    => wp_create_nonce('wc_store_api'),
-            'storeApiCartUrl'  => rest_url('wc/store/v1/cart'),
-            'storeApiAddUrl'   => rest_url('wc/store/v1/cart/add-item'),
-            'sideCartEnabled'  => (bool) get_theme_mod("{$pfx}_enable_side_cart", true),
-            'addedToCartText'  => __('Product added to cart', 'sobe'),
-            'cartOpenedText'   => __('Product added to cart. Your cart is now open.', 'sobe'),
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'ajaxAction' => "{$pfx}_refresh_cart",
+            'storeApiNonce' => wp_create_nonce('wc_store_api'),
+            'storeApiCartUrl' => rest_url('wc/store/v1/cart'),
+            'storeApiAddUrl' => rest_url('wc/store/v1/cart/add-item'),
+            'sideCartEnabled' => (bool) get_theme_mod("{$pfx}_enable_side_cart", true),
+            'addedToCartText' => __('Product added to cart', 'sobe'),
+            'cartOpenedText' => __('Product added to cart. Your cart is now open.', 'sobe'),
             'addToCartErrorText' => __('Could not add product to cart.', 'sobe'),
             'networkErrorText' => __('Something went wrong. Please try again.', 'sobe'),
-            'wcAjaxUrl'        => \WC_AJAX::get_endpoint('%%endpoint%%'),
+            'wcAjaxUrl' => \WC_AJAX::get_endpoint('%%endpoint%%'),
         ];
-        echo '<script>window.themeCartParams = ' . \wp_json_encode($params) . ';</script>';
+        echo '<script>window.themeCartParams = '.\wp_json_encode($params).';</script>';
     }
 }, 5);
 
@@ -270,24 +274,24 @@ add_action('after_setup_theme', function () {
  */
 add_filter('woocommerce_product_tabs', function (array $tabs): array {
     $tabs['shipping_info'] = [
-        'title'    => __('Shipping Information', 'sobe'),
+        'title' => __('Shipping Information', 'sobe'),
         'priority' => 50,
         'callback' => function (): void {
-            echo '<p>' . wp_kses_post(
+            echo '<p>'.wp_kses_post(
                 apply_filters(
                     'sobe_shipping_info_text',
                     __('Free standard shipping on all orders over $100. Express delivery available at checkout.', 'sobe')
                 )
-            ) . '</p>';
+            ).'</p>';
         },
     ];
 
     $tabs['misc'] = [
-        'title'    => __('Product Details', 'sobe'),
+        'title' => __('Product Details', 'sobe'),
         'priority' => 60,
         'callback' => function (): void {
             global $product;
-            $sku  = $product->get_sku();
+            $sku = $product->get_sku();
             $cats = wc_get_product_category_list($product->get_id(), ', ');
             $tags = wc_get_product_tag_list($product->get_id(), ', ');
             echo '<dl class="pdp-misc-list">';
@@ -318,7 +322,7 @@ add_action('wp_enqueue_scripts', function (): void {
         return;
     }
     wp_enqueue_script(
-        config('theme.prefix') . '-product-gallery',
+        config('theme.prefix').'-product-gallery',
         \Roots\asset('resources/js/product-gallery.js')->uri(),
         ['jquery'],
         null,
@@ -340,27 +344,27 @@ add_action('wp_enqueue_scripts', function (): void {
         return;
     }
 
-    $pfx          = config('theme.prefix');
-    $mode         = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
-    $ordering     = WC()->query ? WC()->query->get_catalog_ordering_args() : [];
-    $queried      = get_queried_object();
+    $pfx = config('theme.prefix');
+    $mode = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
+    $ordering = WC()->query ? WC()->query->get_catalog_ordering_args() : [];
+    $queried = get_queried_object();
     // WC may return a space-separated compound orderby (e.g. 'menu_order title'); take the first token only.
-    $orderby_raw  = explode(' ', $ordering['orderby'] ?? 'menu_order')[0];
-    $orderby      = sanitize_key($orderby_raw) ?: 'menu_order';
+    $orderby_raw = explode(' ', $ordering['orderby'] ?? 'menu_order')[0];
+    $orderby = sanitize_key($orderby_raw) ?: 'menu_order';
 
     $params = [
-        'ajaxUrl'        => admin_url('admin-ajax.php'),
-        'ajaxAction'     => "{$pfx}_load_more_products",
-        'nonce'          => wp_create_nonce("{$pfx}_load_more"),
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'ajaxAction' => "{$pfx}_load_more_products",
+        'nonce' => wp_create_nonce("{$pfx}_load_more"),
         'historyEnabled' => (bool) get_theme_mod("{$pfx}_pagination_history", false),
-        'taxonomy'       => is_product_taxonomy() ? sanitize_key($queried->taxonomy ?? '') : '',
-        'termId'         => is_product_taxonomy() ? (int) ($queried->term_id ?? 0) : 0,
-        'search'         => sanitize_text_field(get_search_query()),
-        'orderby'        => $orderby,
-        'loadingText'    => __('Loading products…', 'sobe'),
-        'loadedText'     => __('More products loaded', 'sobe'),
+        'taxonomy' => is_product_taxonomy() ? sanitize_key($queried->taxonomy ?? '') : '',
+        'termId' => is_product_taxonomy() ? (int) ($queried->term_id ?? 0) : 0,
+        'search' => sanitize_text_field(get_search_query()),
+        'orderby' => $orderby,
+        'loadingText' => __('Loading products…', 'sobe'),
+        'loadedText' => __('More products loaded', 'sobe'),
     ];
-    echo '<script>window.sobeLoadMoreParams = ' . \wp_json_encode($params) . ';</script>';
+    echo '<script>window.sobeLoadMoreParams = '.\wp_json_encode($params).';</script>';
 
     if ($mode !== 'load-more') {
         return;
@@ -379,26 +383,26 @@ $load_more_handler = function (): void {
     $pfx = config('theme.prefix');
     check_ajax_referer("{$pfx}_load_more", 'nonce');
 
-    $page     = max(1, (int) ($_POST['page'] ?? 1));
+    $page = max(1, (int) ($_POST['page'] ?? 1));
     $taxonomy = sanitize_key($_POST['taxonomy'] ?? '');
-    $term_id  = (int) ($_POST['term_id'] ?? 0);
-    $search   = sanitize_text_field($_POST['search'] ?? '');
-    $orderby  = sanitize_key($_POST['orderby'] ?? 'menu_order');
+    $term_id = (int) ($_POST['term_id'] ?? 0);
+    $search = sanitize_text_field($_POST['search'] ?? '');
+    $orderby = sanitize_key($_POST['orderby'] ?? 'menu_order');
     $per_page = (int) get_theme_mod("{$pfx}_products_per_page", 12);
 
     $query_args = [
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
-        'paged'          => $page,
+        'post_type' => 'product',
+        'post_status' => 'publish',
+        'paged' => $page,
         'posts_per_page' => $per_page,
-        'orderby'        => $orderby,
+        'orderby' => $orderby,
     ];
 
     if ($taxonomy && $term_id) {
         $query_args['tax_query'] = [[
             'taxonomy' => $taxonomy,
-            'field'    => 'term_id',
-            'terms'    => $term_id,
+            'field' => 'term_id',
+            'terms' => $term_id,
         ]];
     }
 
@@ -423,13 +427,13 @@ $load_more_handler = function (): void {
     $html = ob_get_clean();
 
     wp_send_json([
-        'html'     => $html,
+        'html' => $html,
         'has_more' => $page < $query->max_num_pages,
         'next_page' => $page + 1,
     ]);
 };
 
-$load_more_action = config('theme.prefix') . '_load_more_products';
+$load_more_action = config('theme.prefix').'_load_more_products';
 add_action("wp_ajax_{$load_more_action}", $load_more_handler);
 add_action("wp_ajax_nopriv_{$load_more_action}", $load_more_handler);
 
@@ -445,7 +449,7 @@ $refresh_cart_handler = function () {
     wp_die();
 };
 
-$refresh_action = config('theme.prefix') . '_refresh_cart';
+$refresh_action = config('theme.prefix').'_refresh_cart';
 add_action("wp_ajax_{$refresh_action}", $refresh_cart_handler);
 add_action("wp_ajax_nopriv_{$refresh_action}", $refresh_cart_handler);
 
@@ -471,7 +475,108 @@ function sobe_get_swatch_value(\WP_Term $term, string $attribute_name): ?string
     if ($v = get_term_meta($id, 'pa_color_hex', true)) {
         return (string) $v;
     }
+
     return apply_filters('sobe_swatch_value', null, $term, $attribute_name);
+}
+
+/**
+ * Compute per-term product counts for each visible filter group, excluding
+ * that group's own clause from the query so counts are interdependent.
+ *
+ * Uses wp_get_object_terms() instead of get_terms() — get_terms() has no
+ * object_ids parameter. Guards against stores with >1000 products by falling
+ * back to global counts.
+ *
+ * @param  array  $base_query_args  Full WP_Query args including all active filters.
+ * @return array { categories: [{slug,name,count}], brands: [...], attributes: {attr_name: [...]} }
+ */
+function sobe_get_filtered_term_counts(array $base_query_args): array
+{
+    $result = ['categories' => [], 'brands' => [], 'attributes' => []];
+
+    $get_counts = function (string $taxonomy) use ($base_query_args): array {
+        $cache_key = 'sobe_filter_counts_'.$taxonomy.'_'.md5(serialize($base_query_args));
+        $cached = wp_cache_get($cache_key, 'sobe_filters');
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $all_terms = get_terms(['taxonomy' => $taxonomy, 'hide_empty' => false, 'orderby' => 'name']);
+        if (is_wp_error($all_terms) || empty($all_terms)) {
+            return [];
+        }
+
+        // Clone query args, removing this taxonomy's clause from tax_query
+        $clone_args = $base_query_args;
+        if (! empty($clone_args['tax_query'])) {
+            $clauses = array_values(array_filter(
+                (array) $clone_args['tax_query'],
+                fn ($c) => is_array($c) && ($c['taxonomy'] ?? '') !== $taxonomy
+            ));
+            if (empty($clauses)) {
+                unset($clone_args['tax_query']);
+            } else {
+                $clone_args['tax_query'] = count($clauses) > 1
+                    ? array_merge(['relation' => 'AND'], $clauses)
+                    : $clauses;
+            }
+        }
+
+        $clone_args['fields'] = 'ids';
+        $clone_args['posts_per_page'] = -1;
+        $clone_args['no_found_rows'] = true;
+        unset($clone_args['paged']);
+
+        $q = new \WP_Query($clone_args);
+        $ids = $q->posts;
+        wp_reset_postdata();
+
+        $term_data = [];
+
+        if (empty($ids)) {
+            foreach ($all_terms as $term) {
+                $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => 0];
+            }
+        } elseif (count($ids) > 1000) {
+            // Fallback for large stores — global counts acceptable at this scale
+            foreach ($all_terms as $term) {
+                $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => (int) $term->count];
+            }
+        } else {
+            $slugs = wp_get_object_terms($ids, $taxonomy, ['fields' => 'slugs']);
+            if (is_wp_error($slugs)) {
+                foreach ($all_terms as $term) {
+                    $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => (int) $term->count];
+                }
+            } else {
+                $counts = array_count_values($slugs);
+                foreach ($all_terms as $term) {
+                    $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => $counts[$term->slug] ?? 0];
+                }
+            }
+        }
+
+        wp_cache_set($cache_key, $term_data, 'sobe_filters', 60);
+
+        return $term_data;
+    };
+
+    $result['categories'] = $get_counts('product_cat');
+
+    if (taxonomy_exists('product_brand')) {
+        $result['brands'] = $get_counts('product_brand');
+    }
+
+    if (function_exists('wc_get_attribute_taxonomies')) {
+        foreach (wc_get_attribute_taxonomies() as $attr) {
+            $taxonomy = wc_attribute_taxonomy_name($attr->attribute_name);
+            if (taxonomy_exists($taxonomy)) {
+                $result['attributes'][$attr->attribute_name] = $get_counts($taxonomy);
+            }
+        }
+    }
+
+    return $result;
 }
 
 // ── AJAX catalog filter handler ───────────────────────────────────────────────
@@ -480,17 +585,17 @@ $filter_handler = function (): void {
     $pfx = config('theme.prefix');
     check_ajax_referer("{$pfx}_nonce", 'nonce');
 
-    $raw_state   = sanitize_text_field(wp_unslash($_POST['filter_state'] ?? '{}'));
+    $raw_state = sanitize_text_field(wp_unslash($_POST['filter_state'] ?? '{}'));
     $filter_state = json_decode($raw_state, true) ?: [];
 
     $per_page = (int) get_theme_mod("{$pfx}_products_per_page", 12);
-    $paged    = max(1, (int) ($filter_state['paged'] ?? 1));
+    $paged = max(1, (int) ($filter_state['paged'] ?? 1));
 
     $query_args = [
-        'post_type'      => 'product',
-        'post_status'    => 'publish',
+        'post_type' => 'product',
+        'post_status' => 'publish',
         'posts_per_page' => $per_page,
-        'paged'          => $paged,
+        'paged' => $paged,
     ];
 
     // Tax query — categories (single) + filter_* attributes
@@ -499,8 +604,8 @@ $filter_handler = function (): void {
     if (! empty($filter_state['product_cat'])) {
         $tax_query[] = [
             'taxonomy' => 'product_cat',
-            'field'    => 'slug',
-            'terms'    => sanitize_text_field($filter_state['product_cat']),
+            'field' => 'slug',
+            'terms' => sanitize_text_field($filter_state['product_cat']),
         ];
     }
 
@@ -509,26 +614,26 @@ $filter_handler = function (): void {
             continue;
         }
         $attr_name = substr($key, 7);
-        $taxonomy  = 'pa_' . sanitize_key($attr_name);
-        $slugs     = array_map('sanitize_text_field', (array) $val);
+        $taxonomy = 'pa_'.sanitize_key($attr_name);
+        $slugs = array_map('sanitize_text_field', (array) $val);
         if (! empty($slugs)) {
             $tax_query[] = [
                 'taxonomy' => $taxonomy,
-                'field'    => 'slug',
-                'terms'    => $slugs,
+                'field' => 'slug',
+                'terms' => $slugs,
                 'operator' => 'IN',
             ];
         }
     }
 
-    if (! empty($filter_state[$pfx . '_brands']) || ! empty($filter_state['product_brand'])) {
-        $brand_key = $pfx . '_brands';
+    if (! empty($filter_state[$pfx.'_brands']) || ! empty($filter_state['product_brand'])) {
+        $brand_key = $pfx.'_brands';
         $slugs = array_map('sanitize_text_field', (array) ($filter_state[$brand_key] ?? $filter_state['product_brand'] ?? []));
         if (! empty($slugs)) {
             $tax_query[] = [
                 'taxonomy' => 'product_brand',
-                'field'    => 'slug',
-                'terms'    => $slugs,
+                'field' => 'slug',
+                'terms' => $slugs,
                 'operator' => 'IN',
             ];
         }
@@ -543,23 +648,38 @@ $filter_handler = function (): void {
 
     // Price meta query
     $meta_query = [];
-    $min_price  = isset($filter_state['min_price']) ? (float) $filter_state['min_price'] : null;
-    $max_price  = isset($filter_state['max_price']) ? (float) $filter_state['max_price'] : null;
+    $min_price = isset($filter_state['min_price']) ? (float) $filter_state['min_price'] : null;
+    $max_price = isset($filter_state['max_price']) ? (float) $filter_state['max_price'] : null;
 
     if ($min_price !== null || $max_price !== null) {
         $price_clause = ['key' => '_price', 'type' => 'NUMERIC'];
         if ($min_price !== null && $max_price !== null) {
-            $price_clause['value']   = [$min_price, $max_price];
+            $price_clause['value'] = [$min_price, $max_price];
             $price_clause['compare'] = 'BETWEEN';
         } elseif ($min_price !== null) {
-            $price_clause['value']   = $min_price;
+            $price_clause['value'] = $min_price;
             $price_clause['compare'] = '>=';
         } else {
-            $price_clause['value']   = $max_price;
+            $price_clause['value'] = $max_price;
             $price_clause['compare'] = '<=';
         }
         $meta_query[] = $price_clause;
     }
+    // Price type filter (on_sale / full_price).
+    // Limitation: for variable products, _sale_price on the parent reflects WC's cached value;
+    // only some-variations-on-sale products may not appear correctly with this meta_query approach.
+    $price_type = sanitize_key($filter_state['price_type'] ?? 'all');
+    if ($price_type === 'on_sale') {
+        $meta_query[] = ['key' => '_sale_price', 'value' => '', 'compare' => '!='];
+        $meta_query[] = ['key' => '_sale_price', 'value' => '0', 'compare' => '>', 'type' => 'NUMERIC'];
+    } elseif ($price_type === 'full_price') {
+        $meta_query[] = [
+            'relation' => 'OR',
+            ['key' => '_sale_price', 'compare' => 'NOT EXISTS'],
+            ['key' => '_sale_price', 'value' => '', 'compare' => '='],
+        ];
+    }
+
     if (! empty($meta_query)) {
         $query_args['meta_query'] = $meta_query;
     }
@@ -583,13 +703,14 @@ $filter_handler = function (): void {
     $pagination_html = view('woocommerce.loop.pagination')->render();
 
     wp_send_json([
-        'html'            => $html,
+        'html' => $html,
         'pagination_html' => $pagination_html,
-        'count'           => $query->found_posts,
+        'count' => $query->found_posts,
+        'filters' => sobe_get_filtered_term_counts($query_args),
     ]);
 };
 
-$filter_action = config('theme.prefix') . '_filter_products';
+$filter_action = config('theme.prefix').'_filter_products';
 add_action("wp_ajax_{$filter_action}", $filter_handler);
 add_action("wp_ajax_nopriv_{$filter_action}", $filter_handler);
 
@@ -600,10 +721,10 @@ add_action('wp_enqueue_scripts', function (): void {
     }
     $pfx = config('theme.prefix');
     $params = [
-        'ajaxUrl'     => admin_url('admin-ajax.php'),
-        'nonce'       => wp_create_nonce("{$pfx}_nonce"),
-        'action'      => "{$pfx}_filter_products",
+        'ajaxUrl' => admin_url('admin-ajax.php'),
+        'nonce' => wp_create_nonce("{$pfx}_nonce"),
+        'action' => "{$pfx}_filter_products",
         'removeLabel' => __('Remove filter', 'sobe'),
     ];
-    echo '<script>window.sobeCatalogParams = ' . \wp_json_encode($params) . ';</script>';
+    echo '<script>window.sobeCatalogParams = '.\wp_json_encode($params).';</script>';
 }, 20);

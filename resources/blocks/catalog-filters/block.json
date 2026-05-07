@@ -33,7 +33,7 @@
     },
     "showPriceRange": {
       "type": "boolean",
-      "default": false
+      "default": true
     },
     "collapseByDefault": {
       "type": "boolean",

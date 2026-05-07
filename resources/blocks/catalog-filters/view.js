@@ -40,6 +40,12 @@ import noUiSlider from 'nouislider';
     if (minInput) state.min_price = minInput.value;
     if (maxInput) state.max_price = maxInput.value;
 
+    root.querySelectorAll('[data-filter-select]').forEach((el) => {
+      if (el.value && el.value !== 'all') {
+        state[el.dataset.filterSelect] = el.value;
+      }
+    });
+
     return state;
   }
 
@@ -51,6 +57,10 @@ import noUiSlider from 'nouislider';
     }
 
     for (const [key, val] of Object.entries(state)) {
+      if (key === 'price_type') {
+        if (val && val !== 'all') url.searchParams.set('price_type', val);
+        continue;
+      }
       if (Array.isArray(val)) {
         url.searchParams.set('filter_' + key.replace(/^filter_/, ''), val.join('+'));
       } else if (val !== '' && val !== null && val !== undefined) {
@@ -94,6 +104,8 @@ import noUiSlider from 'nouislider';
       }
 
       syncChips(state);
+      if (data.filters) updateFilterCounts(data);
+      updateClearAllVisibility(state);
       history.pushState({}, '', buildFilterUrl(state));
     } catch (_err) {
       // silently fail — page state unchanged
@@ -102,6 +114,93 @@ import noUiSlider from 'nouislider';
 
   const debouncedCheckbox = debounce(() => applyFilters(collectState()), DEBOUNCE_CHECKBOX);
   const debouncedPrice = debounce(() => applyFilters(collectState()), DEBOUNCE_PRICE);
+
+  // ── Clear all ────────────────────────────────────────────────────────────────
+
+  const clearAllBtn = root.querySelector('[data-clear-all-filters]');
+
+  function updateClearAllVisibility(state) {
+    if (!clearAllBtn) return;
+    const sliderEl = root.querySelector('[data-range-slider]');
+    const hasActive = Object.keys(state).some((k) => {
+      const v = state[k];
+      if (k === 'min_price') {
+        const defaultMin = parseFloat(sliderEl?.dataset.min ?? 0);
+        return parseFloat(v) > defaultMin;
+      }
+      if (k === 'max_price') {
+        const defaultMax = parseFloat(sliderEl?.dataset.max ?? Infinity);
+        return parseFloat(v) < defaultMax;
+      }
+      return Array.isArray(v) ? v.length > 0 : !!v;
+    });
+    clearAllBtn.hidden = !hasActive;
+  }
+
+  function clearAllFilters() {
+    root.querySelectorAll('input[type="radio"]:checked').forEach((el) => (el.checked = false));
+    root.querySelectorAll('input[type="checkbox"]:checked').forEach((el) => (el.checked = false));
+    root.querySelectorAll('[data-filter-select]').forEach((el) => (el.selectedIndex = 0));
+    const sliderEl = root.querySelector('[data-range-slider]');
+    if (sliderEl?.noUiSlider) {
+      sliderEl.noUiSlider.set([
+        parseFloat(sliderEl.dataset.min),
+        parseFloat(sliderEl.dataset.max),
+      ]);
+    }
+    applyFilters({});
+  }
+
+  clearAllBtn?.addEventListener('click', clearAllFilters);
+
+  // ── Interdependent filter counts ─────────────────────────────────────────────
+
+  function updateFilterCounts(data) {
+    if (!data?.filters) return;
+    const { categories, brands, attributes } = data.filters;
+
+    function patchGroup(terms, getInputFn, listSelector) {
+      const groupEl = root.querySelector(listSelector);
+      const groupContainer = groupEl?.closest('details');
+      terms?.forEach(({ slug, count }) => {
+        const input = getInputFn(slug);
+        if (!input) return;
+        const li = input.closest('li');
+        if (!li) return;
+        li.hidden = count === 0;
+        if (!li.hidden) {
+          const badge = li.querySelector('.sobe-filter-count');
+          if (badge) badge.textContent = `(${count})`;
+        }
+      });
+      if (groupContainer) {
+        const visibleTerms = groupContainer.querySelectorAll('li:not([hidden])');
+        groupContainer.hidden = visibleTerms.length === 0;
+      }
+    }
+
+    patchGroup(
+      categories,
+      (slug) => root.querySelector(`input[name="product_cat"][value="${slug}"]`),
+      '[data-filter-list="categories"]'
+    );
+
+    patchGroup(
+      brands,
+      (slug) => root.querySelector(`[data-filter-list="brands"] input[value="${slug}"]`),
+      '[data-filter-list="brands"]'
+    );
+
+    if (attributes) {
+      for (const [attrName, terms] of Object.entries(attributes)) {
+        patchGroup(
+          terms,
+          (slug) => root.querySelector(`input[name="filter_${attrName}[]"][value="${slug}"]`),
+          `[data-filter-list="pa_${attrName}"]`
+        );
+      }
+    }
+  }
 
   // ── Active filter chips ──────────────────────────────────────────────────────
 
@@ -151,6 +250,10 @@ import noUiSlider from 'nouislider';
     el.addEventListener('input', debouncedPrice);
   });
 
+  root.querySelectorAll('[data-filter-select]').forEach((el) =>
+    el.addEventListener('change', debouncedCheckbox)
+  );
+
   // ── Client-side filter search ─────────────────────────────────────────────
 
   root.querySelectorAll('[data-filter-search]').forEach((input) => {
@@ -161,8 +264,7 @@ import noUiSlider from 'nouislider';
     input.addEventListener('input', () => {
       const q = input.value.toLowerCase().trim();
       list.querySelectorAll('li').forEach((li) => {
-        const text = li.textContent.toLowerCase();
-        li.hidden = q.length > 0 && !text.includes(q);
+        li.hidden = q.length > 0 && !li.textContent.toLowerCase().includes(q);
       });
     });
   });
@@ -270,4 +372,8 @@ import noUiSlider from 'nouislider';
       }
     });
   }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+
+  updateClearAllVisibility(collectState());
 })();

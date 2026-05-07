@@ -54,19 +54,41 @@
     {{-- Results Loop --}}
     <section class="py-12">
       <div class="max-w-standard mx-auto px-6 lg:px-8">
-        <p class="text-sm text-text-muted mb-8">
-          {!! sprintf(
-            __('Showing %1$d results for "%2$s"', 'sobe'),
-            $wp_query->found_posts,
-            get_search_query()
-          ) !!}
-        </p>
 
-        @while(have_posts()) @php the_post(); @endphp
-          @include('partials.content-search')
-        @endwhile
+        {{-- Header row: count + re-search form --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <p class="text-sm text-text-muted">
+            {!! sprintf(__('Showing %1$d results for "%2$s"', 'sobe'),
+              $wp_query->found_posts, get_search_query()) !!}
+          </p>
+          <div class="max-w-xs w-full">
+            {!! get_search_form(false) !!}
+          </div>
+        </div>
 
-        {!! get_the_posts_navigation() !!}
+        {{-- Results grid --}}
+        <div class="search-results-grid">
+          @while(have_posts()) @php the_post(); @endphp
+            @if(get_post_type() === 'product')
+              @include('partials.search-result-product')
+            @elseif(get_post_type() === 'post')
+              @include('partials.search-result-post')
+            @else
+              @include('partials.search-result-page')
+            @endif
+          @endwhile
+        </div>
+
+        {{-- Pagination --}}
+        <div class="mt-12">
+          {!! get_the_posts_pagination([
+            'mid_size'  => 2,
+            'prev_text' => '←',
+            'next_text' => '→',
+            'class'     => 'sobe-wp-pagination',
+          ]) !!}
+        </div>
+
       </div>
     </section>
   @endif

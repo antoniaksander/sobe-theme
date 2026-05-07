@@ -8,6 +8,26 @@
   aria-label="{{ __('Product filters', 'sobe') }}"
 >
 
+  {{-- Price type dropdown (always visible) --}}
+  <div class="sobe-filter-group">
+    <label class="sobe-filter-label" for="sobe-price-type">
+      {{ __('Price type', 'sobe') }}
+    </label>
+    <select
+      id="sobe-price-type"
+      class="sobe-select"
+      data-filter-select="price_type"
+    >
+      <option value="all">{{ __('All', 'sobe') }}</option>
+      <option value="on_sale" @if(($activeFilters['price_type'] ?? '') === 'on_sale') selected @endif>
+        {{ __('On sale', 'sobe') }}
+      </option>
+      <option value="full_price" @if(($activeFilters['price_type'] ?? '') === 'full_price') selected @endif>
+        {{ __('Full price', 'sobe') }}
+      </option>
+    </select>
+  </div>
+
   {{-- Active filter chips --}}
   <div class="sobe-filter-chips" data-filter-chips aria-label="{{ __('Active filters', 'sobe') }}">
     @if ($activeCatSlug)
@@ -42,6 +62,14 @@
       @endforeach
     @endforeach
   </div>
+
+  {{-- Clear all active filters --}}
+  <button
+    class="sobe-filter-clear-all"
+    data-clear-all-filters
+    type="button"
+    hidden
+  >{{ __('Clear all', 'sobe') }}</button>
 
   {{-- Categories (single-select radio) --}}
   @if ($showCategories && !empty($categories))

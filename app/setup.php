@@ -28,18 +28,20 @@ add_action('init', function () {
         if (in_array($block_slug, $layout_block_slugs, true)) {
             $block_args = [
                 'render_callback' => function ($attributes, $content = '') use ($block_slug) {
-                    $variant   = $attributes['variant'] ?? ($block_slug === 'site-header' ? 'header-1' : 'layout-2');
+                    $variant = $attributes['variant'] ?? ($block_slug === 'site-header' ? 'header-1' : 'layout-2');
                     $view_name = $block_slug === 'site-header'
-                        ? 'sections.' . $variant
-                        : 'sections.footer-' . $variant;
+                        ? 'sections.'.$variant
+                        : 'sections.footer-'.$variant;
+
                     return view($view_name)->render();
                 },
             ];
-            register_block_type(resource_path('blocks/' . $block_slug), $block_args);
+            register_block_type(resource_path('blocks/'.$block_slug), $block_args);
+
             continue;
         }
 
-        $asset_uri = \Roots\asset('resources/blocks/' . $block_slug . '/index.jsx')->uri();
+        $asset_uri = \Roots\asset('resources/blocks/'.$block_slug.'/index.jsx')->uri();
 
         wp_register_script(
             "{$pfx}-{$block_slug}",
@@ -50,25 +52,25 @@ add_action('init', function () {
         );
 
         $block_args = [
-            'editor_script'   => "{$pfx}-{$block_slug}",
+            'editor_script' => "{$pfx}-{$block_slug}",
             'render_callback' => function ($attributes, $content = '') use ($block_slug) {
-                return view('blocks.' . $block_slug, compact('attributes', 'content'))->render();
+                return view('blocks.'.$block_slug, compact('attributes', 'content'))->render();
             },
         ];
 
         // Register style.scss when it exists — loads on frontend for any page using the block.
         // Same pattern as view.js: Vite hashes the filename, \Roots\asset() resolves via manifest.
-        $style_path = resource_path('blocks/' . $block_slug . '/style.scss');
+        $style_path = resource_path('blocks/'.$block_slug.'/style.scss');
         if (file_exists($style_path)) {
-            $style_uri = \Roots\asset('resources/blocks/' . $block_slug . '/style.scss')->uri();
+            $style_uri = \Roots\asset('resources/blocks/'.$block_slug.'/style.scss')->uri();
             wp_register_style("{$pfx}-{$block_slug}-style", $style_uri, [], null);
             $block_args['style'] = "{$pfx}-{$block_slug}-style";
         }
 
         // Register editor.scss when it exists — loads only in the block editor.
-        $editor_style_path = resource_path('blocks/' . $block_slug . '/editor.scss');
+        $editor_style_path = resource_path('blocks/'.$block_slug.'/editor.scss');
         if (file_exists($editor_style_path)) {
-            $editor_style_uri = \Roots\asset('resources/blocks/' . $block_slug . '/editor.scss')->uri();
+            $editor_style_uri = \Roots\asset('resources/blocks/'.$block_slug.'/editor.scss')->uri();
             wp_register_style("{$pfx}-{$block_slug}-editor-style", $editor_style_uri, [], null);
             $block_args['editor_style'] = "{$pfx}-{$block_slug}-editor-style";
         }
@@ -76,14 +78,14 @@ add_action('init', function () {
         // Register view.js when it exists — used for blocks with frontend JS (e.g. hero WebGL).
         // Not registered via block.json viewScript — Vite hashes filenames; \Roots\asset() reads
         // the manifest and resolves the correct URL.
-        $view_path = resource_path('blocks/' . $block_slug . '/view.js');
+        $view_path = resource_path('blocks/'.$block_slug.'/view.js');
         if (file_exists($view_path)) {
-            $view_uri = \Roots\asset('resources/blocks/' . $block_slug . '/view.js')->uri();
+            $view_uri = \Roots\asset('resources/blocks/'.$block_slug.'/view.js')->uri();
             wp_register_script("{$pfx}-{$block_slug}-view", $view_uri, [], null, true);
             $block_args['view_script'] = "{$pfx}-{$block_slug}-view";
         }
 
-        register_block_type(resource_path('blocks/' . $block_slug), $block_args);
+        register_block_type(resource_path('blocks/'.$block_slug), $block_args);
     }
 });
 
@@ -98,10 +100,10 @@ add_action('init', function () {
     ]);
 
     register_block_pattern('sobe/homepage-showcase', [
-        'title'       => __('Homepage Showcase', 'sage'),
+        'title' => __('Homepage Showcase', 'sage'),
         'description' => __('High-end agency homepage with hero, brand carousel, and product features.', 'sage'),
-        'categories'  => ['sobe-patterns'],
-        'content'     => require resource_path('patterns/homepage-showcase.php'),
+        'categories' => ['sobe-patterns'],
+        'content' => require resource_path('patterns/homepage-showcase.php'),
     ]);
 
     // Layout patterns — hidden from inserter; rendered programmatically via \App\sobe_render_layout_pattern().
@@ -110,31 +112,31 @@ add_action('init', function () {
     ]);
 
     register_block_pattern("{$pfx}/header-layout-1", [
-        'title'      => __('Header Layout 1', 'sobe'),
+        'title' => __('Header Layout 1', 'sobe'),
         'categories' => ['sobe-layout'],
-        'inserter'   => false,
-        'content'    => require resource_path('patterns/header-layout-1.php'),
+        'inserter' => false,
+        'content' => require resource_path('patterns/header-layout-1.php'),
     ]);
 
     register_block_pattern("{$pfx}/header-layout-2", [
-        'title'      => __('Header Layout 2', 'sobe'),
+        'title' => __('Header Layout 2', 'sobe'),
         'categories' => ['sobe-layout'],
-        'inserter'   => false,
-        'content'    => require resource_path('patterns/header-layout-2.php'),
+        'inserter' => false,
+        'content' => require resource_path('patterns/header-layout-2.php'),
     ]);
 
     register_block_pattern("{$pfx}/header-layout-3", [
-        'title'      => __('Header Layout 3', 'sobe'),
+        'title' => __('Header Layout 3', 'sobe'),
         'categories' => ['sobe-layout'],
-        'inserter'   => false,
-        'content'    => require resource_path('patterns/header-layout-3.php'),
+        'inserter' => false,
+        'content' => require resource_path('patterns/header-layout-3.php'),
     ]);
 
     register_block_pattern("{$pfx}/footer-layout-2", [
-        'title'      => __('Footer Layout 2', 'sobe'),
+        'title' => __('Footer Layout 2', 'sobe'),
         'categories' => ['sobe-layout'],
-        'inserter'   => false,
-        'content'    => require resource_path('patterns/footer-layout-2.php'),
+        'inserter' => false,
+        'content' => require resource_path('patterns/footer-layout-2.php'),
     ]);
 });
 
@@ -144,6 +146,7 @@ add_filter('script_loader_tag', function ($tag, $handle) {
     if (str_starts_with($handle, "{$pfx}-")) {
         return str_replace(' src=', ' type="module" src=', $tag);
     }
+
     return $tag;
 }, 10, 2);
 
@@ -198,7 +201,7 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
     ];
 
     $pfx = config('theme.prefix');
-    $registered_blocks  = \WP_Block_Type_Registry::get_instance()->get_all_registered();
+    $registered_blocks = \WP_Block_Type_Registry::get_instance()->get_all_registered();
     $layout_block_names = ["{$pfx}/site-header", "{$pfx}/site-footer"];
 
     foreach ($registered_blocks as $name => $block) {
@@ -223,6 +226,7 @@ add_filter('block_categories_all', function ($categories) {
         ['slug' => 'sobe-content',     'title' => __('Sobe Content', 'sobe'),     'icon' => 'text'],
         ['slug' => 'sobe-layout',      'title' => __('Sobe Layout', 'sobe'),      'icon' => 'layout'],
     ];
+
     return array_merge($custom, $categories);
 });
 
@@ -304,11 +308,11 @@ add_filter('theme_file_path', function ($path, $file) {
 add_action('wp_head', function () {
     $themeDir = get_stylesheet_directory();
     $themeUrl = get_stylesheet_directory_uri();
-    $fonts    = ['Satoshi-Variable.woff2', 'CabinetGrotesk-Variable.woff2'];
+    $fonts = ['Satoshi-Variable.woff2', 'CabinetGrotesk-Variable.woff2'];
 
     foreach ($fonts as $font) {
-        if (file_exists($themeDir . '/fonts/' . $font)) {
-            echo '<link rel="preload" as="font" type="font/woff2" crossorigin href="' . esc_attr($themeUrl . '/fonts/' . $font) . '">';
+        if (file_exists($themeDir.'/fonts/'.$font)) {
+            echo '<link rel="preload" as="font" type="font/woff2" crossorigin href="'.esc_attr($themeUrl.'/fonts/'.$font).'">';
         }
     }
 }, 0);
@@ -324,20 +328,20 @@ add_action('wp_head', function () {
 add_action('wp_head', function () {
     $themeDir = get_stylesheet_directory();
     $themeUrl = get_stylesheet_directory_uri();
-    $faces    = '';
+    $faces = '';
 
-    if (file_exists($themeDir . '/fonts/Satoshi-Variable.woff2')) {
-        $url    = $themeUrl . '/fonts/Satoshi-Variable.woff2';
+    if (file_exists($themeDir.'/fonts/Satoshi-Variable.woff2')) {
+        $url = $themeUrl.'/fonts/Satoshi-Variable.woff2';
         $faces .= "@font-face{font-family:'Satoshi';src:url('{$url}')format('woff2');font-weight:300 900;font-display:swap;font-style:normal}";
     }
 
-    if (file_exists($themeDir . '/fonts/CabinetGrotesk-Variable.woff2')) {
-        $url    = $themeUrl . '/fonts/CabinetGrotesk-Variable.woff2';
+    if (file_exists($themeDir.'/fonts/CabinetGrotesk-Variable.woff2')) {
+        $url = $themeUrl.'/fonts/CabinetGrotesk-Variable.woff2';
         $faces .= "@font-face{font-family:'CabinetGrotesk';src:url('{$url}')format('woff2');font-weight:100 900;font-display:swap;font-style:normal}";
     }
 
     if ($faces) {
-        echo '<style>' . $faces . '</style>';
+        echo '<style>'.$faces.'</style>';
     }
 }, 1);
 
@@ -368,7 +372,7 @@ add_action('after_setup_theme', function () {
      */
     register_nav_menus([
         'primary_navigation' => __('Primary Navigation', 'sobe'),
-        'footer_navigation'  => __('Footer Navigation', 'sobe'),
+        'footer_navigation' => __('Footer Navigation', 'sobe'),
     ]);
 
     /**
@@ -456,7 +460,7 @@ add_action('after_setup_theme', function () {
     add_theme_support('starter-content', [
         'posts' => [
             'home' => [
-                'post_type'  => 'page',
+                'post_type' => 'page',
                 'post_title' => __('Home', 'sobe'),
                 'post_content' => require resource_path('patterns/homepage-showcase.php'),
             ],
@@ -530,16 +534,16 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
     ]);
 
     $wp_customize->add_setting("{$pfx}_header_wishlist", [
-        'default'           => false,
+        'default' => false,
         'sanitize_callback' => 'rest_sanitize_boolean',
-        'transport'         => 'refresh',
+        'transport' => 'refresh',
     ]);
 
     $wp_customize->add_control("{$pfx}_header_wishlist", [
-        'label'       => __('Header: Wishlist Icon', 'sobe'),
+        'label' => __('Header: Wishlist Icon', 'sobe'),
         'description' => __('Shows a heart icon in the site header (requires YITH WooCommerce Wishlist plugin).', 'sobe'),
-        'section'     => "{$pfx}_header_options",
-        'type'        => 'checkbox',
+        'section' => "{$pfx}_header_options",
+        'type' => 'checkbox',
     ]);
 
     // ── Logo ────────────────────────────────────────────────────────────────
@@ -571,26 +575,27 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
 
     // ── Footer ─────────────────────────────────────────────────────────────
     $wp_customize->add_section("{$pfx}_footer_options", [
-        'title'    => __('Footer Options', 'sobe'),
+        'title' => __('Footer Options', 'sobe'),
         'priority' => 31,
     ]);
 
     $wp_customize->add_setting("{$pfx}_footer_layout", [
-        'default'           => 'layout-2',
+        'default' => 'layout-2',
         'sanitize_callback' => function ($value) {
             $allowed = ['layout-2', 'none'];
+
             return in_array($value, $allowed, true) ? $value : 'layout-2';
         },
         'transport' => 'refresh',
     ]);
 
     $wp_customize->add_control("{$pfx}_footer_layout", [
-        'label'   => __('Footer: Layout', 'sobe'),
+        'label' => __('Footer: Layout', 'sobe'),
         'section' => "{$pfx}_footer_options",
-        'type'    => 'select',
+        'type' => 'select',
         'choices' => [
             'layout-2' => __('Minimal (Brand + Widgets)', 'sobe'),
-            'none'     => __('None (Hidden)', 'sobe'),
+            'none' => __('None (Hidden)', 'sobe'),
         ],
     ]);
 
@@ -678,6 +683,7 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'default' => 12,
         'sanitize_callback' => function ($value) {
             $v = (int) $value;
+
             return ($v >= 4 && $v <= 48) ? $v : 12;
         },
         'transport' => 'refresh',
@@ -689,8 +695,8 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'section' => 'woocommerce_product_catalog',
         'type' => 'number',
         'input_attrs' => [
-            'min'  => 4,
-            'max'  => 48,
+            'min' => 4,
+            'max' => 48,
             'step' => 1,
         ],
     ]);
@@ -748,8 +754,8 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
  * Renders the dark mode toggle anywhere — menus, widgets, content blocks.
  * Returns empty string when the Customizer master switch is off (upsell gate).
  */
-add_shortcode(config('theme.prefix') . '_dark_toggle', function () {
-    if (! get_theme_mod(config('theme.prefix') . '_enable_dark_toggle', false)) {
+add_shortcode(config('theme.prefix').'_dark_toggle', function () {
+    if (! get_theme_mod(config('theme.prefix').'_enable_dark_toggle', false)) {
         return '';
     }
 
@@ -821,7 +827,7 @@ add_filter('woocommerce_add_to_cart_fragments', function ($fragments) {
         $fragments['.woocommerce-notices-wrapper'] = $emptyWrapper;
     } else {
         $notices = \App\Helpers\sobe_get_notices_for_toast();
-        if (!empty($notices)) {
+        if (! empty($notices)) {
             $fragments['sobe_toast_data'] = \wp_json_encode($notices);
         }
     }
@@ -843,10 +849,10 @@ add_action('rest_api_init', function (): void {
     $pfx = config('theme.prefix');
 
     register_rest_route("{$pfx}/v1", '/search', [
-        'methods'             => \WP_REST_Server::READABLE,
-        'callback'            => function (\WP_REST_Request $request): \WP_REST_Response {
-            $pfx   = config('theme.prefix');
-            $q     = sanitize_text_field($request->get_param('q') ?? '');
+        'methods' => \WP_REST_Server::READABLE,
+        'callback' => function (\WP_REST_Request $request): \WP_REST_Response {
+            $pfx = config('theme.prefix');
+            $q = sanitize_text_field($request->get_param('q') ?? '');
             $limit = min(10, max(1, (int) ($request->get_param('limit') ?? 5)));
 
             if (strlen($q) < 2) {
@@ -854,7 +860,7 @@ add_action('rest_api_init', function (): void {
             }
 
             $cache_key = md5("sobe_search_{$q}_{$limit}");
-            $cached    = wp_cache_get($cache_key, 'sobe_search');
+            $cached = wp_cache_get($cache_key, 'sobe_search');
             if ($cached !== false) {
                 return rest_ensure_response($cached);
             }
@@ -863,29 +869,29 @@ add_action('rest_api_init', function (): void {
             $post_types = array_filter($post_types, 'post_type_exists');
 
             $query = new \WP_Query([
-                'post_type'      => array_values($post_types),
-                'post_status'    => 'publish',
+                'post_type' => array_values($post_types),
+                'post_status' => 'publish',
                 'posts_per_page' => $limit,
-                's'              => $q,
+                's' => $q,
             ]);
 
             $results = [];
             foreach ($query->posts as $post) {
                 $price_html = '';
-                $thumbnail  = get_the_post_thumbnail_url($post->ID, 'thumbnail') ?: '';
+                $thumbnail = get_the_post_thumbnail_url($post->ID, 'thumbnail') ?: '';
 
                 if ($post->post_type === 'product' && function_exists('wc_get_product')) {
-                    $product    = wc_get_product($post->ID);
+                    $product = wc_get_product($post->ID);
                     $price_html = $product ? $product->get_price_html() : '';
-                    $thumbnail  = get_the_post_thumbnail_url($post->ID, 'woocommerce_thumbnail') ?: $thumbnail;
+                    $thumbnail = get_the_post_thumbnail_url($post->ID, 'woocommerce_thumbnail') ?: $thumbnail;
                 }
 
                 $results[] = [
-                    'id'         => $post->ID,
-                    'title'      => get_the_title($post->ID),
-                    'url'        => get_permalink($post->ID),
+                    'id' => $post->ID,
+                    'title' => get_the_title($post->ID),
+                    'url' => get_permalink($post->ID),
                     'price_html' => $price_html,
-                    'thumbnail'  => $thumbnail,
+                    'thumbnail' => $thumbnail,
                 ];
             }
 
@@ -894,21 +900,32 @@ add_action('rest_api_init', function (): void {
             return rest_ensure_response($results);
         },
         'permission_callback' => '__return_true',
-        'args'                => [
-            'q'     => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
+        'args' => [
+            'q' => ['type' => 'string', 'required' => true, 'sanitize_callback' => 'sanitize_text_field'],
             'limit' => ['type' => 'integer', 'default' => 5, 'sanitize_callback' => 'absint'],
         ],
     ]);
 });
 
+// Index product_brand terms in Relevanssi Free (v4.26.1+).
+// After deploy: WP Admin → Relevanssi → Indexing → enable taxonomy indexing → check product_brand → Re-index.
+add_filter('relevanssi_taxonomies_to_index', function (array $taxonomies): array {
+    if (! in_array('product_brand', $taxonomies, true)) {
+        $taxonomies[] = 'product_brand';
+    }
+
+    return $taxonomies;
+});
+
 add_action('wp_head', function (): void {
     $pfx = config('theme.prefix');
     $params = [
-        'restUrl'       => rest_url(),
-        'namespace'     => "{$pfx}/v1",
+        'restUrl' => rest_url(),
+        'namespace' => "{$pfx}/v1",
         'searchPageUrl' => home_url('/'),
+        'relevanssiActive' => function_exists('relevanssi_do_query'),
     ];
-    echo '<script>window.sobeSearchParams = ' . \wp_json_encode($params) . ';</script>';
+    echo '<script>window.sobeSearchParams = '.\wp_json_encode($params).';</script>';
 }, 5);
 
 add_filter('woocommerce_add_to_cart_redirect', function ($url) {
