@@ -1091,16 +1091,8 @@
   border-color: var(--c-heading);
 }
 
-/* Selected/Active State */
-.woo-variation-swatches .variable-items-wrapper .variable-item.selected {
-  border-color: var(--c-heading);
-  background-color: var(--c-heading);
-  color: var(--c-surface-1);
-}
-
 /* Out of Stock State */
 .woo-variation-swatches .variable-items-wrapper .variable-item.disabled {
-  opacity: 0.4;
   cursor: not-allowed;
   position: relative;
 }
@@ -1316,6 +1308,8 @@
   padding-bottom: var(--space-md);
   max-height: 320px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border) transparent;
 }
 
 /* Filter search */
@@ -1452,10 +1446,10 @@
 
 /* Handles: hollow circles centered on the thin rail */
 .sobe-range-slider .noUi-handle {
-  width: 18px !important;
-  height: 18px !important;
-  top: calc(50% - 9px) !important;
-  right: -9px !important;
+  width: var(--slider-handle-size) !important;
+  height: var(--slider-handle-size) !important;
+  top: calc(50% - calc(var(--slider-handle-size) / 2)) !important;
+  right: calc(var(--slider-handle-size) / -2) !important;
   border: 2px solid var(--c-text);
   background: var(--c-surface-1);
   border-radius: 50%;
@@ -1584,6 +1578,12 @@
 }
 
 /* Mobile filter drawer — slide-in sidebar */
+/* Local component tokens — adjust here rather than in template markup */
+:root {
+  --filter-drawer-width: 320px;
+  --slider-handle-size: 18px;
+}
+
 .sobe-filter-drawer {
   display: flex !important;
   flex-direction: column;
@@ -1591,7 +1591,7 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: min(320px, 85vw);
+  width: min(var(--filter-drawer-width), 85vw);
   z-index: var(--z-modal);
   background: var(--c-surface-1);
   transform: translateX(-100%);
@@ -1610,8 +1610,8 @@
   content: '';
   position: fixed;
   inset: 0;
-  left: min(320px, 85vw);
-  background: rgba(0, 0, 0, 0.4);
+  left: min(var(--filter-drawer-width), 85vw);
+  background: var(--c-overlay-mid);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -1640,6 +1640,8 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--space-md) var(--space-lg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border) transparent;
 }
 
 .sobe-filter-drawer__close {
@@ -1670,7 +1672,7 @@
   width: 100%;
   padding: var(--space-sm) var(--space-md);
   background: var(--c-accent);
-  color: #fff;
+  color: var(--c-accent-fg);
   border: none;
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);

@@ -80,7 +80,7 @@ the readme will list any important changes.
         @endif
 
         @php woocommerce_product_loop_end(); @endphp
-        <div data-pagination>
+        <div data-pagination aria-live="polite" aria-atomic="true">
           @php do_action('woocommerce_after_shop_loop'); @endphp
         </div>
       @else

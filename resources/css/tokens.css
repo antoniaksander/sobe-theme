@@ -34,6 +34,7 @@
   --c-border: #e2e2dc;
   --c-ring: var(--c-accent);
   --c-overlay: rgba(0, 0, 0, 0.5);
+  --c-overlay-mid: rgba(0, 0, 0, 0.4);
 
   /* ── Fixed light overlay tokens (glass effects on dark/photo backgrounds —
      intentionally NOT overridden in .dark; these sit on images/dark surfaces) ── */

@@ -81,6 +81,7 @@ import noUiSlider from 'nouislider';
     body.append('filter_state', JSON.stringify(state));
 
     const res = await fetch(params.ajaxUrl, { method: 'POST', body });
+    if (!res.ok) throw new Error(res.status);
     return res.json();
   }
 
@@ -236,7 +237,7 @@ import noUiSlider from 'nouislider';
         btn.dataset.removeFilter = key;
         btn.dataset.removeValue = v;
         btn.setAttribute('aria-label', `${params.removeLabel} ${v}`);
-        btn.innerHTML = `${v} <span class="sobe-filter-chip__remove" aria-hidden="true">×</span>`;
+        btn.innerHTML = `${v} <span class="sobe-filter-chip__remove" aria-hidden="true">${params.removeSymbol}</span>`;
         zone.appendChild(btn);
       });
     }
@@ -277,13 +278,17 @@ import noUiSlider from 'nouislider';
     const listId = input.dataset.filterSearch;
     const list = root.querySelector(`[data-filter-list="${listId}"]`);
     if (!list) return;
+    const items = [...list.querySelectorAll('li')];
 
-    input.addEventListener('input', () => {
-      const q = input.value.toLowerCase().trim();
-      list.querySelectorAll('li').forEach((li) => {
-        li.hidden = q.length > 0 && !li.textContent.toLowerCase().includes(q);
-      });
-    });
+    input.addEventListener(
+      'input',
+      debounce(() => {
+        const q = input.value.toLowerCase().trim();
+        items.forEach((li) => {
+          li.hidden = q.length > 0 && !li.textContent.toLowerCase().includes(q);
+        });
+      }, 150)
+    );
   });
 
   // ── noUiSlider price range ───────────────────────────────────────────────
@@ -367,27 +372,52 @@ import noUiSlider from 'nouislider';
     const observer = new ResizeObserver(handleResize);
     observer.observe(document.documentElement);
     handleResize();
+    window.addEventListener('beforeunload', () => observer.disconnect(), { once: true });
+
+    function closeDrawer() {
+      drawer.hidden = true;
+      openBtn.setAttribute('aria-expanded', 'false');
+      openBtn.focus();
+    }
 
     openBtn.addEventListener('click', () => {
       drawer.hidden = false;
       openBtn.setAttribute('aria-expanded', 'true');
-      drawer.querySelector('button, input, [tabindex]')?.focus();
+      drawer.querySelector('button:not([disabled]), input:not([disabled])')?.focus();
     });
 
     drawer.addEventListener('click', (e) => {
-      const panelWidth = Math.min(320, window.innerWidth * 0.85);
+      const panelWidth = Math.min(
+        parseInt(getComputedStyle(document.documentElement).getPropertyValue('--filter-drawer-width') || '320', 10),
+        window.innerWidth * 0.85
+      );
       if (e.target.closest('[data-close-filter-drawer]') || e.clientX > panelWidth) {
-        drawer.hidden = true;
-        openBtn.setAttribute('aria-expanded', 'false');
-        openBtn.focus();
+        closeDrawer();
       }
     });
 
     drawer.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        drawer.hidden = true;
-        openBtn.setAttribute('aria-expanded', 'false');
-        openBtn.focus();
+        closeDrawer();
+        return;
+      }
+      if (e.key !== 'Tab') return;
+
+      // Focus trap — cycle focus between first and last focusable children
+      const focusable = [
+        ...drawer.querySelectorAll(
+          'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        ),
+      ].filter((el) => !el.closest('[hidden]'));
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
       }
     });
   }

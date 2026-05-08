@@ -725,6 +725,7 @@ add_action('wp_enqueue_scripts', function (): void {
         'nonce' => wp_create_nonce("{$pfx}_nonce"),
         'action' => "{$pfx}_filter_products",
         'removeLabel' => __('Remove filter', 'sobe'),
+        'removeSymbol' => '&times;',
     ];
     echo '<script>window.sobeCatalogParams = '.\wp_json_encode($params).';</script>';
 }, 20);
