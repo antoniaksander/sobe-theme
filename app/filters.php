@@ -23,6 +23,21 @@ add_filter('upload_mimes', function (array $mimes) {
 add_filter('excerpt_length', fn () => config('theme.excerpt_length'), 999);
 
 /**
+ * Cap related products to 4 and force a single 4-column row.
+ */
+add_filter('woocommerce_output_related_products_args', function (array $args): array {
+    $args['posts_per_page'] = 4;
+    $args['columns']        = 4;
+    return $args;
+});
+
+/**
+ * Cap upsells to 4 products displayed in a single row.
+ */
+add_filter('woocommerce_upsells_total', fn () => 4);
+add_filter('woocommerce_upsell_display_default_columns', fn () => 4);
+
+/**
  * Add "… Continued" to the excerpt.
  *
  * @return string

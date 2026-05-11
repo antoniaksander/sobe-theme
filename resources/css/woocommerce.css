@@ -1814,3 +1814,37 @@
   outline: 2px solid var(--c-accent);
   outline-offset: 2px;
 }
+
+/* ── PDP: Related products & Upsells sections ──────────────────────────────── */
+
+.sobe-pdp-section {
+  margin-top: var(--space-2xl);
+}
+
+.sobe-pdp-section__heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--c-heading);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* 4-column grid on desktop — independent of shop catalog body classes */
+@media (min-width: 1024px) {
+  .related ul.products,
+  .up-sells ul.products {
+    --shop-cols: 4;
+  }
+}
+
+/* 2 columns on mobile */
+@media (max-width: 767.98px) {
+  .related ul.products,
+  .up-sells ul.products {
+    --shop-cols: 2;
+  }
+}
