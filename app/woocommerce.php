@@ -543,16 +543,30 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
                 $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => (int) $term->count];
             }
         } else {
-            $slugs = wp_get_object_terms($ids, $taxonomy, ['fields' => 'slugs']);
-            if (is_wp_error($slugs)) {
-                foreach ($all_terms as $term) {
-                    $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => (int) $term->count];
-                }
-            } else {
-                $counts = array_count_values($slugs);
-                foreach ($all_terms as $term) {
-                    $term_data[] = ['slug' => $term->slug, 'name' => $term->name, 'count' => $counts[$term->slug] ?? 0];
-                }
+            global $wpdb;
+            $ids_list = implode(',', array_map('intval', $ids));
+
+            $rows = $wpdb->get_results($wpdb->prepare("
+                SELECT t.slug, t.name, COUNT(DISTINCT tr.object_id) as count
+                FROM {$wpdb->term_relationships} tr
+                JOIN {$wpdb->term_taxonomy} tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+                JOIN {$wpdb->terms} t ON tt.term_id = t.term_id
+                WHERE tt.taxonomy = %s
+                AND tr.object_id IN ($ids_list)
+                GROUP BY t.term_id
+            ", $taxonomy), ARRAY_A);
+
+            $count_map = [];
+            foreach ($rows as $row) {
+                $count_map[$row['slug']] = (int) $row['count'];
+            }
+
+            foreach ($all_terms as $term) {
+                $term_data[] = [
+                    'slug'  => $term->slug,
+                    'name'  => $term->name,
+                    'count' => $count_map[$term->slug] ?? 0,
+                ];
             }
         }
 

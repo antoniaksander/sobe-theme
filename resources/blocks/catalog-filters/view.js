@@ -51,9 +51,8 @@ import noUiSlider from 'nouislider';
 
   function buildFilterUrl(state) {
     const url = new URL(window.location.href);
-    for (const [k] of url.searchParams.entries()) {
-      url.searchParams.delete(k);
-    }
+
+    url.search = '';
 
     for (const [key, val] of Object.entries(state)) {
       if (key === 'paged') continue; // handled below
@@ -165,9 +164,17 @@ import noUiSlider from 'nouislider';
     const link = e.target.closest('[data-pagination] a');
     if (!link) return;
     e.preventDefault();
+
     const href = new URL(link.href);
-    const paged = parseInt(href.searchParams.get('paged') || '1', 10);
-    applyFilters({ ...collectState(), paged });
+
+    let paged = href.searchParams.get('paged');
+
+    if (!paged) {
+      const match = href.pathname.match(/\/page\/(\d+)/);
+      paged = match ? match[1] : '1';
+    }
+
+    applyFilters({ ...collectState(), paged: parseInt(paged, 10) });
   });
 
   // ── Interdependent filter counts ─────────────────────────────────────────────
