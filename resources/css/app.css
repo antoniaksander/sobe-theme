@@ -1139,11 +1139,15 @@ body.single-post {
 }
 
 @media (min-width: 640px) {
-  .search-results-grid { grid-template-columns: repeat(2, 1fr); }
+  .search-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
-  .search-results-grid { grid-template-columns: repeat(3, 1fr); }
+  .search-results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .search-result-card {
@@ -1345,7 +1349,6 @@ body.single-post {
 
   .sobe-post-row--has-image .sobe-post-row__media .sobe-post-row__img {
     height: 100%;
-    aspect-ratio: unset;
   }
 }
 
@@ -1400,7 +1403,9 @@ body.single-post {
   text-decoration: underline;
   text-underline-offset: 4px;
   text-decoration-color: var(--c-border);
-  transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+  transition:
+    color var(--transition-fast),
+    text-decoration-color var(--transition-fast);
 }
 
 .sobe-post-row__cta:hover {
