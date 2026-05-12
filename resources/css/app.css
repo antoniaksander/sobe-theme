@@ -31,12 +31,20 @@ body.single-post {
 
 /* 2. Text (48rem) and Wide (80rem) blocks get safe mobile padding */
 .is-layout-constrained > :not(.alignfull) {
-  padding-inline: 1.5rem;
+  padding-inline: 1rem;
 }
 
 @media (min-width: 1024px) {
   .is-layout-constrained > :not(.alignfull) {
     padding-inline: 2rem;
+  }
+
+  /* WooCommerce functional pages (cart, checkout, account/wishlist) manage
+     their own layout — strip the desktop padding so nothing doubles up. */
+  body.woocommerce-cart .is-layout-constrained > :not(.alignfull),
+  body.woocommerce-checkout .is-layout-constrained > :not(.alignfull),
+  body.woocommerce-account .is-layout-constrained > :not(.alignfull) {
+    padding-inline: 0;
   }
 }
 
