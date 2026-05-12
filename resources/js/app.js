@@ -548,11 +548,13 @@ Alpine.start();
 
 gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
   const smoothScrollMobile = document.body.dataset.smoothScrollMobile;
+  const isDesktopViewport = window.matchMedia('(min-width: 48rem)').matches;
   // (hover: hover) AND (pointer: fine) is only true for mouse/trackpad-primary
   // devices (desktop/laptop). On iPad — even with a connected mouse — the primary
   // pointer is still touch (coarse, no hover), so this stays false.
   const isDesktopPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+  if (!isDesktopViewport) return;
   if (smoothScrollMobile !== 'true' && !isDesktopPointer) return;
 
   lenis = new Lenis({

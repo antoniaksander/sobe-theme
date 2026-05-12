@@ -126,6 +126,7 @@
 .woocommerce ul.products li.product a img {
   width: 100%;
   aspect-ratio: var(--wc-product-card-aspect-ratio, 3 / 4);
+  border-radius: var(--radius-md);
   object-fit: cover;
   display: block;
   transition: transform 300ms ease;
