@@ -117,7 +117,7 @@
 
   {{-- Brands (multi-select checkbox) --}}
   @if ($showBrands && !empty($brands))
-  <details class="sobe-accordion sobe-accordion--scrollable" @if (!$collapseByDefault) open @endif>
+  <details class="sobe-accordion sobe-accordion--scrollable" @if ($brandsOpenByDefault) open @endif>
     <summary class="sobe-accordion__trigger">{{ __('Brands', 'sobe') }}</summary>
     <div class="sobe-accordion__panel">
       @if (count($brands) > 5)
@@ -131,7 +131,7 @@
           >
         </div>
       @endif
-      <ul class="sobe-filter-list" data-filter-list="brands">
+      <ul class="sobe-filter-list" data-filter-list="brands" role="group" aria-label="{{ __('Brands', 'sobe') }}">
         @php $activeBrands = (array) ($activeFilters[$brandsTaxonomy] ?? []); @endphp
         @foreach ($brands as $brand)
           <li class="sobe-filter-list__item">
@@ -207,7 +207,7 @@
               >
             </div>
           @endif
-          <ul class="sobe-filter-list" data-filter-list="{{ esc_attr($attrKey) }}">
+          <ul class="sobe-filter-list" data-filter-list="{{ esc_attr($attrKey) }}" role="group" aria-label="{{ esc_attr($group->attribute_label) }}">
             @foreach ($group->terms as $term)
               <li class="sobe-filter-list__item">
                 <label class="sobe-checkbox">

@@ -24,17 +24,17 @@ the readme will list any important changes.
   @endphp
 
   {{-- Main Layout Wrapper --}}
-  <div class="max-w-[var(--layout-grid)] mx-auto px-4 {{ $showSidebar ? 'shop-with-sidebar flex flex-col lg:flex-row gap-8' : '' }}">
+  <div class="max-w-[var(--layout-grid)] mx-auto px-4 {{ $showSidebar ? 'shop-with-sidebar flex flex-col md:flex-row gap-8' : '' }}">
 
     {{-- Conditionally Render Sidebar --}}
     @if ($showSidebar)
-      <aside class="shop-sidebar w-full lg:w-64 xl:w-72 flex-shrink-0 order-2 lg:order-1">
+      <aside class="shop-sidebar w-full md:w-56 lg:w-64 xl:w-72 flex-shrink-0 order-2 md:order-1">
         @include('sections.sidebar-shop')
       </aside>
     @endif
 
     {{-- Main Content Wrapper --}}
-    <div class="shop-main {{ $showSidebar ? 'flex-1 min-w-0 order-1 lg:order-2' : 'w-full' }}">
+    <div class="shop-main {{ $showSidebar ? 'flex-1 min-w-0 order-1 md:order-2' : 'w-full' }}">
 
       <header class="woocommerce-products-header">
         @if (apply_filters('woocommerce_show_page_title', true))
@@ -80,7 +80,7 @@ the readme will list any important changes.
         @endif
 
         @php woocommerce_product_loop_end(); @endphp
-        <div data-pagination>
+        <div data-pagination aria-live="polite" aria-atomic="true">
           @php do_action('woocommerce_after_shop_loop'); @endphp
         </div>
       @else

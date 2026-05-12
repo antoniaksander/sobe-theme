@@ -1,42 +1,60 @@
 @extends('layouts.app')
 
 @section('content')
-  <x-section width="standard" padding="default">
-    @include('partials.page-header')
+  @php
+    $heroPostId = (int) get_option('page_for_posts') ?: null;
+    $showHero   = $heroPostId && is_home() && !is_front_page()
+                    && get_post_meta($heroPostId, '_sobe_page_hero', true)
+                    && has_post_thumbnail($heroPostId);
+    $hideTitle  = $heroPostId && is_home() && !is_front_page()
+                    && (bool) get_post_meta($heroPostId, '_sobe_hide_title', true);
+  @endphp
 
-    @if (! have_posts())
-    <x-alert type="warning">
-      {!! __('Sorry, no results were found.', 'sobe') !!}
-    </x-alert>
-
-    {!! get_search_form(false) !!}
-  @else
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      @while(have_posts()) @php the_post(); @endphp
-        <article class="post-card">
-          @if (has_post_thumbnail())
-            <a href="{{ get_permalink() }}">
-              <img src="{{ get_the_post_thumbnail_url(get_the_ID(), 'medium_large') }}" alt="{{ get_the_title() }}" class="w-full h-48 object-cover">
-            </a>
-          @endif
-          <div class="p-4">
-            @php $categories = get_the_category(); @endphp
-            @if (!empty($categories))
-              @foreach($categories as $category)
-                <x-badge type="new">{{ $category->name }}</x-badge>
-              @endforeach
-            @endif
-            <h2 class="text-xl font-bold mt-2">
-              <a href="{{ get_permalink() }}">{!! get_the_title() !!}</a>
-            </h2>
-            <p class="text-muted mt-2">{!! get_the_excerpt() !!}</p>
-          </div>
-        </article>
-      @endwhile
-    </div>
+  @if($showHero)
+    @include('partials.page-hero')
   @endif
 
-    {!! get_the_posts_navigation() !!}
+  <x-section width="standard" :padding="$showHero ? 'hero' : 'default'">
+    @if(!$showHero && !$hideTitle)
+      @include('partials.page-header')
+    @endif
+
+    @if(! have_posts())
+      <x-alert type="warning">{!! __('Sorry, no results were found.', 'sobe') !!}</x-alert>
+      {!! get_search_form(false) !!}
+    @else
+      <div class="sobe-post-list">
+        @while(have_posts()) @php
+          the_post();
+          $cats     = get_the_category();
+          $ctaLabel = get_post_meta(get_the_ID(), '_sobe_post_cta', true) ?: __('Read article', 'sobe');
+        @endphp
+          <article class="sobe-post-row {{ has_post_thumbnail() ? 'sobe-post-row--has-image' : '' }}">
+            @if(has_post_thumbnail())
+              <a class="sobe-post-row__media" href="{{ get_permalink() }}" tabindex="-1" aria-hidden="true">
+                {!! get_the_post_thumbnail(get_the_ID(), 'large', ['class' => 'sobe-post-row__img']) !!}
+              </a>
+            @endif
+            <div class="sobe-post-row__body">
+              @if(!empty($cats))
+                <span class="sobe-post-row__category">{{ esc_html($cats[0]->name) }}</span>
+              @endif
+              <h2 class="sobe-post-row__title">
+                <a href="{{ get_permalink() }}">{!! get_the_title() !!}</a>
+              </h2>
+              <p class="sobe-post-row__excerpt">{!! get_the_excerpt() !!}</p>
+              <a class="sobe-post-row__cta" href="{{ get_permalink() }}">{{ $ctaLabel }}</a>
+            </div>
+          </article>
+        @endwhile
+      </div>
+
+      {!! get_the_posts_pagination([
+        'class'     => 'sobe-wp-pagination',
+        'prev_text' => __('← Previous', 'sobe'),
+        'next_text' => __('Next →', 'sobe'),
+      ]) !!}
+    @endif
   </x-section>
 @endsection
 

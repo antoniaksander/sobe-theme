@@ -7,7 +7,7 @@ const { useState, useEffect } = wp.element;
 import './editor.scss';
 
 export default function Edit({ attributes, setAttributes }) {
-  const { useManualEntry, brands, speed, pauseOnHover } = attributes;
+  const { useManualEntry, brands, speed, pauseOnHover, showImages } = attributes;
 
   // WooCommerce taxonomy terms — fetched once when manual mode is enabled.
   const [wcTerms, setWcTerms] = useState([]);
@@ -192,6 +192,17 @@ export default function Edit({ attributes, setAttributes }) {
               onChange={(val) => setAttributes({ speed: val })}
               __nextHasNoMarginBottom
               __next40pxDefaultSize
+            />
+          </PanelRow>
+          <PanelRow>
+            <ToggleControl
+              label={__('Show Brand Images', 'sage')}
+              help={showImages
+                ? __('Brand logos are shown; falls back to name if no image.', 'sage')
+                : __('Brand names shown as text regardless of image.', 'sage')}
+              checked={showImages}
+              onChange={(val) => setAttributes({ showImages: val })}
+              __nextHasNoMarginBottom
             />
           </PanelRow>
           <PanelRow>

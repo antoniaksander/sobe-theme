@@ -12,6 +12,7 @@
       'default' => 'py-16 md:py-24',
       'lg'      => 'py-24 md:py-32',
       'xl'      => 'py-32 md:py-40',
+      'hero'    => 'pt-8 md:pt-12 pb-16 md:pb-24',
   ];
 
   $widthMap = [

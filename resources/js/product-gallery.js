@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
     );
     let originalPriceHTML = null;
 
-    $(document).on('found_variation', '.variations_form', (_e, variation) => {
+    $(document).off('found_variation.sobe').on('found_variation.sobe', '.variations_form', (_e, variation) => {
       // Update static price with variation-specific price HTML
       if (staticPriceEl && variation.price_html) {
         if (originalPriceHTML === null)
@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mainSwiper.slideTo(newIdx);
     });
 
-    $(document).on('reset_data', '.variations_form', () => {
+    $(document).off('reset_data.sobe').on('reset_data.sobe', '.variations_form', () => {
       // Restore original range price
       if (staticPriceEl && originalPriceHTML !== null) {
         staticPriceEl.innerHTML = originalPriceHTML;

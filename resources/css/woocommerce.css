@@ -37,6 +37,29 @@
   transition:
     box-shadow 200ms ease,
     transform 200ms ease;
+  /* Container — enables @container product-card rules below */
+  container-type: inline-size;
+  container-name: product-card;
+}
+
+/* ── Product card container queries ────────────────────────────────────────────
+   Compact layout when a card is narrower than --cq-product-card-compact.
+   Triggers automatically in tight grid columns or narrow viewports, so cards
+   remain legible without viewport-level media query overrides. */
+@container product-card (max-width: 180px) {
+  .woocommerce-loop-product__title {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+  }
+
+  .price {
+    font-size: 0.75rem;
+  }
+
+  .button {
+    font-size: 0.75rem;
+    padding-block: 0.375rem;
+  }
 }
 
 /* Suppress WooCommerce-layout.css clearfix pseudo-elements — they become ghost grid items */
@@ -52,25 +75,47 @@
 
 /* Mobile (< 768px) */
 @media (max-width: 767.98px) {
-  body.sobe-catalog-mobile-columns-1 .woocommerce ul.products { --shop-cols: 1; }
-  body.sobe-catalog-mobile-columns-2 .woocommerce ul.products { --shop-cols: 2; }
+  body.sobe-catalog-mobile-columns-1 .woocommerce ul.products {
+    --shop-cols: 1;
+  }
+  body.sobe-catalog-mobile-columns-2 .woocommerce ul.products {
+    --shop-cols: 2;
+  }
 }
 
 /* Tablet (768px – 1023px) */
 @media (min-width: 768px) and (max-width: 1023.98px) {
-  body.sobe-catalog-tablet-columns-1 .woocommerce ul.products { --shop-cols: 1; }
-  body.sobe-catalog-tablet-columns-2 .woocommerce ul.products { --shop-cols: 2; }
-  body.sobe-catalog-tablet-columns-3 .woocommerce ul.products { --shop-cols: 3; }
+  body.sobe-catalog-tablet-columns-1 .woocommerce ul.products {
+    --shop-cols: 1;
+  }
+  body.sobe-catalog-tablet-columns-2 .woocommerce ul.products {
+    --shop-cols: 2;
+  }
+  body.sobe-catalog-tablet-columns-3 .woocommerce ul.products {
+    --shop-cols: 3;
+  }
 }
 
 /* Desktop (≥ 1024px) — Customizer-controlled, replaces WC .columns-N approach */
 @media (min-width: 1024px) {
-  body.sobe-catalog-desktop-columns-1 .woocommerce ul.products { --shop-cols: 1; }
-  body.sobe-catalog-desktop-columns-2 .woocommerce ul.products { --shop-cols: 2; }
-  body.sobe-catalog-desktop-columns-3 .woocommerce ul.products { --shop-cols: 3; }
-  body.sobe-catalog-desktop-columns-4 .woocommerce ul.products { --shop-cols: 4; }
-  body.sobe-catalog-desktop-columns-5 .woocommerce ul.products { --shop-cols: 5; }
-  body.sobe-catalog-desktop-columns-6 .woocommerce ul.products { --shop-cols: 6; }
+  body.sobe-catalog-desktop-columns-1 .woocommerce ul.products {
+    --shop-cols: 1;
+  }
+  body.sobe-catalog-desktop-columns-2 .woocommerce ul.products {
+    --shop-cols: 2;
+  }
+  body.sobe-catalog-desktop-columns-3 .woocommerce ul.products {
+    --shop-cols: 3;
+  }
+  body.sobe-catalog-desktop-columns-4 .woocommerce ul.products {
+    --shop-cols: 4;
+  }
+  body.sobe-catalog-desktop-columns-5 .woocommerce ul.products {
+    --shop-cols: 5;
+  }
+  body.sobe-catalog-desktop-columns-6 .woocommerce ul.products {
+    --shop-cols: 6;
+  }
 }
 
 .woocommerce ul.products li.product:hover {
@@ -78,10 +123,9 @@
   transform: none;
 }
 
-
 .woocommerce ul.products li.product a img {
   width: 100%;
-  /* height: 14rem; */
+  aspect-ratio: var(--wc-product-card-aspect-ratio, 3 / 4);
   object-fit: cover;
   display: block;
   transition: transform 300ms ease;
@@ -114,7 +158,9 @@
   cursor: pointer;
   transition: color var(--transition-fast);
 }
-.sobe-pagination__arrow:hover { color: var(--c-accent); }
+.sobe-pagination__arrow:hover {
+  color: var(--c-accent);
+}
 .sobe-pagination__arrow--disabled {
   opacity: 0.35;
   cursor: not-allowed;
@@ -502,7 +548,10 @@
 /* Overflow visible so the 1.5-slide peek effect shows adjacent slides.
    The .pdp-gallery wrapper clips at its own edges. */
 .pdp-swiper-main {
-  aspect-ratio: var(--pdp-gallery-aspect-ratio, 1 / 1); /* set via config/theme.php 'wc_gallery_aspect_ratio' */
+  aspect-ratio: var(
+    --pdp-gallery-aspect-ratio,
+    1 / 1
+  ); /* set via config/theme.php 'wc_gallery_aspect_ratio' */
   border-radius: 0.75rem;
   overflow: visible;
   position: relative;
@@ -918,6 +967,7 @@
 .sobe-product-image-wrapper {
   position: relative;
   overflow: hidden;
+  aspect-ratio: var(--wc-product-card-aspect-ratio, 3 / 4);
 }
 
 /* Disable the default zoom transform inside a swap wrapper */
@@ -934,7 +984,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   opacity: 0;
   transition: opacity 300ms ease;
 }
@@ -1091,16 +1141,8 @@
   border-color: var(--c-heading);
 }
 
-/* Selected/Active State */
-.woo-variation-swatches .variable-items-wrapper .variable-item.selected {
-  border-color: var(--c-heading);
-  background-color: var(--c-heading);
-  color: var(--c-surface-1);
-}
-
 /* Out of Stock State */
 .woo-variation-swatches .variable-items-wrapper .variable-item.disabled {
-  opacity: 0.4;
   cursor: not-allowed;
   position: relative;
 }
@@ -1312,10 +1354,19 @@
   transform: rotate(45deg);
 }
 
+/* Hide panel when accordion is closed. Without this, the div's default display:block
+   overrides the browser UA stylesheet that normally hides details content, causing
+   the panel to overflow into sibling elements and block pointer events. */
+.sobe-accordion:not([open]) > .sobe-accordion__panel {
+  display: none;
+}
+
 .sobe-accordion__panel {
   padding-bottom: var(--space-md);
   max-height: 320px;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border) transparent;
 }
 
 /* Filter search */
@@ -1452,10 +1503,10 @@
 
 /* Handles: hollow circles centered on the thin rail */
 .sobe-range-slider .noUi-handle {
-  width: 18px !important;
-  height: 18px !important;
-  top: calc(50% - 9px) !important;
-  right: -9px !important;
+  width: var(--slider-handle-size) !important;
+  height: var(--slider-handle-size) !important;
+  top: calc(50% - calc(var(--slider-handle-size) / 2)) !important;
+  right: calc(var(--slider-handle-size) / -2) !important;
   border: 2px solid var(--c-text);
   background: var(--c-surface-1);
   border-radius: 50%;
@@ -1559,10 +1610,12 @@
   color: var(--c-text);
   cursor: pointer;
   margin-bottom: var(--space-md);
-  transition: border-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 767.98px) {
   .sobe-filter-mobile-trigger {
     display: inline-flex;
   }
@@ -1576,6 +1629,38 @@
 /* Scrollable brands accordion — reduces panel max-height to trigger overflow scroll */
 .sobe-accordion--scrollable .sobe-accordion__panel {
   max-height: 12rem;
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+/* Always-visible scrollbar so users can see the panel is scrollable (macOS hides overlay scrollbars) */
+.sobe-accordion--scrollable .sobe-accordion__panel::-webkit-scrollbar {
+  width: 5px;
+}
+.sobe-accordion--scrollable .sobe-accordion__panel::-webkit-scrollbar-track {
+  background: var(--c-surface-2, #f0f0f0);
+  border-radius: 3px;
+}
+.sobe-accordion--scrollable .sobe-accordion__panel::-webkit-scrollbar-thumb {
+  background: var(--c-border);
+  border-radius: 3px;
+}
+
+/* Bottom fade-out gradient — signals more content below without a scrollbar hint */
+.sobe-accordion--scrollable[open] {
+  position: relative;
+}
+.sobe-accordion--scrollable[open]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2.5rem;
+  background: linear-gradient(to bottom, transparent, var(--c-surface-1, #fff));
+  pointer-events: none;
+  border-radius: 0 0 var(--radius-sm, 4px) var(--radius-sm, 4px);
 }
 
 /* Hide empty widget_block sections in the sidebar (ghost sections from block extraction) */
@@ -1584,6 +1669,12 @@
 }
 
 /* Mobile filter drawer — slide-in sidebar */
+/* Local component tokens — adjust here rather than in template markup */
+:root {
+  --filter-drawer-width: 320px;
+  --slider-handle-size: 18px;
+}
+
 .sobe-filter-drawer {
   display: flex !important;
   flex-direction: column;
@@ -1591,7 +1682,7 @@
   top: 0;
   left: 0;
   bottom: 0;
-  width: min(320px, 85vw);
+  width: min(var(--filter-drawer-width), 85vw);
   z-index: var(--z-modal);
   background: var(--c-surface-1);
   transform: translateX(-100%);
@@ -1610,8 +1701,8 @@
   content: '';
   position: fixed;
   inset: 0;
-  left: min(320px, 85vw);
-  background: rgba(0, 0, 0, 0.4);
+  left: min(var(--filter-drawer-width), 85vw);
+  background: var(--c-overlay-mid);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
@@ -1640,6 +1731,8 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--space-md) var(--space-lg);
+  scrollbar-width: thin;
+  scrollbar-color: var(--c-border) transparent;
 }
 
 .sobe-filter-drawer__close {
@@ -1670,7 +1763,7 @@
   width: 100%;
   padding: var(--space-sm) var(--space-md);
   background: var(--c-accent);
-  color: #fff;
+  color: var(--c-accent-fg);
   border: none;
   border-radius: var(--radius-sm);
   font-size: var(--text-sm);
@@ -1730,7 +1823,9 @@
   color: var(--c-text-muted);
   cursor: pointer;
   text-align: left;
-  transition: border-color var(--transition-fast), color var(--transition-fast);
+  transition:
+    border-color var(--transition-fast),
+    color var(--transition-fast);
 }
 
 .sobe-filter-clear-all:hover {
@@ -1741,4 +1836,38 @@
 .sobe-filter-clear-all:focus-visible {
   outline: 2px solid var(--c-accent);
   outline-offset: 2px;
+}
+
+/* ── PDP: Related products & Upsells sections ──────────────────────────────── */
+
+.sobe-pdp-section {
+  margin-top: var(--space-2xl);
+}
+
+.sobe-pdp-section__heading {
+  font-family: var(--font-heading);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--c-heading);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--c-border);
+}
+
+/* 4-column grid on desktop — independent of shop catalog body classes */
+@media (min-width: 1024px) {
+  .related ul.products,
+  .up-sells ul.products {
+    --shop-cols: 4;
+  }
+}
+
+/* 2 columns on mobile */
+@media (max-width: 767.98px) {
+  .related ul.products,
+  .up-sells ul.products {
+    --shop-cols: 2;
+  }
 }

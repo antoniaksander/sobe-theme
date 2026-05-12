@@ -151,6 +151,38 @@ add_filter('script_loader_tag', function ($tag, $handle) {
 }, 10, 2);
 
 /**
+ * Register page display post meta.
+ */
+add_action('init', function () {
+    $meta = [
+        '_sobe_page_hero' => 'boolean',
+        '_sobe_hide_title' => 'boolean',
+    ];
+    foreach ($meta as $key => $type) {
+        register_post_meta('page', $key, [
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => $type,
+            'default' => false,
+            'auth_callback' => fn () => current_user_can('edit_posts'),
+        ]);
+    }
+});
+
+/**
+ * Register post CTA label meta (custom link text for the blog listing).
+ */
+add_action('init', function () {
+    register_post_meta('post', '_sobe_post_cta', [
+        'show_in_rest' => true,
+        'single' => true,
+        'type' => 'string',
+        'default' => '',
+        'auth_callback' => fn () => current_user_can('edit_posts'),
+    ]);
+});
+
+/**
  * Register product_brand taxonomy.
  */
 add_action('init', function () {
@@ -181,7 +213,6 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
         'core/list-item',
         'core/image',
         'core/quote',
-        // 'core/embed',
         'core/button',
         'core/buttons',
         'core/separator',
@@ -191,13 +222,6 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
         'core/group',
         'core/columns',
         'core/column',
-        // Current WooCommerce Product Filter Block
-        'woocommerce/product-filters',
-        'woocommerce/active-filters', // Only use if explicitly supported by your version
-        // Common Product Display Blocks
-        'woocommerce/all-products',
-        'woocommerce/product-search',
-        'woocommerce/handpicked-products',
     ];
 
     $pfx = config('theme.prefix');
@@ -208,7 +232,8 @@ add_filter('allowed_block_types_all', function ($allowed_blocks, $editor_context
         if (in_array($name, $layout_block_names, true)) {
             continue;
         }
-        if (strpos($name, "{$pfx}/") === 0) {
+        // Allow all theme blocks and all WooCommerce blocks (including cart/checkout inner blocks).
+        if (strpos($name, "{$pfx}/") === 0 || strpos($name, 'woocommerce/') === 0) {
             $allowed[] = $name;
         }
     }

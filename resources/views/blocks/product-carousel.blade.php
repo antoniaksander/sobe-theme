@@ -2,6 +2,7 @@
   $count      = (int) ($attributes['count']      ?? 8);
   $orderBy    = $attributes['orderBy']    ?? 'latest';
   $categoryId = (int) ($attributes['categoryId'] ?? 0);
+  $brandId    = (int) ($attributes['brandId']    ?? 0);
   $heading    = $attributes['heading']    ?? '';
   $paragraph  = $attributes['paragraph'] ?? '';
   $linkText   = $attributes['linkText']  ?? '';
@@ -64,19 +65,25 @@
       break;
   }
 
-  // ── Category filter (combines with featured tax_query via AND) ──────────
+  // ── Taxonomy filters (each clause ANDed together and with featured) ─────
   if ($categoryId > 0) {
-    $catClause = [
+    $args['tax_query'][] = [
       'taxonomy' => 'product_cat',
       'field'    => 'term_id',
       'terms'    => $categoryId,
     ];
-    if (!empty($args['tax_query'])) {
-      $args['tax_query']['relation'] = 'AND';
-      $args['tax_query'][]           = $catClause;
-    } else {
-      $args['tax_query'] = [$catClause];
-    }
+  }
+
+  if ($brandId > 0) {
+    $args['tax_query'][] = [
+      'taxonomy' => 'product_brand',
+      'field'    => 'term_id',
+      'terms'    => $brandId,
+    ];
+  }
+
+  if (count($args['tax_query'] ?? []) > 1) {
+    $args['tax_query']['relation'] = 'AND';
   }
 
   $products_query = new \WP_Query($args);
@@ -100,7 +107,7 @@
               </h2>
             @endif
             @if($paragraph)
-              <p class="product-carousel__paragraph text-text-muted mt-2 mb-0">
+              <p class="product-carousel__paragraph text-text-muted mt-2 mb-0 max-w-prose">
                 {{ esc_html($paragraph) }}
               </p>
             @endif

@@ -3,6 +3,7 @@
   $manualBrands   = $attributes['brands']         ?? [];
   $speed          = $attributes['speed']          ?? '30s';
   $pauseOnHover   = $attributes['pauseOnHover']   ?? true;
+  $showImages     = $attributes['showImages']     ?? true;
 
   // Whitelist speed to prevent CSS-variable injection.
   $allowedSpeeds = ['15s', '20s', '30s', '40s', '60s'];
@@ -73,7 +74,7 @@
             <a href="{{ esc_url($item['link']) }}" class="brand-carousel__link" rel="noopener">
           @endif
 
-          @if(!empty($item['imageUrl']))
+          @if($showImages && !empty($item['imageUrl']))
 <img
   src="{{ esc_url($item['imageUrl']) }}"
   alt="{{ esc_attr($item['imageAlt']) }}"
@@ -96,7 +97,7 @@
             <a href="{{ esc_url($item['link']) }}" class="brand-carousel__link" rel="noopener" tabindex="-1">
           @endif
 
-          @if(!empty($item['imageUrl']))
+          @if($showImages && !empty($item['imageUrl']))
 <img
   src="{{ esc_url($item['imageUrl']) }}"
   alt="{{ esc_attr($item['imageAlt']) }}"

@@ -14,11 +14,8 @@
       $base = $referer
           ? remove_query_arg('paged', $referer)
           : get_permalink(wc_get_page_id('shop'));
-  } elseif (is_product_taxonomy()) {
-      $obj  = get_queried_object();
-      $base = ($obj instanceof \WP_Term) ? get_term_link($obj) : get_permalink(wc_get_page_id('shop'));
   } else {
-      $base = get_permalink(wc_get_page_id('shop'));
+      $base = remove_query_arg('paged');
   }
   $prevUrl = ($current > 1)      ? add_query_arg('paged', $current - 1, $base) : null;
   $nextUrl = ($current < $total) ? add_query_arg('paged', $current + 1, $base) : null;
@@ -28,7 +25,7 @@
   @if ($mode === 'paginated')
     <nav class="sobe-pagination" aria-label="{{ __('Products pagination', 'sobe') }}">
       @if ($prevUrl)
-        <a class="sobe-pagination__arrow" href="{{ esc_url($prevUrl) }}" rel="prev"
+        <a class="sobe-pagination__arrow" href="{!! esc_url($prevUrl) !!}" rel="prev"
            aria-label="{{ __('Previous page', 'sobe') }}">←</a>
       @else
         <span class="sobe-pagination__arrow sobe-pagination__arrow--disabled"
@@ -40,7 +37,7 @@
       </span>
 
       @if ($nextUrl)
-        <a class="sobe-pagination__arrow" href="{{ esc_url($nextUrl) }}" rel="next"
+        <a class="sobe-pagination__arrow" href="{!! esc_url($nextUrl) !!}" rel="next"
            aria-label="{{ __('Next page', 'sobe') }}">→</a>
       @else
         <span class="sobe-pagination__arrow sobe-pagination__arrow--disabled"

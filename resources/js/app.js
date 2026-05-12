@@ -548,9 +548,12 @@ Alpine.start();
 
 gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
   const smoothScrollMobile = document.body.dataset.smoothScrollMobile;
-  const isPointerFine = window.matchMedia('(pointer: fine)').matches;
+  // (hover: hover) AND (pointer: fine) is only true for mouse/trackpad-primary
+  // devices (desktop/laptop). On iPad — even with a connected mouse — the primary
+  // pointer is still touch (coarse, no hover), so this stays false.
+  const isDesktopPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
-  if (smoothScrollMobile !== 'true' && !isPointerFine) return;
+  if (smoothScrollMobile !== 'true' && !isDesktopPointer) return;
 
   lenis = new Lenis({
     duration: 1.2,
@@ -568,6 +571,12 @@ const scheduleIdle = (fn) =>
   'requestIdleCallback' in window
     ? requestIdleCallback(fn, { timeout: 2000 })
     : setTimeout(fn, 100);
+
+// Expose animation utilities for cross-bundle use (e.g. catalog-filters/view.js
+// managing gsap.context() across AJAX grid replacements).
+window.gsap = gsap;
+window.ScrollTrigger = ScrollTrigger;
+window.initAnimationBus = initAnimationBus;
 
 initAnimationBus();
 

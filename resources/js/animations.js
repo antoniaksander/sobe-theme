@@ -145,4 +145,12 @@ function initStickyHeader() {
   });
 }
 
+// Debounced ScrollTrigger.refresh() on resize so trigger positions stay accurate
+// after layout shifts (viewport resize, content injection, font load, etc.).
+let _refreshTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_refreshTimer);
+  _refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 150);
+});
+
 export { initAnimationBus, initStickyHeader, gsap, ScrollTrigger };

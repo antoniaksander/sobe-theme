@@ -31,12 +31,20 @@ body.single-post {
 
 /* 2. Text (48rem) and Wide (80rem) blocks get safe mobile padding */
 .is-layout-constrained > :not(.alignfull) {
-  padding-inline: 1.5rem;
+  padding-inline: 1rem;
 }
 
 @media (min-width: 1024px) {
   .is-layout-constrained > :not(.alignfull) {
     padding-inline: 2rem;
+  }
+
+  /* WooCommerce functional pages (cart, checkout, account/wishlist) manage
+     their own layout — strip the desktop padding so nothing doubles up. */
+  body.woocommerce-cart .is-layout-constrained > :not(.alignfull),
+  body.woocommerce-checkout .is-layout-constrained > :not(.alignfull),
+  body.woocommerce-account .is-layout-constrained > :not(.alignfull) {
+    padding-inline: 0;
   }
 }
 
@@ -1139,11 +1147,15 @@ body.single-post {
 }
 
 @media (min-width: 640px) {
-  .search-results-grid { grid-template-columns: repeat(2, 1fr); }
+  .search-results-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
-  .search-results-grid { grid-template-columns: repeat(3, 1fr); }
+  .search-results-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 .search-result-card {
@@ -1247,4 +1259,164 @@ body.single-post {
   background: var(--c-accent);
   color: var(--c-accent-fg);
   border-color: var(--c-accent);
+}
+
+/* ── Page Hero ─────────────────────────────────────────────────────────────── */
+.sobe-page-hero {
+  position: relative;
+  width: 100%;
+  min-height: 50vh;
+  display: flex;
+  align-items: flex-end;
+  background-image: var(--_hero-bg);
+  background-size: cover;
+  background-position: center;
+}
+
+.sobe-page-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to top,
+    rgba(0 0 0 / 0.65) 0%,
+    rgba(0 0 0 / 0.2) 55%,
+    transparent 100%
+  );
+}
+
+.sobe-page-hero__inner {
+  position: relative;
+  z-index: 1;
+  padding-block: 3rem;
+  padding-inline: 1.5rem;
+  max-width: var(--max-width-standard);
+  margin-inline: auto;
+  width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .sobe-page-hero__inner {
+    padding-block: 5rem;
+    padding-inline: 2rem;
+  }
+}
+
+.sobe-page-hero__title {
+  color: var(--c-surface-invert-fg);
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 1.1;
+  margin: 0;
+  text-shadow: 0 1px 4px rgba(0 0 0 / 0.4);
+}
+
+/* ── Blog post list ─────────────────────────────────────────────────────────── */
+.sobe-post-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.sobe-post-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding-block: var(--space-2xl);
+  border-top: 1px solid var(--c-border);
+}
+
+.sobe-post-row:last-child {
+  border-bottom: 1px solid var(--c-border);
+}
+
+@media (min-width: 768px) {
+  .sobe-post-row--has-image {
+    flex-direction: row;
+    align-items: stretch;
+    gap: var(--space-2xl);
+  }
+}
+
+.sobe-post-row__media {
+  display: block;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.sobe-post-row__media .sobe-post-row__img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  object-fit: cover;
+  display: block;
+  transition: transform var(--transition-slow);
+}
+
+@media (min-width: 768px) {
+  .sobe-post-row--has-image .sobe-post-row__media {
+    width: 46%;
+    min-height: 340px;
+  }
+
+  .sobe-post-row--has-image .sobe-post-row__media .sobe-post-row__img {
+    height: 100%;
+  }
+}
+
+.sobe-post-row__media:hover .sobe-post-row__img {
+  transform: scale(1.03);
+}
+
+.sobe-post-row__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.sobe-post-row__category {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+.sobe-post-row__title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 3vw, 3rem);
+  font-weight: var(--font-normal);
+  line-height: 1.1;
+  margin: 0;
+}
+
+.sobe-post-row__title a {
+  color: var(--c-heading);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.sobe-post-row__title a:hover {
+  color: var(--c-text-muted);
+}
+
+.sobe-post-row__excerpt {
+  color: var(--c-text-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.sobe-post-row__cta {
+  align-self: flex-start;
+  margin-top: var(--space-sm);
+  color: var(--c-text);
+  font-size: var(--text-sm);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-color: var(--c-border);
+  transition:
+    color var(--transition-fast),
+    text-decoration-color var(--transition-fast);
+}
+
+.sobe-post-row__cta:hover {
+  color: var(--c-accent);
+  text-decoration-color: var(--c-accent);
 }

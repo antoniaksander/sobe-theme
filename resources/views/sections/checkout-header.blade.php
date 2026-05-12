@@ -13,7 +13,26 @@
     </a>
 
     <a class="justify-self-center font-semibold text-lg text-heading" href="{{ home_url('/') }}">
-      {{ $siteName }}
+      @if ($logo)
+        <img
+          class="!h-8 w-auto max-w-[140px] object-contain"
+          src="{{ $logo }}"
+          alt="{{ $siteName }}"
+          x-show="!dark"
+        />
+      @endif
+      @if ($darkLogo)
+        <img
+          class="!h-8 w-auto max-w-[140px] object-contain"
+          src="{{ $darkLogo }}"
+          alt="{{ $siteName }}"
+          x-show="dark"
+          x-cloak
+        />
+      @endif
+      @if (!$logo && !$darkLogo)
+        {{ $siteName }}
+      @endif
     </a>
 
   </div>

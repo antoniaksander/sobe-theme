@@ -35,19 +35,12 @@ class CatalogFilters extends Composer
 
         $brands = [];
         if ($showBrands && taxonomy_exists($brandsTaxonomy)) {
-            if (is_tax($brandsTaxonomy)) {
-                $currentTerm = get_queried_object();
-                $brands = ($currentTerm instanceof \WP_Term && $currentTerm->taxonomy === $brandsTaxonomy)
-                    ? [$currentTerm]
-                    : [];
-            } else {
-                $brandTerms = get_terms([
-                    'taxonomy' => $brandsTaxonomy,
-                    'hide_empty' => false,
-                    'orderby' => 'name',
-                ]);
-                $brands = is_wp_error($brandTerms) ? [] : (array) $brandTerms;
-            }
+            $brandTerms = get_terms([
+                'taxonomy' => $brandsTaxonomy,
+                'hide_empty' => false,
+                'orderby' => 'name',
+            ]);
+            $brands = is_wp_error($brandTerms) ? [] : (array) $brandTerms;
 
             // Compute accurate published-product counts via a single JOIN query
             if (! empty($brands)) {
@@ -72,25 +65,38 @@ class CatalogFilters extends Composer
 
         $attributeGroups = [];
         if ($showAttributes && function_exists('wc_get_attribute_taxonomies')) {
-            foreach (wc_get_attribute_taxonomies() as $attr) {
-                $taxonomy = wc_attribute_taxonomy_name($attr->attribute_name);
-                $terms = get_terms(['taxonomy' => $taxonomy, 'hide_empty' => true]);
-                if (! is_wp_error($terms) && ! empty($terms)) {
-                    $attr->terms = $terms;
-                    $attributeGroups[] = $attr;
+            $attrCacheKey = 'sobe_catalog_attribute_groups';
+            $cached = wp_cache_get($attrCacheKey);
+            if ($cached !== false) {
+                $attributeGroups = $cached;
+            } else {
+                foreach (wc_get_attribute_taxonomies() as $attr) {
+                    $taxonomy = wc_attribute_taxonomy_name($attr->attribute_name);
+                    $terms = get_terms(['taxonomy' => $taxonomy, 'hide_empty' => true]);
+                    if (! is_wp_error($terms) && ! empty($terms)) {
+                        $attr->terms = $terms;
+                        $attributeGroups[] = $attr;
+                    }
                 }
+                wp_cache_set($attrCacheKey, $attributeGroups, '', HOUR_IN_SECONDS);
             }
         }
 
         $priceRange = (object) ['min' => 0, 'max' => 1000];
         if ($showPriceRange) {
-            $row = $wpdb->get_row(
-                "SELECT MIN(meta_value+0) AS min_price, MAX(meta_value+0) AS max_price
-                 FROM {$wpdb->postmeta}
-                 WHERE meta_key = '_price'
-                 AND meta_value != ''
-                 AND meta_value IS NOT NULL"
-            );
+            $priceCacheKey = 'sobe_price_range';
+            $row = wp_cache_get($priceCacheKey);
+            if ($row === false) {
+                $row = $wpdb->get_row($wpdb->prepare(
+                    "SELECT MIN(meta_value+0) AS min_price, MAX(meta_value+0) AS max_price
+                     FROM {$wpdb->postmeta}
+                     WHERE meta_key = %s
+                     AND meta_value != ''
+                     AND meta_value IS NOT NULL",
+                    '_price'
+                ));
+                wp_cache_set($priceCacheKey, $row, '', HOUR_IN_SECONDS);
+            }
             if ($row) {
                 $priceRange = (object) [
                     'min' => (float) ($row->min_price ?? 0),
@@ -100,6 +106,19 @@ class CatalogFilters extends Composer
         }
 
         $activeFilters = $this->parseActiveFilters();
+
+        // On a brand archive page, pre-check the current brand and force-open the accordion
+        // so the user immediately sees which brand they're browsing and can scroll the list.
+        $brandsOpenByDefault = ! $collapseByDefault;
+        if ($showBrands && is_tax($brandsTaxonomy)) {
+            $currentTerm = get_queried_object();
+            if ($currentTerm instanceof \WP_Term && $currentTerm->taxonomy === $brandsTaxonomy) {
+                if (empty($activeFilters[$brandsTaxonomy])) {
+                    $activeFilters[$brandsTaxonomy] = [$currentTerm->slug];
+                }
+                $brandsOpenByDefault = true;
+            }
+        }
 
         return compact(
             'categories',
@@ -112,7 +131,8 @@ class CatalogFilters extends Composer
             'showAttributes',
             'showPriceRange',
             'collapseByDefault',
-            'brandsTaxonomy'
+            'brandsTaxonomy',
+            'brandsOpenByDefault'
         );
     }
 

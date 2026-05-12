@@ -33,6 +33,18 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Validate environment parity (.site-requirements.json)
+        run: |
+          REQ_PHP=$(jq -r '.php' .site-requirements.json)
+          REQ_NODE=$(jq -r '.node' .site-requirements.json)
+          ACTUAL_PHP=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
+          ACTUAL_NODE=$(node -e "process.stdout.write(process.versions.node.split('.')[0])")
+          echo "Required: PHP=$REQ_PHP Node=$REQ_NODE"
+          echo "Actual:   PHP=$ACTUAL_PHP Node=$ACTUAL_NODE"
+          [ "$ACTUAL_PHP" = "$REQ_PHP" ] || { echo "::error::PHP mismatch (need $REQ_PHP, got $ACTUAL_PHP)"; exit 1; }
+          [ "$ACTUAL_NODE" = "$REQ_NODE" ] || { echo "::error::Node mismatch (need $REQ_NODE, got $ACTUAL_NODE)"; exit 1; }
+          echo "✓ Environment matches .site-requirements.json"
+
       - name: Build (bundle size check runs inside Vite)
         run: npm run build
 
