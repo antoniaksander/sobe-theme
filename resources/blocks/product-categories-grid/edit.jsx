@@ -11,12 +11,55 @@ const {
   SelectControl,
   ToggleControl,
   Button,
+  Dropdown,
+  CheckboxControl,
+  TextControl,
 } = wp.components;
 const { __, sprintf, _n } = wp.i18n;
 const { useState, useEffect } = wp.element;
 const { useSelect } = wp.data;
 
 import './editor.scss';
+
+const TERMS_PER_PAGE = 100;
+const TERMS_MAX_PAGES = 200;
+
+async function fetchAllProductCategories() {
+  const all = [];
+  let page = 1;
+
+  while (page <= TERMS_MAX_PAGES) {
+    const path =
+      `/wp/v2/product_cat?per_page=${TERMS_PER_PAGE}&page=${page}` +
+      '&orderby=name&order=asc&hide_empty=false';
+
+    let batch;
+
+    try {
+      batch = await wp.apiFetch({ path });
+    } catch (err) {
+      // WordPress returns this once we request the page after the last full page.
+      if (page > 1 && err?.code === 'rest_post_invalid_page_number') {
+        break;
+      }
+      throw err;
+    }
+
+    if (!Array.isArray(batch) || batch.length === 0) {
+      break;
+    }
+
+    all.push(...batch);
+
+    if (batch.length < TERMS_PER_PAGE) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  return all;
+}
 
 function normalizeItems(items) {
   if (!Array.isArray(items)) {
@@ -107,21 +150,94 @@ function CategoryCardEditor({ row, terms, onRemove, onImage, onClearOverride }) 
   );
 }
 
+function CategoryPickerBody({ loadState, terms, termsError, items, toggleTerm, onRetry }) {
+  if (loadState === 'loading') {
+    return (
+      <p className="components-base-control__help sobe-product-categories-grid-editor__picker-status">
+        {__('Loading categories…', 'sobe')}
+      </p>
+    );
+  }
+
+  if (loadState === 'error') {
+    return (
+      <div className="sobe-product-categories-grid-editor__picker-error">
+        <p className="components-base-control__help" style={{ margin: '0 0 8px' }}>
+          {termsError
+            || __('Could not load categories. Check your connection and try again.', 'sobe')}
+        </p>
+        <Button variant="secondary" onClick={onRetry} size="small">
+          {__('Retry', 'sobe')}
+        </Button>
+      </div>
+    );
+  }
+
+  if (!Array.isArray(terms) || terms.length === 0) {
+    return (
+      <p className="components-base-control__help sobe-product-categories-grid-editor__picker-status">
+        {__('No product categories found.', 'sobe')}
+      </p>
+    );
+  }
+
+  return terms.map((t) => (
+    <CheckboxControl
+      key={t.id}
+      label={t.name}
+      checked={items.some((i) => i.termId === t.id)}
+      onChange={(checked) => toggleTerm(t.id, checked)}
+      __nextHasNoMarginBottom
+    />
+  ));
+}
+
 export default function Edit({ attributes, setAttributes }) {
-  const { layout, enableHoverEffects, items: rawItems } = attributes;
+  const { layout, enableHoverEffects, items: rawItems, heading, paragraph } = attributes;
   const items = normalizeItems(rawItems);
 
   const [terms, setTerms] = useState([]);
+  const [loadState, setLoadState] = useState('loading');
+  const [termsError, setTermsError] = useState(null);
+  const [fetchKey, setFetchKey] = useState(0);
 
   useEffect(() => {
-    wp.apiFetch({
-      path: '/wp/v2/product_cat?per_page=100&orderby=name&order=asc&hide_empty=false',
-    })
-      .then(setTerms)
-      .catch(() => setTerms([]));
-  }, []);
+    let cancelled = false;
 
-  const addableTerms = terms.filter((t) => !items.some((i) => i.termId === t.id));
+    setLoadState('loading');
+    setTermsError(null);
+
+    fetchAllProductCategories()
+      .then((data) => {
+        if (cancelled) {
+          return;
+        }
+        setTerms(Array.isArray(data) ? data : []);
+        setLoadState('ready');
+      })
+      .catch((err) => {
+        if (cancelled) {
+          return;
+        }
+        setTerms([]);
+        setTermsError(
+          err && typeof err.message === 'string' && err.message
+            ? err.message
+            : null,
+        );
+        setLoadState('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchKey]);
+
+  useEffect(() => {
+    if (attributes.layout === 'stack') {
+      setAttributes({ layout: 'uniform-2' });
+    }
+  }, [attributes.layout]);
 
   const blockProps = useBlockProps({
     className: 'sobe-product-categories-grid-editor',
@@ -132,17 +248,26 @@ export default function Edit({ attributes, setAttributes }) {
     { value: 'uniform-2', label: __('Two equal columns', 'sobe') },
     { value: 'columns-4', label: __('Four columns (wide screens)', 'sobe') },
     { value: 'hero-follow', label: __('Hero row + grid', 'sobe') },
-    { value: 'split-tall-left', label: __('Tall column + stack', 'sobe') },
-    { value: 'stack', label: __('Stacked list', 'sobe') },
+    {
+      value: 'split-tall-left',
+      label: __('Tall left column + right pairs', 'sobe'),
+    },
   ];
 
-  function addTerm(termId) {
-    const id = parseInt(termId, 10);
-    if (!id) {
+  const termsForCards = loadState === 'ready' ? terms : [];
+
+  function toggleTerm(termId, checked) {
+    if (checked) {
+      if (items.some((i) => i.termId === termId)) {
+        return;
+      }
+      setAttributes({
+        items: [...items, { termId, imageId: 0 }],
+      });
       return;
     }
     setAttributes({
-      items: [...items, { termId: id, imageId: 0 }],
+      items: items.filter((i) => i.termId !== termId),
     });
   }
 
@@ -168,6 +293,26 @@ export default function Edit({ attributes, setAttributes }) {
   return (
     <>
       <InspectorControls>
+        <PanelBody title={__('Content', 'sobe')} initialOpen={false}>
+          <TextControl
+            label={__('Heading', 'sobe')}
+            value={heading ?? ''}
+            onChange={(val) => setAttributes({ heading: val })}
+            placeholder={__('Section title…', 'sobe')}
+            __nextHasNoMarginBottom
+            __next40pxDefaultSize
+          />
+          <div style={{ marginTop: 12 }}>
+            <TextControl
+              label={__('Description', 'sobe')}
+              value={paragraph ?? ''}
+              onChange={(val) => setAttributes({ paragraph: val })}
+              placeholder={__('Supporting text…', 'sobe')}
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+            />
+          </div>
+        </PanelBody>
         <PanelBody title={__('Layout', 'sobe')} initialOpen={true}>
           <PanelRow>
             <SelectControl
@@ -190,31 +335,62 @@ export default function Edit({ attributes, setAttributes }) {
         </PanelBody>
         <PanelBody title={__('Categories', 'sobe')} initialOpen={true}>
           <PanelRow>
-            <SelectControl
-              key={`add-cat-${items.length}`}
-              label={__('Add category', 'sobe')}
-              value=""
-              options={[
-                { label: __('— Choose —', 'sobe'), value: '' },
-                ...addableTerms.map((t) => ({ label: t.name, value: String(t.id) })),
-              ]}
-              onChange={addTerm}
-              __next40pxDefaultSize
-              __nextHasNoMarginBottom
+            <Dropdown
+              popoverProps={{ placement: 'bottom-start' }}
+              contentClassName="sobe-product-categories-grid-editor__dropdown"
+              renderToggle={({ isOpen, onToggle }) => (
+                <Button
+                  variant="secondary"
+                  onClick={onToggle}
+                  aria-expanded={isOpen}
+                  __next40pxDefaultSize
+                >
+                  {sprintf(__('Categories (%d)', 'sobe'), items.length)}
+                </Button>
+              )}
+              renderContent={() => (
+                <div
+                  className="sobe-product-categories-grid-editor__picker"
+                  role="group"
+                  aria-label={__('Product categories', 'sobe')}
+                >
+                  <CategoryPickerBody
+                    loadState={loadState}
+                    terms={terms}
+                    termsError={termsError}
+                    items={items}
+                    toggleTerm={toggleTerm}
+                    onRetry={() => {
+                      setFetchKey((k) => k + 1);
+                    }}
+                  />
+                </div>
+              )}
             />
           </PanelRow>
-          {addableTerms.length === 0 && terms.length > 0 && (
-            <p className="components-base-control__help" style={{ marginTop: 8 }}>
-              {__('All loaded categories are already in the grid.', 'sobe')}
-            </p>
-          )}
+          <p className="components-base-control__help" style={{ marginTop: 4 }}>
+            {__(
+              'Open the list and tick categories to include. Each new selection is added to the end of the grid.',
+              'sobe',
+            )}
+          </p>
         </PanelBody>
       </InspectorControls>
 
       <div {...blockProps}>
+        {(heading || paragraph) && (
+          <div className="sobe-product-categories-grid-editor__section-header">
+            {heading ? (
+              <p className="sobe-product-categories-grid-editor__section-heading">{heading}</p>
+            ) : null}
+            {paragraph ? (
+              <p className="sobe-product-categories-grid-editor__section-desc">{paragraph}</p>
+            ) : null}
+          </div>
+        )}
         {items.length === 0 ? (
           <p style={{ margin: 0, color: 'var(--c-text-muted)' }}>
-            {__('Add product categories from the sidebar.', 'sobe')}
+            {__('Open “Categories” in the sidebar and tick one or more categories.', 'sobe')}
           </p>
         ) : (
           <ul className="sobe-product-categories-grid-editor__cards">
@@ -222,7 +398,7 @@ export default function Edit({ attributes, setAttributes }) {
               <CategoryCardEditor
                 key={`${row.termId}-${index}`}
                 row={row}
-                terms={terms}
+                terms={termsForCards}
                 onRemove={() => removeAt(index)}
                 onImage={(media) => setItemImage(index, media)}
                 onClearOverride={() => clearOverride(index)}

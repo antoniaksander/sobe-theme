@@ -10,6 +10,8 @@
     "attributes": {
       "layout": "bento-alternating",
       "enableHoverEffects": true,
+      "heading": "Shop by category",
+      "paragraph": "Browse our curated collections.",
       "items": []
     }
   },
@@ -32,8 +34,7 @@
         "uniform-2",
         "columns-4",
         "hero-follow",
-        "split-tall-left",
-        "stack"
+        "split-tall-left"
       ],
       "default": "bento-alternating"
     },
@@ -44,6 +45,14 @@
     "items": {
       "type": "array",
       "default": []
+    },
+    "heading": {
+      "type": "string",
+      "default": ""
+    },
+    "paragraph": {
+      "type": "string",
+      "default": ""
     }
   }
 }

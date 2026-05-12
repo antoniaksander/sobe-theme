@@ -1,51 +1,145 @@
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+
 // product-categories-grid — uses --sobe-cat-grid-* from tokens.css
 
 .sobe-product-categories-grid {
   container-type: inline-size;
+  padding-top: var(--sobe-cat-grid-section-pt);
+  padding-bottom: var(--sobe-cat-grid-section-pb);
+}
+
+.sobe-product-categories-grid__inner {
+  position: relative;
+}
+
+.sobe-pc-grid-swiper {
+  overflow: hidden;
+
+  @media (min-width: 48rem) {
+    overflow: visible;
+  }
+}
+
+.sobe-pc-grid-swiper .swiper-slide {
+  height: auto;
 }
 
 .sobe-product-categories-grid__list {
-  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
   gap: var(--sobe-cat-grid-gap);
 }
 
-/* ── Layout: uniform 2 columns ─────────────────────────────────────────────── */
-.sobe-product-categories-grid--layout-uniform-2 .sobe-product-categories-grid__list {
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: minmax(var(--sobe-cat-grid-min-cell), auto);
-}
+@media (max-width: 47.99rem) {
+  .sobe-pc-grid-swiper:not(.swiper-initialized) .sobe-product-categories-grid__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sobe-cat-grid-gap);
+  }
 
-/* ── Layout: 2 → 4 columns by breakpoint ───────────────────────────────────── */
-.sobe-product-categories-grid--layout-columns-4 .sobe-product-categories-grid__list {
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: minmax(var(--sobe-cat-grid-min-cell), auto);
+  /* Portrait cards on small screens (slider + no-JS stack) */
+  .sobe-pc-grid-swiper .sobe-pc-card__link {
+    min-height: unset;
+    aspect-ratio: var(--sobe-cat-grid-mobile-slide-aspect);
+    width: 100%;
+  }
 
-  @media (min-width: 64rem) {
-    grid-template-columns: repeat(4, 1fr);
+  .sobe-pc-grid-swiper .sobe-pc-card__placeholder {
+    min-height: 0;
   }
 }
 
-/* ── Layout: large hero tile then smaller tiles ───────────────────────────── */
-.sobe-product-categories-grid--layout-hero-follow .sobe-product-categories-grid__list {
-  grid-template-columns: 1fr;
+/* ── Mobile nav: only after Swiper init (avoids dead controls without JS) ─ */
+.sobe-pc-grid-nav {
+  position: absolute;
+  top: 50%;
+  z-index: calc(var(--z-sticky) + 1);
+  display: none;
+  width: 2.5rem;
+  height: 2.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-full);
+  background: var(--c-surface-1);
+  color: var(--c-text);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transform: translateY(-50%);
 
   @media (min-width: 48rem) {
-    grid-template-columns: repeat(2, 1fr);
+    display: none !important;
   }
 
-  .sobe-pc-card:first-child {
-    @media (min-width: 48rem) {
+  &:hover {
+    background: var(--c-surface-2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--c-ring);
+    outline-offset: 2px;
+  }
+
+  /* Swiper Navigation: hide prev on first slide, next on last */
+  &.swiper-button-disabled {
+    display: none !important;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .sobe-product-categories-grid__inner:has(.sobe-pc-grid-swiper.swiper-initialized)
+    .sobe-pc-grid-nav {
+    display: flex;
+  }
+}
+
+.sobe-pc-grid-nav--prev {
+  left: 0;
+}
+
+.sobe-pc-grid-nav--next {
+  right: 0;
+}
+
+@media (max-width: 47.99rem) {
+  .sobe-pc-grid-swiper.swiper-initialized {
+    padding-inline: 2.75rem;
+  }
+}
+
+/* ── Desktop: CSS grid layouts ─────────────────────────────────────────────── */
+@media (min-width: 48rem) {
+  .sobe-pc-grid-swiper .sobe-product-categories-grid__list {
+    display: grid;
+  }
+
+  .sobe-product-categories-grid--layout-uniform-2 .sobe-product-categories-grid__list {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(var(--sobe-cat-grid-min-cell), auto);
+  }
+
+  .sobe-product-categories-grid--layout-columns-4 .sobe-product-categories-grid__list {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-rows: minmax(var(--sobe-cat-grid-min-cell), auto);
+
+    @media (min-width: 64rem) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  .sobe-product-categories-grid--layout-hero-follow .sobe-product-categories-grid__list {
+    grid-template-columns: repeat(2, 1fr);
+
+    .sobe-pc-card:first-child {
       grid-column: 1 / -1;
       min-height: clamp(14rem, 36vw, 22rem);
     }
   }
-}
 
-/* ── Layout: tall leading column + stacked remainder ───────────────────────── */
-.sobe-product-categories-grid--layout-split-tall-left .sobe-product-categories-grid__list {
-  grid-template-columns: 1fr;
-
-  @media (min-width: 48rem) {
+  .sobe-product-categories-grid--layout-split-tall-left .sobe-product-categories-grid__list {
     grid-template-columns: 1fr 1fr;
     grid-template-rows: repeat(2, minmax(var(--sobe-cat-grid-min-cell), auto));
     grid-auto-flow: dense;
@@ -55,82 +149,46 @@
       min-height: 100%;
     }
   }
-}
-
-/* ── Layout: single column stack ───────────────────────────────────────────── */
-.sobe-product-categories-grid--layout-stack .sobe-product-categories-grid__list {
-  grid-template-columns: 1fr;
-  grid-auto-rows: minmax(10rem, auto);
-}
-
-/* ── Layout: bento (reference) — exact rhythm for four categories ─────────── */
-.sobe-product-categories-grid--layout-bento-alternating.sobe-product-categories-grid--items-4
-  .sobe-product-categories-grid__list {
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: repeat(4, minmax(4.5rem, 1fr));
-  min-height: clamp(22rem, 52vw, 34rem);
-
-  .sobe-pc-card:nth-child(1) {
-    grid-column: 1;
-    grid-row: 1 / span 4;
-  }
-
-  .sobe-pc-card:nth-child(2) {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .sobe-pc-card:nth-child(3) {
-    grid-column: 2;
-    grid-row: 2;
-  }
-
-  .sobe-pc-card:nth-child(4) {
-    grid-column: 2;
-    grid-row: 3 / span 2;
-  }
-}
-
-/* Bento: other counts — alternating tall cells on a 2-column dense grid */
-.sobe-product-categories-grid--layout-bento-alternating:not(.sobe-product-categories-grid--items-4)
-  .sobe-product-categories-grid__list {
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-flow: dense;
-  grid-auto-rows: minmax(var(--sobe-cat-grid-min-cell), auto);
-
-  .sobe-pc-card:nth-child(4n + 1) {
-    grid-row: span 2;
-  }
-
-  .sobe-pc-card:nth-child(4n) {
-    grid-row: span 2;
-  }
-}
-
-/* ── Narrow screens: stack complex grids ───────────────────────────────────── */
-@media (max-width: 47.99rem) {
-  .sobe-product-categories-grid--layout-uniform-2 .sobe-product-categories-grid__list,
-  .sobe-product-categories-grid--layout-columns-4 .sobe-product-categories-grid__list,
-  .sobe-product-categories-grid--layout-split-tall-left .sobe-product-categories-grid__list,
-  .sobe-product-categories-grid--layout-bento-alternating .sobe-product-categories-grid__list {
-    grid-template-columns: 1fr;
-  }
 
   .sobe-product-categories-grid--layout-bento-alternating.sobe-product-categories-grid--items-4
     .sobe-product-categories-grid__list {
-    grid-template-rows: auto;
-    min-height: 0;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, minmax(4.5rem, 1fr));
+    min-height: clamp(22rem, 52vw, 34rem);
 
-    .sobe-pc-card:nth-child(n) {
-      grid-column: auto;
-      grid-row: auto;
+    .sobe-pc-card:nth-child(1) {
+      grid-column: 1;
+      grid-row: 1 / span 4;
+    }
+
+    .sobe-pc-card:nth-child(2) {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .sobe-pc-card:nth-child(3) {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .sobe-pc-card:nth-child(4) {
+      grid-column: 2;
+      grid-row: 3 / span 2;
     }
   }
 
-  .sobe-product-categories-grid--layout-split-tall-left .sobe-product-categories-grid__list {
-    .sobe-pc-card:first-child {
-      grid-row: auto;
-      min-height: 0;
+  .sobe-product-categories-grid--layout-bento-alternating:not(.sobe-product-categories-grid--items-4)
+    .sobe-product-categories-grid__list {
+    grid-template-columns: repeat(2, 1fr);
+    grid-auto-flow: dense;
+    grid-auto-rows: minmax(var(--sobe-cat-grid-min-cell), auto);
+
+    .sobe-pc-card:nth-child(4n + 1) {
+      grid-row: span 2;
+    }
+
+    .sobe-pc-card:nth-child(4n) {
+      grid-row: span 2;
     }
   }
 }
@@ -213,16 +271,17 @@
 }
 
 .sobe-pc-card__text {
-  position: relative;
+  position: absolute;
+  inset: 0;
   z-index: 2;
   display: flex;
-  min-height: inherit;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
   padding: var(--space-md);
   text-align: center;
+  pointer-events: none;
 }
 
 .sobe-pc-card__count {

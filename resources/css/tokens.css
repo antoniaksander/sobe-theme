@@ -74,6 +74,11 @@
   --sobe-cat-grid-radius: var(--radius-xl);
   --sobe-cat-grid-min-cell: clamp(7.5rem, 18vw, 11rem);
   --sobe-cat-grid-zoom-hover: 1.08;
+  /* Block section inset (matches common 2rem band in app.css section rhythm) */
+  --sobe-cat-grid-section-pt: 2rem;
+  --sobe-cat-grid-section-pb: 2rem;
+  /* Mobile slider: portrait tile (height > width) */
+  --sobe-cat-grid-mobile-slide-aspect: 3 / 4;
 
   --wc-product-card-title-color: var(--c-heading);
   --wc-product-card-title-size: 1rem;
