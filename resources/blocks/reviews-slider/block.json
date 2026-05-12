@@ -77,6 +77,11 @@
       "type": "string",
       "default": ""
     },
+    "headerAlignment": {
+      "type": "string",
+      "enum": ["left", "center", "right"],
+      "default": "center"
+    },
     "reviews": {
       "type": "array",
       "default": [],

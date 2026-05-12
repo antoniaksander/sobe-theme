@@ -48,6 +48,7 @@ export default function Edit({ attributes, setAttributes }) {
     autoplayDelay,
     heading,
     paragraph,
+    headerAlignment,
     reviews,
   } = attributes;
 
@@ -198,6 +199,19 @@ export default function Edit({ attributes, setAttributes }) {
 
         {/* ── Section header ───────────────────────────────────────────── */}
         <PanelBody title={__('Section Header', 'sage')} initialOpen={false}>
+          <SelectControl
+            label={__('Header alignment', 'sage')}
+            value={headerAlignment}
+            options={[
+              { label: __('Left', 'sage'), value: 'left' },
+              { label: __('Center', 'sage'), value: 'center' },
+              { label: __('Right', 'sage'), value: 'right' },
+            ]}
+            onChange={(val) => setAttributes({ headerAlignment: val })}
+            __nextHasNoMarginBottom
+            __next40pxDefaultSize
+          />
+          <div style={{ marginTop: '8px' }}>
           <TextControl
             label={__('Heading', 'sage')}
             value={heading}
@@ -206,6 +220,7 @@ export default function Edit({ attributes, setAttributes }) {
             __nextHasNoMarginBottom
             __next40pxDefaultSize
           />
+          </div>
           <div style={{ marginTop: '8px' }}>
             <TextControl
               label={__('Sub-text', 'sage')}
@@ -324,7 +339,7 @@ export default function Edit({ attributes, setAttributes }) {
       <div {...blockProps}>
 
         {(heading || paragraph) && (
-          <div style={{ marginBottom: '24px' }}>
+          <div style={{ marginBottom: '24px', textAlign: headerAlignment }}>
             {heading && <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: '18px', color: '#0f0f1c' }}>{heading}</p>}
             {paragraph && <p style={{ margin: 0, fontSize: '13px', color: '#6b6b82' }}>{paragraph}</p>}
           </div>
@@ -372,8 +387,8 @@ export default function Edit({ attributes, setAttributes }) {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden' }}>
 
               {/* Left — review text */}
-              <div style={{ background: 'var(--c-surface-invert, #1a1a2e)', padding: '40px 36px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                <div>
+              <div style={{ background: 'var(--c-surface-invert, #1a1a2e)', padding: '40px 36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '100%', maxWidth: '30rem' }}>
                   <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
                     {STARS.map((n) => (
                       <svg key={n} width="18" height="18" viewBox="0 0 24 24"
@@ -387,8 +402,6 @@ export default function Edit({ attributes, setAttributes }) {
                   <p style={{ fontSize: '18px', lineHeight: '1.6', fontStyle: 'italic', color: 'var(--c-surface-invert-fg, #f4f3f2)', margin: '0 0 24px', letterSpacing: '-0.01em' }}>
                     "{current?.text || __('Add review text in the sidebar…', 'sage')}"
                   </p>
-                </div>
-                <div>
                   <p style={{ margin: '0 0 20px', fontSize: '13px', fontWeight: 600, color: '#9494a8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     — {current?.author || __('Reviewer name', 'sage')}
                   </p>
@@ -401,7 +414,6 @@ export default function Edit({ attributes, setAttributes }) {
                       style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#f4f3f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
-                    <span style={{ fontSize: '11px', color: '#6b6b82', marginLeft: '4px' }}>{previewIndex + 1} / {total}</span>
                   </div>
                 </div>
               </div>
