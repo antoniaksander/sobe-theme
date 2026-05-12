@@ -5,13 +5,22 @@
   "version": "0.1.0",
   "title": "Brand Carousel",
   "icon": "screenoptions",
-  "category": "sobe-sliders",
+  "category": "sobe-woocommerce",
   "description": "Endless CSS marquee of brand logos with WebGL liquid-shimmer hover effect.",
   "example": {
     "attributes": {
-      "useManualEntry": false,
+      "useManualEntry": true,
       "speed": "30s",
-      "pauseOnHover": true
+      "pauseOnHover": true,
+      "showImages": false,
+      "brands": [
+        { "id": "1", "name": "Acme", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "2", "name": "Globex", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "3", "name": "Initech", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "4", "name": "Umbrella", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "5", "name": "Soylent", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "6", "name": "Meridian", "imageUrl": "", "imageAlt": "", "link": "" }
+      ]
     }
   },
   "supports": {

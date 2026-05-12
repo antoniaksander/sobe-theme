@@ -5,7 +5,13 @@
   "version": "0.1.0",
   "title": "Our Brands",
   "category": "sobe-woocommerce",
-  "description": "",
+  "description": "Alphabetical brand directory pulled from the WooCommerce product_brand taxonomy.",
+  "example": {
+    "attributes": {
+      "showLogos": false,
+      "hideEmpty": true
+    }
+  },
   "textdomain": "sage",
   "supports": {
     "html": false,

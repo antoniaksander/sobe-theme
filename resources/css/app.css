@@ -29,23 +29,10 @@ body.single-post {
   margin-right: 0 !important;
 }
 
-/* 2. Text (48rem) and Wide (80rem) blocks get safe mobile padding */
+/* 2. Block children never add their own inline padding — the wrapping
+   <x-section> container (px-6 lg:px-8) is the single source of padding. */
 .is-layout-constrained > :not(.alignfull) {
-  padding-inline: 1rem;
-}
-
-@media (min-width: 1024px) {
-  .is-layout-constrained > :not(.alignfull) {
-    padding-inline: 2rem;
-  }
-
-  /* WooCommerce functional pages (cart, checkout, account/wishlist) manage
-     their own layout — strip the desktop padding so nothing doubles up. */
-  body.woocommerce-cart .is-layout-constrained > :not(.alignfull),
-  body.woocommerce-checkout .is-layout-constrained > :not(.alignfull),
-  body.woocommerce-account .is-layout-constrained > :not(.alignfull) {
-    padding-inline: 0;
-  }
+  padding-inline: 0;
 }
 
 /* ── Front-page layout: wrapper has no dimensions so the hero (w-full) fills

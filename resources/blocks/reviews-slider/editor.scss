@@ -1,0 +1,11 @@
+.sobe-reviews-slider-editor {
+  .wp-block & {
+    padding: 0;
+  }
+
+  // Reset Gutenberg's default block outline on the dark canvas
+  &.wp-block:focus,
+  &.wp-block:focus-visible {
+    outline-offset: 4px;
+  }
+}

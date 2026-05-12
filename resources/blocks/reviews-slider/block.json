@@ -1,0 +1,99 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/reviews-slider",
+  "version": "0.1.0",
+  "title": "Reviews Slider",
+  "icon": "format-quote",
+  "category": "sobe-woocommerce",
+  "description": "Full-width testimonial/review slider. Auto-advances with prev/next navigation. Fetches real WooCommerce reviews or accepts manual entries.",
+  "example": {
+    "attributes": {
+      "heading": "What Our Customers Say",
+      "paragraph": "Real reviews from real people.",
+      "dataMode": "manual",
+      "autoplayDelay": 5000,
+      "reviews": [
+        {
+          "id": "ex1",
+          "rating": 5,
+          "text": "Absolutely love this product. The quality exceeded my expectations — I've already recommended it to three friends.",
+          "author": "Sarah M.",
+          "productTitle": "Premium Leather Bag",
+          "productUrl": "#",
+          "imageUrl": "",
+          "imageId": 0,
+          "imageAlt": ""
+        },
+        {
+          "id": "ex2",
+          "rating": 5,
+          "text": "Fast delivery, beautiful packaging, and the product itself is stunning. Will definitely order again.",
+          "author": "James K.",
+          "productTitle": "Merino Wool Scarf",
+          "productUrl": "#",
+          "imageUrl": "",
+          "imageId": 0,
+          "imageAlt": ""
+        }
+      ]
+    }
+  },
+  "textdomain": "sage",
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "className": true,
+    "align": ["wide", "full"]
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    },
+    "dataMode": {
+      "type": "string",
+      "enum": ["auto", "products", "manual"],
+      "default": "auto"
+    },
+    "productIds": {
+      "type": "array",
+      "default": [],
+      "items": { "type": "number" }
+    },
+    "wcReviewCount": {
+      "type": "number",
+      "default": 8
+    },
+    "autoplayDelay": {
+      "type": "number",
+      "default": 5000
+    },
+    "heading": {
+      "type": "string",
+      "default": ""
+    },
+    "paragraph": {
+      "type": "string",
+      "default": ""
+    },
+    "reviews": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "id":           { "type": "string" },
+          "rating":       { "type": "number" },
+          "text":         { "type": "string" },
+          "author":       { "type": "string" },
+          "productTitle": { "type": "string" },
+          "productUrl":   { "type": "string" },
+          "imageId":      { "type": "number" },
+          "imageUrl":     { "type": "string" },
+          "imageAlt":     { "type": "string" }
+        }
+      }
+    }
+  }
+}

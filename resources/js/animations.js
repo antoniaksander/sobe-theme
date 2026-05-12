@@ -14,6 +14,19 @@ const presets = {
 // Query only elements not yet processed — makes this function safe to call
 // repeatedly after WooCommerce AJAX updates without duplicating animations.
 function initAnimationBus() {
+  // Bridge: `.animate-{preset}` CSS classes (added via block editor's
+  // "Additional CSS class(es)" field) are converted to data-animate so the
+  // standard preset handler picks them up without any extra logic.
+  const classSelector = Object.keys(presets)
+    .map((p) => `.animate-${p}:not([data-animate])`)
+    .join(',');
+  document.querySelectorAll(classSelector).forEach((el) => {
+    const type = Object.keys(presets).find((p) =>
+      el.classList.contains(`animate-${p}`),
+    );
+    if (type) el.dataset.animate = type;
+  });
+
   gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
     const elements = document.querySelectorAll(
       '[data-animate]:not([data-animated])',

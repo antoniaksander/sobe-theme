@@ -39,22 +39,37 @@ export default function Edit({ attributes, setAttributes }) {
       </InspectorControls>
 
       <div {...blockProps}>
-        <div style={{
-          padding: '2.5rem',
-          background: '#f8f9fa',
-          border: '2px dashed #cbd5e1',
-          borderRadius: '0.5rem',
-          textAlign: 'center',
-        }}>
-          <p style={{ margin: '0 0 4px', fontWeight: 600, color: '#0f172a', fontSize: '14px' }}>
-            {__('Our Brands — A–Z directory', 'sage')}
-          </p>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>
-            {showLogos
-              ? __('Logos + names · alphabetical', 'sage')
-              : __('Names only · alphabetical', 'sage')}
-            {hideEmpty ? '' : __(` · including empty`, 'sage')}
-          </p>
+        {/* Alphabet nav */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '10px', marginBottom: '16px' }}>
+          {'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map((l, i) => (
+            <span key={l} style={{ fontSize: '11px', fontWeight: 500, color: i === 0 ? '#0f172a' : '#94a3b8', borderBottom: i === 0 ? '2px solid #e11d48' : '2px solid transparent', paddingBottom: '2px', letterSpacing: '0.05em' }}>{l}</span>
+          ))}
+        </div>
+
+        {/* Letter section A */}
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '40px', fontWeight: 700, color: '#0f172a', lineHeight: 1, marginBottom: '12px' }}>A</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px 16px' }}>
+            {['Acme Corp', 'Aero', 'Apex', 'Arken', 'Axon'].map((name) => (
+              <span key={name} style={{ fontSize: '12px', color: '#475569' }}>
+                {showLogos && <span style={{ display: 'block', width: '48px', height: '20px', background: '#e2e8f0', borderRadius: '3px', marginBottom: '4px' }} />}
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* Letter section B */}
+        <div>
+          <div style={{ fontSize: '40px', fontWeight: 700, color: '#0f172a', lineHeight: 1, marginBottom: '12px' }}>B</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px 16px' }}>
+            {['Belux', 'Bravo', 'Bridget', 'Bronx'].map((name) => (
+              <span key={name} style={{ fontSize: '12px', color: '#475569' }}>
+                {showLogos && <span style={{ display: 'block', width: '48px', height: '20px', background: '#e2e8f0', borderRadius: '3px', marginBottom: '4px' }} />}
+                {name}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
     </>

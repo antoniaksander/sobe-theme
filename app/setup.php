@@ -247,7 +247,6 @@ add_filter('block_categories_all', function ($categories) {
     $custom = [
         ['slug' => 'sobe-general',     'title' => __('Sobe General', 'sobe'),     'icon' => 'layout'],
         ['slug' => 'sobe-woocommerce', 'title' => __('Sobe WooCommerce', 'sobe'), 'icon' => 'cart'],
-        ['slug' => 'sobe-sliders',     'title' => __('Sobe Sliders', 'sobe'),     'icon' => 'slides'],
         ['slug' => 'sobe-content',     'title' => __('Sobe Content', 'sobe'),     'icon' => 'text'],
         ['slug' => 'sobe-layout',      'title' => __('Sobe Layout', 'sobe'),      'icon' => 'layout'],
     ];

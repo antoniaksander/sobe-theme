@@ -7,6 +7,16 @@
   "icon": "cart",
   "category": "sobe-woocommerce",
   "description": "A swipeable carousel of WooCommerce products with optional WebGL shimmer.",
+  "example": {
+    "attributes": {
+      "heading": "New Arrivals",
+      "paragraph": "Discover our latest collection of carefully curated products.",
+      "count": 8,
+      "orderBy": "latest",
+      "linkText": "Shop All",
+      "linkUrl": "#"
+    }
+  },
   "supports": {
     "html": false,
     "anchor": true,

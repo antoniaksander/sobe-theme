@@ -6,6 +6,17 @@
   "title": "Product Feature",
   "category": "sobe-woocommerce",
   "description": "Two-column product showcase with editable content.",
+  "example": {
+    "attributes": {
+      "heading": "Premium Quality, Unmatched Design",
+      "paragraph": "Experience the difference with our flagship product. Crafted with premium materials and built to last a lifetime.",
+      "ctaText": "Shop Now",
+      "ctaUrl": "#",
+      "ctaType": "btn-dark",
+      "layout": "product-left",
+      "imageRatio": "square"
+    }
+  },
   "textdomain": "sobe",
   "supports": {
     "html": false,

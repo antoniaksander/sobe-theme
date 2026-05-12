@@ -1,28 +1,63 @@
-/* Default State: Closed */
-.sobe-faq .sobe-faq__answer-wrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 400ms ease-in-out;
-  overflow: hidden;
-  visibility: hidden; /* Added for extra safety */
-}
+.sobe-faq {
+  // ── Question row ──────────────────────────────────────────────────────────
+  .faq-editor__question-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
 
-/* Open State: Expanded */
-.sobe-faq .sobe-faq__item.is-open .sobe-faq__answer-wrapper {
-  grid-template-rows: 1fr;
-  visibility: visible;
-}
+  .faq__question-text {
+    flex: 1;
+  }
 
-/* Crucial for the Grid trick */
-.sobe-faq .sobe-faq__answer-inner {
-  min-height: 0;
-}
+  // ── Toggle / remove icon buttons ─────────────────────────────────────────
+  .faq-editor__toggle,
+  .faq-editor__remove {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #757575;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
 
-/* Chevron Rotation */
-.sobe-faq .faq__chevron {
-  transition: transform 0.3s ease;
-}
+    svg {
+      width: 15px;
+      height: 15px;
+      display: block;
+    }
 
-.sobe-faq .sobe-faq__item.is-open .faq__chevron {
-  transform: rotate(180deg);
+    &:hover {
+      background: #f0f0f0;
+      border-color: #ddd;
+      color: #1e1e1e;
+    }
+  }
+
+  .faq-editor__remove:hover {
+    color: #cc1818;
+  }
+
+  // ── Chevron rotation ──────────────────────────────────────────────────────
+  .faq__chevron {
+    transition: transform 0.2s ease;
+
+    &.faq__chevron--open {
+      transform: rotate(180deg);
+    }
+  }
+
+  // ── Answer panel in editor (override frontend grid animation) ─────────────
+  .faq-editor__answer {
+    display: block !important;
+    visibility: visible !important;
+    overflow: visible !important;
+    grid-template-rows: unset !important;
+  }
 }

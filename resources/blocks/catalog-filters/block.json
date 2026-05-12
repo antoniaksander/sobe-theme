@@ -7,6 +7,15 @@
   "icon": "filter",
   "category": "sobe-woocommerce",
   "description": "Product filter panel with categories, brands, attributes, and price range. Place in the Shop Sidebar widget area.",
+  "example": {
+    "attributes": {
+      "showCategories": true,
+      "showBrands": true,
+      "showAttributes": true,
+      "showPriceRange": true,
+      "collapseByDefault": false
+    }
+  },
   "supports": {
     "html": false,
     "anchor": false,

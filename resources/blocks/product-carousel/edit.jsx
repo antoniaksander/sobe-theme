@@ -228,14 +228,33 @@ export default function Edit({ attributes, setAttributes }) {
             )}
           </div>
         )}
-        <div style={{ padding: '2.5rem', background: '#f8f9fa', border: '2px dashed #cbd5e1', textAlign: 'center', borderRadius: '0.5rem' }}>
-          <p style={{ margin: '0 0 4px', fontWeight: 600, color: '#0f172a', fontSize: '14px' }}>
-            {__('Product Carousel', 'sage')}
-          </p>
-          <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>
-            {[`${count} products`, orderByLabel, catLabel, brandLabel].filter(Boolean).join(' · ')}
-          </p>
+        {/* Mock product cards */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
+          {[
+            { bg: '#f1f5f9', price: '€49.00' },
+            { bg: '#fef9f0', price: '€89.00' },
+            { bg: '#f0fdf4', price: '€34.00' },
+            { bg: '#fdf4ff', price: '€120.00' },
+          ].map(({ bg, price }, i) => (
+            <div key={i} style={{ borderRadius: '8px', overflow: 'hidden', background: '#fff', border: '1px solid #e2e8f0', boxShadow: '0 1px 3px rgba(0,0,0,.06)' }}>
+              <div style={{ aspectRatio: '1', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.2">
+                  <rect x="3" y="3" width="18" height="18" rx="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <path d="M21 15l-5-5L5 21"/>
+                </svg>
+              </div>
+              <div style={{ padding: '10px' }}>
+                <div style={{ height: '9px', background: '#e2e8f0', borderRadius: '3px', marginBottom: '5px' }} />
+                <div style={{ height: '9px', background: '#e2e8f0', borderRadius: '3px', width: '65%', marginBottom: '8px' }} />
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#0f172a' }}>{price}</div>
+              </div>
+            </div>
+          ))}
         </div>
+        <p style={{ margin: '10px 0 0', fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
+          {[`${count} products`, orderByLabel, catLabel, brandLabel].filter(Boolean).join(' · ')}
+        </p>
       </div>
     </>
   );

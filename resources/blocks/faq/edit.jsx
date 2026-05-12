@@ -1,5 +1,5 @@
-const { useBlockProps, InspectorControls } = wp.blockEditor;
-const { PanelBody, PanelRow, TextControl, Button } = wp.components;
+const { useBlockProps, InspectorControls, RichText } = wp.blockEditor;
+const { PanelBody, Button } = wp.components;
 const { __ } = wp.i18n;
 const { useState } = wp.element;
 
@@ -7,132 +7,117 @@ import './editor.scss';
 
 export default function Edit({ attributes, setAttributes }) {
   const { faqs } = attributes;
-  const [localFaqs, setLocalFaqs] = useState(faqs);
+  const [openIndex, setOpenIndex] = useState(null);
 
   const blockProps = useBlockProps({ className: 'sobe-faq' });
 
-  const updateFaq = (index, field, value) => {
-    const updated = [...localFaqs];
-    updated[index][field] = value;
-    setLocalFaqs(updated);
-    setAttributes({ faqs: updated });
-  };
+  function updateFaq(index, patch) {
+    setAttributes({ faqs: faqs.map((f, i) => (i === index ? { ...f, ...patch } : f)) });
+  }
 
-  const addFaq = () => {
-    const updated = [...localFaqs, { question: '', answer: '' }];
-    setLocalFaqs(updated);
-    setAttributes({ faqs: updated });
-  };
+  function addFaq() {
+    setAttributes({ faqs: [...faqs, { question: '', answer: '' }] });
+    setOpenIndex(faqs.length);
+  }
 
-  const removeFaq = (index) => {
-    const updated = localFaqs.filter((_, i) => i !== index);
-    setLocalFaqs(updated);
-    setAttributes({ faqs: updated });
-  };
+  function removeFaq(index) {
+    setAttributes({ faqs: faqs.filter((_, i) => i !== index) });
+    setOpenIndex((prev) => {
+      if (prev === index) return null;
+      if (prev > index) return prev - 1;
+      return prev;
+    });
+  }
+
+  function toggle(index) {
+    setOpenIndex((prev) => (prev === index ? null : index));
+  }
 
   return (
     <>
       <InspectorControls>
-        <PanelBody title={__('FAQ Items', 'sobe')}>
-          <PanelRow>
-            <p
-              style={{
-                marginBottom: '1rem',
-                fontSize: '13px',
-                color: '#646970',
-              }}
-            >
-              {localFaqs.length === 0
-                ? __('Add your first FAQ item using the button below.', 'sobe')
-                : __('Manage your FAQ items below.', 'sobe')}
-            </p>
-          </PanelRow>
-
-          {localFaqs.map((faq, index) => (
-            <div key={index} className="faq-item-editor">
-              <div className="faq-item-header">
-                <span className="faq-item-number">
-                  {__('Item', 'sobe')} {index + 1}
-                </span>
-                <Button
-                  isDestructive
-                  onClick={() => removeFaq(index)}
-                  className="faq-item-remove"
-                >
-                  {__('Remove', 'sobe')}
-                </Button>
-              </div>
-
-              <TextControl
-                label={__('Question', 'sobe')}
-                value={faq.question}
-                onChange={(value) => updateFaq(index, 'question', value)}
-                placeholder={__('Enter the question…', 'sobe')}
-              />
-
-              <TextControl
-                label={__('Answer', 'sobe')}
-                value={faq.answer}
-                onChange={(value) => updateFaq(index, 'answer', value)}
-                placeholder={__('Enter the answer…', 'sobe')}
-                rows={3}
-              />
-            </div>
-          ))}
-
-          <PanelRow>
-            <Button isPrimary onClick={addFaq} style={{ width: '100%' }}>
-              {__('Add FAQ Item', 'sobe')}
-            </Button>
-          </PanelRow>
+        <PanelBody title={__('FAQ Items', 'sobe')} initialOpen={true}>
+          <p style={{ fontSize: '12px', color: '#757575', margin: '0 0 12px' }}>
+            {__('Click the chevron in the block to expand an item and edit inline.', 'sobe')}
+          </p>
+          <Button variant="secondary" onClick={addFaq} style={{ width: '100%' }}>
+            {__('+ Add FAQ Item', 'sobe')}
+          </Button>
         </PanelBody>
       </InspectorControls>
 
       <div {...blockProps}>
         <div className="faq__header">
-          <h2 className="faq__title">
-            {__('Frequently Asked Questions', 'sobe')}
-          </h2>
+          <h2 className="faq__title">{__('Frequently Asked Questions', 'sobe')}</h2>
         </div>
 
         <div className="faq__items">
-          {localFaqs.length === 0 ? (
+          {faqs.length === 0 ? (
             <p className="faq__empty">
-              {__(
-                'No FAQ items yet. Add your first item in the sidebar.',
-                'sobe',
-              )}
+              {__('No FAQ items yet. Add your first item using the sidebar.', 'sobe')}
             </p>
           ) : (
-            localFaqs.map((faq, index) => (
-              <div key={index} className="faq__item">
-                <div className="faq__question-wrapper">
-                  <span className="faq__question-text">
-                    {faq.question || __('Question', 'sobe')}
-                  </span>
-                  <svg
-                    className="faq__chevron"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M6 9L12 15L18 9"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+            faqs.map((faq, index) => {
+              const isOpen = openIndex === index;
+              return (
+                <div key={index} className={`sobe-faq__item faq__item${isOpen ? ' is-open' : ''}`}>
+
+                  {/* ── Question row ── */}
+                  <div className="faq-editor__question-row">
+                    <RichText
+                      tagName="span"
+                      className="faq__question-text"
+                      value={faq.question}
+                      onChange={(val) => updateFaq(index, { question: val })}
+                      placeholder={__('Enter question…', 'sobe')}
+                      allowedFormats={[]}
                     />
-                  </svg>
+                    <button
+                      type="button"
+                      className="faq-editor__toggle"
+                      onClick={() => toggle(index)}
+                      aria-label={isOpen ? __('Collapse', 'sobe') : __('Expand', 'sobe')}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" className={`faq__chevron${isOpen ? ' faq__chevron--open' : ''}`}>
+                        <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      className="faq-editor__remove"
+                      onClick={() => removeFaq(index)}
+                      aria-label={__('Remove item', 'sobe')}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* ── Answer (shown when open) ── */}
+                  {isOpen && (
+                    <div className="sobe-faq__answer-wrapper faq__answer-wrapper faq-editor__answer">
+                      <div className="sobe-faq__answer-inner faq__answer-inner">
+                        <RichText
+                          tagName="p"
+                          className="faq__answer-text"
+                          value={faq.answer}
+                          onChange={(val) => updateFaq(index, { answer: val })}
+                          placeholder={__('Enter answer…', 'sobe')}
+                          allowedFormats={['core/bold', 'core/italic', 'core/link']}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                 </div>
-                <div className="faq__answer-wrapper">
-                  <p className="faq__answer-text">
-                    {faq.answer || __('Answer', 'sobe')}
-                  </p>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
+
+          <Button variant="secondary" onClick={addFaq} style={{ width: '100%', marginTop: '12px' }}>
+            {__('+ Add FAQ Item', 'sobe')}
+          </Button>
         </div>
       </div>
     </>

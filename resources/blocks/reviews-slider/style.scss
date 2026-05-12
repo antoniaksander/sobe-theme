@@ -1,0 +1,205 @@
+.sobe-reviews-slider {
+  // ── Two-column layout ────────────────────────────────────────────────────
+  .reviews-slider__layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+    @media (max-width: 767px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ── Review content (left) ────────────────────────────────────────────────
+  .reviews-slider__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--space-2xl) var(--space-xl);
+
+    @media (max-width: 767px) {
+      padding: var(--space-xl) var(--space-lg);
+    }
+  }
+
+  // The animating text group (stars + quote + author).
+  .reviews-slider__body {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+
+    &[data-state="out"] {
+      opacity: 0;
+      transform: translateY(0);
+      transition: opacity 0.18s ease;
+      pointer-events: none;
+    }
+
+    &[data-state="in-start"] {
+      opacity: 0;
+      transform: translateY(22px);
+      transition: none;
+    }
+  }
+
+  .reviews-slider__stars {
+    display: flex;
+    gap: 4px;
+    margin-bottom: var(--space-md);
+
+    svg { flex-shrink: 0; }
+  }
+
+  .reviews-slider__quote {
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    line-height: 1.65;
+    font-style: italic;
+    letter-spacing: -0.01em;
+    color: var(--c-text);
+    margin: 0 0 var(--space-xl);
+  }
+
+  .reviews-slider__author {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--c-text-muted);
+    margin: 0;
+  }
+
+  // ── Navigation ───────────────────────────────────────────────────────────
+  .reviews-slider__nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: var(--space-xl);
+  }
+
+  .reviews-slider__btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--c-border);
+    background: transparent;
+    color: var(--c-text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--c-surface-2);
+      border-color: var(--c-text-muted);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--c-ring);
+      outline-offset: 2px;
+    }
+
+    &:disabled {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+
+    svg { display: block; pointer-events: none; }
+  }
+
+  // ── Product image (right) ────────────────────────────────────────────────
+  .reviews-slider__image-wrap {
+    position: relative;
+    background: var(--c-surface-2);
+    overflow: hidden;
+    min-height: 320px;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+
+    &[data-state="out"] {
+      opacity: 0;
+      transition: opacity 0.18s ease;
+    }
+
+    @media (max-width: 767px) {
+      min-height: 240px;
+      order: -1;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      position: absolute;
+      inset: 0;
+    }
+  }
+
+  .reviews-slider__image-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--c-text-subtle);
+  }
+
+  .reviews-slider__product-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: var(--space-md) var(--space-lg);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+    color: #fff;
+  }
+
+  .reviews-slider__product-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+
+  .reviews-slider__shop-link {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.15s;
+
+    &:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+  }
+
+  // ── Pagination dots ──────────────────────────────────────────────────────
+  .reviews-slider__dots {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: var(--space-md);
+  }
+
+  .reviews-slider__dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--c-border);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: width 0.2s, background 0.2s;
+    flex-shrink: 0;
+
+    &.is-active {
+      width: 20px;
+      background: var(--c-text);
+    }
+  }
+}

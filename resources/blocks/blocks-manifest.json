@@ -2,9 +2,6 @@
   "hero": {
     "category": "sobe-general"
   },
-  "callout": {
-    "category": "sobe-general"
-  },
   "faq": {
     "category": "sobe-general"
   },
@@ -18,7 +15,7 @@
     "category": "sobe-woocommerce"
   },
   "brand-carousel": {
-    "category": "sobe-sliders"
+    "category": "sobe-woocommerce"
   },
   "site-header": {
     "category": "sobe-layout"
@@ -27,6 +24,9 @@
     "category": "sobe-layout"
   },
   "our-brands": {
+    "category": "sobe-woocommerce"
+  },
+  "reviews-slider": {
     "category": "sobe-woocommerce"
   }
 }

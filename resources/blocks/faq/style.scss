@@ -1,13 +1,12 @@
 .sobe-faq {
   --faq-spacing: 0.75rem;
   --faq-chevron-size: 1.5rem;
-  padding: var(--space-2xl) 0;
 
   .faq__header {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
   }
 
   .faq__icon {
