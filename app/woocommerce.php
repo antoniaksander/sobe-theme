@@ -746,10 +746,31 @@ $filter_handler = function (): void {
     $GLOBALS['wp_query'] = $query;
     $pagination_html = view('woocommerce.loop.pagination')->render();
 
+    // Result count HTML — mirrors WooCommerce loop/result-count.php logic.
+    $total_products = (int) $query->found_posts;
+    $first          = ($paged - 1) * $per_page + 1;
+    $last           = min($total_products, $paged * $per_page);
+    if (1 === $total_products) {
+        $count_text = __('Showing the single result', 'woocommerce');
+    } elseif ($total_products <= $per_page) {
+        /* translators: %s: total results */
+        $count_text = sprintf(__('Showing all %s results', 'woocommerce'), '<strong>' . $total_products . '</strong>');
+    } else {
+        /* translators: 1: first result 2: last result 3: total results */
+        $count_text = sprintf(
+            __('Showing %1$s&ndash;%2$s of %3$s results', 'woocommerce'),
+            '<strong>' . $first . '</strong>',
+            '<strong>' . $last . '</strong>',
+            '<strong>' . $total_products . '</strong>'
+        );
+    }
+    $count_html = '<p class="woocommerce-result-count" data-result-count>' . $count_text . '</p>';
+
     wp_send_json([
         'html' => $html,
         'pagination_html' => $pagination_html,
-        'count' => $query->found_posts,
+        'count' => $total_products,
+        'count_html' => $count_html,
         'filters' => sobe_get_filtered_term_counts($query_args),
     ]);
 };

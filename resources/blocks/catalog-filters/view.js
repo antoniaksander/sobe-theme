@@ -7,6 +7,12 @@ import noUiSlider from 'nouislider';
   const root = document.querySelector('[data-catalog-filters]');
   if (!root) return;
 
+  // Stamp the server-rendered WooCommerce result count so AJAX updates can target it.
+  const _resultCountEl = document.querySelector('.woocommerce-result-count');
+  if (_resultCountEl && !_resultCountEl.hasAttribute('data-result-count')) {
+    _resultCountEl.setAttribute('data-result-count', '');
+  }
+
   const archiveKey = params.archiveTaxonomy?.startsWith('pa_')
     ? 'filter_' + params.archiveTaxonomy.slice(3)
     : params.archiveTaxonomy;
@@ -172,8 +178,8 @@ import noUiSlider from 'nouislider';
         }));
       }
 
-      if (countEl && data.count !== undefined) {
-        countEl.textContent = data.count;
+      if (countEl && data.count_html !== undefined) {
+        countEl.outerHTML = data.count_html;
       }
 
       syncChips(state);
