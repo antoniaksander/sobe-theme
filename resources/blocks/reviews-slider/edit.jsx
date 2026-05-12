@@ -384,34 +384,34 @@ export default function Edit({ attributes, setAttributes }) {
 
         {dataMode === 'manual' && total > 0 && (
           <>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', overflow: 'hidden', minHeight: '540px' }}>
 
               {/* Left — review text */}
-              <div style={{ background: 'var(--c-surface-invert, #1a1a2e)', padding: '40px 36px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ padding: '40px 36px 32px 0', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ width: '100%', maxWidth: '30rem' }}>
                   <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>
                     {STARS.map((n) => (
                       <svg key={n} width="18" height="18" viewBox="0 0 24 24"
-                        fill={n <= (current?.rating ?? 5) ? '#eac612' : 'none'}
-                        stroke={n <= (current?.rating ?? 5) ? '#eac612' : '#4a4a6a'}
+                        fill={n <= (current?.rating ?? 5) ? 'var(--c-stars)' : 'none'}
+                        stroke={n <= (current?.rating ?? 5) ? 'var(--c-stars)' : 'var(--c-text-subtle)'}
                         strokeWidth="1.5">
                         <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                       </svg>
                     ))}
                   </div>
-                  <p style={{ fontSize: '18px', lineHeight: '1.6', fontStyle: 'italic', color: 'var(--c-surface-invert-fg, #f4f3f2)', margin: '0 0 24px', letterSpacing: '-0.01em' }}>
+                  <p style={{ fontSize: 'var(--text-xl)', lineHeight: '1.65', fontStyle: 'italic', color: 'var(--c-text)', margin: '0 0 24px', letterSpacing: '-0.01em' }}>
                     "{current?.text || __('Add review text in the sidebar…', 'sage')}"
                   </p>
-                  <p style={{ margin: '0 0 20px', fontSize: '13px', fontWeight: 600, color: '#9494a8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  <p style={{ margin: '0 0 20px', fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--c-text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     — {current?.author || __('Reviewer name', 'sage')}
                   </p>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button type="button" onClick={(e) => { e.preventDefault(); setPreviewIndex((p) => (p - 1 + total) % total); }}
-                      style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#f4f3f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--c-border)', background: 'transparent', color: 'var(--c-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                     </button>
                     <button type="button" onClick={(e) => { e.preventDefault(); setPreviewIndex((p) => (p + 1) % total); }}
-                      style={{ width: '36px', height: '36px', borderRadius: '50%', border: '1px solid rgba(255,255,255,0.2)', background: 'transparent', color: '#f4f3f2', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      style={{ width: '40px', height: '40px', borderRadius: '50%', border: '1px solid var(--c-border)', background: 'transparent', color: 'var(--c-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
                   </div>
@@ -419,11 +419,15 @@ export default function Edit({ attributes, setAttributes }) {
               </div>
 
               {/* Right — product image */}
-              <div style={{ position: 'relative', background: '#f5f5f2', minHeight: '320px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+              <a
+                href={current?.productUrl || '#'}
+                onClick={(e) => e.preventDefault()}
+                style={{ position: 'relative', background: 'var(--c-surface-2)', minHeight: '540px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: 'inherit', textDecoration: 'none' }}
+              >
                 {current?.imageUrl ? (
                   <img src={current.imageUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }} />
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: '#9494a8' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', color: 'var(--c-text-subtle)' }}>
                     <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
                       <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
                     </svg>
@@ -431,19 +435,19 @@ export default function Edit({ attributes, setAttributes }) {
                   </div>
                 )}
                 {(current?.productTitle || current?.productUrl) && (
-                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 100%)', padding: '16px', color: '#fff' }}>
-                    {current.productTitle && <p style={{ margin: '0 0 4px', fontSize: '13px', fontWeight: 600 }}>{current.productTitle}</p>}
-                    {current.productUrl && <span style={{ fontSize: '11px', opacity: 0.8, textDecoration: 'underline' }}>{__('Shop now →', 'sage')}</span>}
+                  <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, var(--c-overlay) 0%, transparent 100%)', padding: '16px', color: 'var(--c-overlay-light-full)' }}>
+                    {current.productTitle && <p style={{ margin: '0 0 4px', fontSize: 'var(--text-sm)', fontWeight: 600 }}>{current.productTitle}</p>}
+                    {current.productUrl && <span style={{ fontSize: 'var(--text-xs)', color: 'var(--c-overlay-light-high)' }}>{__('Shop now →', 'sage')}</span>}
                   </div>
                 )}
-              </div>
+              </a>
             </div>
 
             {total > 1 && (
               <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '16px' }}>
                 {previewReviews.map((_, i) => (
                   <button key={i} type="button" onClick={(e) => { e.preventDefault(); setPreviewIndex(i); }}
-                    style={{ width: i === previewIndex ? '20px' : '6px', height: '6px', borderRadius: '3px', background: i === previewIndex ? '#1a1a2e' : '#d1d1d8', border: 'none', cursor: 'pointer', padding: 0 }}
+                    style={{ width: i === previewIndex ? '20px' : '6px', height: '6px', borderRadius: '3px', background: i === previewIndex ? 'var(--c-text)' : 'var(--c-border)', border: 'none', cursor: 'pointer', padding: 0 }}
                   />
                 ))}
               </div>
