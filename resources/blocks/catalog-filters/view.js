@@ -446,7 +446,7 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     }
   }
 
-  const LG_BREAKPOINT = 1024;
+  const LG_BREAKPOINT = 768;
 
   function handleResize() {
     if (window.innerWidth >= LG_BREAKPOINT) {

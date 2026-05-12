@@ -1615,7 +1615,7 @@
     color var(--transition-fast);
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 767.98px) {
   .sobe-filter-mobile-trigger {
     display: inline-flex;
   }
