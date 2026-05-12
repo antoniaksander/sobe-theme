@@ -56,6 +56,10 @@
     "pauseOnHover": {
       "type": "boolean",
       "default": true
+    },
+    "showImages": {
+      "type": "boolean",
+      "default": true
     }
   }
 }

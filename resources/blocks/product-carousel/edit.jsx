@@ -15,6 +15,7 @@ export default function Edit({ attributes, setAttributes }) {
     count,
     orderBy,
     categoryId,
+    brandId,
     heading,
     paragraph,
     linkText,
@@ -23,12 +24,14 @@ export default function Edit({ attributes, setAttributes }) {
   } = attributes;
 
   const [categories, setCategories] = useState([]);
+  const [brands, setBrands] = useState([]);
 
   useEffect(() => {
-    wp.apiFetch({
-      path: '/wp/v2/product_cat?per_page=100&orderby=name&order=asc',
-    })
+    wp.apiFetch({ path: '/wp/v2/product_cat?per_page=100&orderby=name&order=asc' })
       .then((terms) => setCategories(terms))
+      .catch(() => {});
+    wp.apiFetch({ path: '/wp/v2/product_brand?per_page=100&orderby=name&order=asc' })
+      .then((terms) => setBrands(terms))
       .catch(() => {});
   }, []);
 
@@ -39,6 +42,11 @@ export default function Edit({ attributes, setAttributes }) {
   const categoryOptions = [
     { label: __('All Categories', 'sage'), value: 0 },
     ...categories.map((cat) => ({ label: cat.name, value: cat.id })),
+  ];
+
+  const brandOptions = [
+    { label: __('All Brands', 'sage'), value: 0 },
+    ...brands.map((b) => ({ label: b.name, value: b.id })),
   ];
 
   const orderByOptions = [
@@ -64,6 +72,10 @@ export default function Edit({ attributes, setAttributes }) {
     categoryId === 0
       ? __('all categories', 'sage')
       : categories.find((c) => c.id === categoryId)?.name ?? `category ${categoryId}`;
+  const brandLabel =
+    brandId === 0
+      ? null
+      : brands.find((b) => b.id === brandId)?.name ?? `brand ${brandId}`;
 
   const isLinkType = linkType?.startsWith('link-');
 
@@ -87,7 +99,33 @@ export default function Edit({ attributes, setAttributes }) {
               label={__('Category', 'sage')}
               value={categoryId}
               options={categoryOptions}
-              onChange={(val) => setAttributes({ categoryId: parseInt(val, 10) })}
+              onChange={(val) => {
+                const id = parseInt(val, 10);
+                const updates = { categoryId: id };
+                if (id > 0) {
+                  const term = categories.find((c) => c.id === id);
+                  if (term?.link) updates.linkUrl = term.link;
+                }
+                setAttributes(updates);
+              }}
+              __nextHasNoMarginBottom
+              __next40pxDefaultSize
+            />
+          </PanelRow>
+          <PanelRow>
+            <SelectControl
+              label={__('Brand', 'sage')}
+              value={brandId}
+              options={brandOptions}
+              onChange={(val) => {
+                const id = parseInt(val, 10);
+                const updates = { brandId: id };
+                if (id > 0) {
+                  const term = brands.find((b) => b.id === id);
+                  if (term?.link) updates.linkUrl = term.link;
+                }
+                setAttributes(updates);
+              }}
               __nextHasNoMarginBottom
               __next40pxDefaultSize
             />
@@ -195,7 +233,7 @@ export default function Edit({ attributes, setAttributes }) {
             {__('Product Carousel', 'sage')}
           </p>
           <p style={{ margin: 0, color: '#64748b', fontSize: '12px' }}>
-            {`${count} products · ${orderByLabel} · ${catLabel}`}
+            {[`${count} products`, orderByLabel, catLabel, brandLabel].filter(Boolean).join(' · ')}
           </p>
         </div>
       </div>
