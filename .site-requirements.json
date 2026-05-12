@@ -1,0 +1,7 @@
+{
+  "php": "8.4",
+  "mysql": "8.0",
+  "wordpress": "6.7",
+  "woocommerce": "9.4",
+  "node": "22"
+}

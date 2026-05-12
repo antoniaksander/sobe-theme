@@ -6,6 +6,8 @@
 
 namespace App;
 
+use App\WooCommerce\FilterHandler;
+
 if (! class_exists('WooCommerce')) {
     return;
 }
@@ -363,6 +365,7 @@ add_action('wp_enqueue_scripts', function (): void {
         'orderby' => $orderby,
         'loadingText' => __('Loading products…', 'sobe'),
         'loadedText' => __('More products loaded', 'sobe'),
+        'errorText' => __('Failed to load more products. Please refresh the page.', 'sobe'),
     ];
     echo '<script>window.sobeLoadMoreParams = '.\wp_json_encode($params).';</script>';
 
@@ -563,8 +566,8 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 
             foreach ($all_terms as $term) {
                 $term_data[] = [
-                    'slug'  => $term->slug,
-                    'name'  => $term->name,
+                    'slug' => $term->slug,
+                    'name' => $term->name,
                     'count' => $count_map[$term->slug] ?? 0,
                 ];
             }
@@ -594,190 +597,9 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 }
 
 // ── AJAX catalog filter handler ───────────────────────────────────────────────
+// Core logic lives in App\WooCommerce\FilterHandler so it's testable without HTTP.
 
-$filter_handler = function (): void {
-    $pfx = config('theme.prefix');
-    check_ajax_referer("{$pfx}_nonce", 'nonce');
-
-    $raw_state = sanitize_text_field(wp_unslash($_POST['filter_state'] ?? '{}'));
-    $filter_state = json_decode($raw_state, true) ?: [];
-
-    $per_page = (int) get_theme_mod("{$pfx}_products_per_page", 12);
-    $paged = max(1, (int) ($filter_state['paged'] ?? 1));
-
-    $query_args = [
-        'post_type' => 'product',
-        'post_status' => 'publish',
-        'posts_per_page' => $per_page,
-        'paged' => $paged,
-    ];
-
-    // Tax query — categories (single) + filter_* attributes
-    $tax_query = [];
-
-    if (! empty($filter_state['product_cat'])) {
-        $tax_query[] = [
-            'taxonomy' => 'product_cat',
-            'field' => 'slug',
-            'terms' => sanitize_text_field($filter_state['product_cat']),
-        ];
-    }
-
-    if (! empty($filter_state['product_tag'])) {
-        $tax_query[] = [
-            'taxonomy' => 'product_tag',
-            'field' => 'slug',
-            'terms' => sanitize_text_field($filter_state['product_tag']),
-        ];
-    }
-
-    foreach ($filter_state as $key => $val) {
-        if (strpos($key, 'filter_') !== 0) {
-            continue;
-        }
-        $attr_name = substr($key, 7);
-        $taxonomy = 'pa_'.sanitize_key($attr_name);
-        $slugs = array_map('sanitize_text_field', (array) $val);
-        if (! empty($slugs)) {
-            $tax_query[] = [
-                'taxonomy' => $taxonomy,
-                'field' => 'slug',
-                'terms' => $slugs,
-                'operator' => 'IN',
-            ];
-        }
-    }
-
-    if (! empty($filter_state[$pfx.'_brands']) || ! empty($filter_state['product_brand'])) {
-        $brand_key = $pfx.'_brands';
-        $slugs = array_map('sanitize_text_field', (array) ($filter_state[$brand_key] ?? $filter_state['product_brand'] ?? []));
-        if (! empty($slugs)) {
-            $tax_query[] = [
-                'taxonomy' => 'product_brand',
-                'field' => 'slug',
-                'terms' => $slugs,
-                'operator' => 'IN',
-            ];
-        }
-    }
-
-    if (count($tax_query) > 1) {
-        $tax_query['relation'] = 'AND';
-    }
-    if (! empty($tax_query)) {
-        $query_args['tax_query'] = $tax_query;
-    }
-
-    // Price meta query
-    $meta_query = [];
-    $min_price = isset($filter_state['min_price']) ? (float) $filter_state['min_price'] : null;
-    $max_price = isset($filter_state['max_price']) ? (float) $filter_state['max_price'] : null;
-
-    if ($min_price !== null || $max_price !== null) {
-        $price_clause = ['key' => '_price', 'type' => 'NUMERIC'];
-        if ($min_price !== null && $max_price !== null) {
-            $price_clause['value'] = [$min_price, $max_price];
-            $price_clause['compare'] = 'BETWEEN';
-        } elseif ($min_price !== null) {
-            $price_clause['value'] = $min_price;
-            $price_clause['compare'] = '>=';
-        } else {
-            $price_clause['value'] = $max_price;
-            $price_clause['compare'] = '<=';
-        }
-        $meta_query[] = $price_clause;
-    }
-    // Price type filter (on_sale / full_price).
-    // Limitation: for variable products, _sale_price on the parent reflects WC's cached value;
-    // only some-variations-on-sale products may not appear correctly with this meta_query approach.
-    $price_type = sanitize_key($filter_state['price_type'] ?? 'all');
-    if ($price_type === 'on_sale') {
-        $meta_query[] = ['key' => '_sale_price', 'value' => '', 'compare' => '!='];
-        $meta_query[] = ['key' => '_sale_price', 'value' => '0', 'compare' => '>', 'type' => 'NUMERIC'];
-    } elseif ($price_type === 'full_price') {
-        $meta_query[] = [
-            'relation' => 'OR',
-            ['key' => '_sale_price', 'compare' => 'NOT EXISTS'],
-            ['key' => '_sale_price', 'value' => '', 'compare' => '='],
-        ];
-    }
-
-    if (! empty($meta_query)) {
-        $query_args['meta_query'] = $meta_query;
-    }
-
-    // WooCommerce native search — preserve ?s= context during AJAX filtering.
-    $search = sanitize_text_field($filter_state['s'] ?? '');
-    if ($search) {
-        $query_args['s'] = $search;
-    }
-
-    // Apply WooCommerce catalog ordering so AJAX pages match the initial page order.
-    // Without this WP_Query defaults to post_date DESC, causing products to appear
-    // in a different sequence on page 2+ than on the server-rendered page 1.
-    $orderby_value = sanitize_key($filter_state['orderby'] ?? '');
-    if ($orderby_value) {
-        $_GET['orderby'] = $orderby_value;
-    }
-    if (WC()->query) {
-        $ordering = WC()->query->get_catalog_ordering_args();
-        $query_args['orderby'] = $ordering['orderby'];
-        $query_args['order']   = $ordering['order'];
-        if (! empty($ordering['meta_key'])) {
-            $query_args['meta_key'] = $ordering['meta_key'];
-        }
-    }
-
-    $query = new \WP_Query($query_args);
-
-    ob_start();
-    if ($query->have_posts()) {
-        wc_setup_loop(['columns' => (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", 4)]);
-        while ($query->have_posts()) {
-            $query->the_post();
-            wc_get_template_part('content', 'product');
-        }
-        wc_reset_loop();
-    }
-    wp_reset_postdata();
-    $html = ob_get_clean();
-
-    // Pagination HTML
-    $GLOBALS['wp_query'] = $query;
-    $pagination_html = view('woocommerce.loop.pagination')->render();
-
-    // Result count HTML — mirrors WooCommerce loop/result-count.php logic.
-    $total_products = (int) $query->found_posts;
-    $first          = ($paged - 1) * $per_page + 1;
-    $last           = min($total_products, $paged * $per_page);
-    if (1 === $total_products) {
-        $count_text = __('Showing the single result', 'woocommerce');
-    } elseif ($total_products <= $per_page) {
-        /* translators: %s: total results */
-        $count_text = sprintf(__('Showing all %s results', 'woocommerce'), '<strong>' . $total_products . '</strong>');
-    } else {
-        /* translators: 1: first result 2: last result 3: total results */
-        $count_text = sprintf(
-            __('Showing %1$s&ndash;%2$s of %3$s results', 'woocommerce'),
-            '<strong>' . $first . '</strong>',
-            '<strong>' . $last . '</strong>',
-            '<strong>' . $total_products . '</strong>'
-        );
-    }
-    $count_html = '<p class="woocommerce-result-count" data-result-count>' . $count_text . '</p>';
-
-    wp_send_json([
-        'html' => $html,
-        'pagination_html' => $pagination_html,
-        'count' => $total_products,
-        'count_html' => $count_html,
-        'filters' => sobe_get_filtered_term_counts($query_args),
-    ]);
-};
-
-$filter_action = config('theme.prefix').'_filter_products';
-add_action("wp_ajax_{$filter_action}", $filter_handler);
-add_action("wp_ajax_nopriv_{$filter_action}", $filter_handler);
+(new FilterHandler(config('theme.prefix')))->register();
 
 // Inline sobeCatalogParams on shop/taxonomy pages
 add_action('wp_enqueue_scripts', function (): void {
@@ -792,6 +614,7 @@ add_action('wp_enqueue_scripts', function (): void {
         'action' => "{$pfx}_filter_products",
         'removeLabel' => __('Remove filter', 'sobe'),
         'removeSymbol' => '&times;',
+        'errorText' => __('Something went wrong. Please refresh the page and try again.', 'sobe'),
     ];
     if (is_product_taxonomy() && isset($queried->taxonomy, $queried->slug)) {
         $params['archiveTaxonomy'] = $queried->taxonomy;

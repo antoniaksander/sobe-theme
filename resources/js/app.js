@@ -569,6 +569,12 @@ const scheduleIdle = (fn) =>
     ? requestIdleCallback(fn, { timeout: 2000 })
     : setTimeout(fn, 100);
 
+// Expose animation utilities for cross-bundle use (e.g. catalog-filters/view.js
+// managing gsap.context() across AJAX grid replacements).
+window.gsap = gsap;
+window.ScrollTrigger = ScrollTrigger;
+window.initAnimationBus = initAnimationBus;
+
 initAnimationBus();
 
 scheduleIdle(() => {

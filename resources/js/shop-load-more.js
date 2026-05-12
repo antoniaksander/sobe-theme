@@ -1,3 +1,6 @@
+import { hasActiveFilters } from './filter-utils.js';
+import { getState, getAction, getNonce } from './filter-store.js';
+
 (function () {
   const params = window.sobeLoadMoreParams;
   if (!params) return;
@@ -6,9 +9,6 @@
   if (!sentinel) return;
 
   let loading = false;
-  let filterState = null;
-  let filterAction = null;
-  let filterNonce = null;
 
   const observer = new IntersectionObserver(
     (entries) => { if (entries[0].isIntersecting && !loading) loadMore(); },
@@ -16,20 +16,9 @@
   );
   observer.observe(sentinel);
 
-  function hasActiveFilters() {
-    if (!filterState) return false;
-    return Object.keys(filterState).some((k) => {
-      if (k === 'paged' || k === 'orderby' || k === 's') return false;
-      const v = filterState[k];
-      return Array.isArray(v) ? v.length > 0 : !!v;
-    });
-  }
-
-  document.addEventListener('sobe:pagination-updated', (e) => {
-    filterState  = e.detail.state;
-    filterAction = e.detail.filterAction;
-    filterNonce  = e.detail.filterNonce;
-
+  // Re-observe when catalog-filters replaces the pagination zone via AJAX.
+  // State sync is handled by the filter store — nothing to read from the event.
+  document.addEventListener('sobe:pagination-updated', () => {
     const newSentinel = document.querySelector('[data-pagination] [data-load-more-sentinel]');
     if (newSentinel && newSentinel !== sentinel) {
       observer.unobserve(sentinel);
@@ -45,8 +34,14 @@
     const paginationZone = document.querySelector('[data-pagination]');
     const grid = document.querySelector('.woocommerce ul.products');
 
+    // Read from the store at call time — not captured at IIFE init — so we
+    // always have the state that was active when the user scrolled to the sentinel.
+    const filterState  = getState();
+    const filterAction = getAction();
+    const filterNonce  = getNonce();
+
     try {
-      if (hasActiveFilters()) {
+      if (hasActiveFilters(filterState)) {
         const body = new FormData();
         body.append('action', filterAction);
         body.append('nonce', filterNonce);
@@ -94,8 +89,17 @@
         observer.disconnect();
         sentinel.remove();
       }
-    } catch {
+    } catch (err) {
       loading = false;
+      console.error('[sobe load-more]', err);
+      // Show a user-visible message inside the sentinel so the failure is obvious
+      // without a full-page reload. Sentinel stays in DOM so scroll does not re-fire.
+      const btn = sentinel.querySelector('button');
+      if (btn) {
+        btn.textContent = params.errorText ?? 'Failed to load. Please refresh.';
+        btn.className = 'sobe-load-more-error';
+        btn.removeAttribute('aria-live');
+      }
     }
   }
 })();

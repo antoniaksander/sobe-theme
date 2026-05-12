@@ -67,7 +67,7 @@ class CatalogFilters extends Composer
         if ($showAttributes && function_exists('wc_get_attribute_taxonomies')) {
             $attrCacheKey = 'sobe_catalog_attribute_groups';
             $cached = wp_cache_get($attrCacheKey);
-            if (false !== $cached) {
+            if ($cached !== false) {
                 $attributeGroups = $cached;
             } else {
                 foreach (wc_get_attribute_taxonomies() as $attr) {
@@ -86,7 +86,7 @@ class CatalogFilters extends Composer
         if ($showPriceRange) {
             $priceCacheKey = 'sobe_price_range';
             $row = wp_cache_get($priceCacheKey);
-            if (false === $row) {
+            if ($row === false) {
                 $row = $wpdb->get_row($wpdb->prepare(
                     "SELECT MIN(meta_value+0) AS min_price, MAX(meta_value+0) AS max_price
                      FROM {$wpdb->postmeta}

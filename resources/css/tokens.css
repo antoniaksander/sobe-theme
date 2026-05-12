@@ -46,18 +46,18 @@
 
   --c-primary: #1a1a2e;
   --c-primary-fg: #fafaf8;
-  --c-primary-hover: #262637;
+  --c-primary-hover: color-mix(in oklch, var(--c-primary) 82%, white);
   --c-accent: #db2b39;
   --c-accent-fg: #ffffff;
-  --c-accent-hover: #db2b39;
+  --c-accent-hover: color-mix(in oklch, var(--c-accent) 82%, black);
   --c-stars: #eac612;
   --c-sale: #db2b39;
 
   /* ── Button palette (brand-fixed — intentionally NOT overridden in .dark) ── */
   --c-btn-navy: #1a1a2e;
-  --c-btn-navy-hover: #2d2d47;
+  --c-btn-navy-hover: color-mix(in oklch, var(--c-btn-navy) 82%, white);
   --c-btn-cream: #f4f3f2;
-  --c-btn-cream-hover: #e8e7e6;
+  --c-btn-cream-hover: color-mix(in oklch, var(--c-btn-cream) 92%, black);
 
   /* ── Global interaction tokens ── */
   --selection-bg: var(--c-text);
@@ -160,10 +160,10 @@
 
   --c-primary: #fafaf8;
   --c-primary-fg: #1a1a2e;
-  --c-primary-hover: #edede9;
+  --c-primary-hover: color-mix(in oklch, var(--c-primary) 92%, black);
   --c-accent: #ff3333;
   --c-accent-fg: #ffffff;
-  --c-accent-hover: #ff5555;
+  --c-accent-hover: color-mix(in oklch, var(--c-accent) 82%, white);
   --c-stars: #eac612;
 
   /* ── Global interaction tokens ── */
@@ -249,12 +249,21 @@
   --space-3xl: clamp(4rem, calc(2.768rem + 5.258vw), 7.5rem);
 }
 
-/* ── Font sizes ─────────────────────────────────────────────────────────────── */
+/* ── Font sizes — fluid scale (375px → 1440px) ──────────────────────────────
+   xs/sm/base/lg are UI chrome — kept fixed to avoid layout jitter on small text.
+   md and above are editorial — fluid so headings breathe at wider viewports.    */
 :root {
-  --text-xs: 0.75rem; /* 12px */
-  --text-sm: 0.875rem; /* 14px */
-  --text-base: 1rem; /* 16px */
-  --text-lg: 1.125rem; /* 18px */
+  --text-xs:   0.75rem;                                    /* 12px — fixed */
+  --text-sm:   0.875rem;                                   /* 14px — fixed */
+  --text-base: 1rem;                                       /* 16px — fixed */
+  --text-lg:   clamp(1rem,    calc(0.965rem + 0.150vw), 1.125rem); /* 16→18px */
+  --text-xl:   clamp(1.125rem,calc(1.036rem + 0.376vw), 1.375rem); /* 18→22px */
+  --text-2xl:  clamp(1.25rem, calc(1.118rem + 0.564vw), 1.625rem); /* 20→26px */
+  --text-3xl:  clamp(1.5rem,  calc(1.324rem + 0.751vw), 2rem);     /* 24→32px */
+  --text-4xl:  clamp(1.75rem, calc(1.486rem + 1.127vw), 2.5rem);   /* 28→40px */
+  --text-5xl:  clamp(2rem,    calc(1.648rem + 1.502vw), 3rem);     /* 32→48px */
+  --text-6xl:  clamp(2.5rem,  calc(1.972rem + 2.254vw), 4rem);     /* 40→64px */
+  --text-7xl:  clamp(3rem,    calc(2.120rem + 3.756vw), 5.5rem);   /* 48→88px */
 }
 
 /* ── Font weights ───────────────────────────────────────────────────────────── */
@@ -325,6 +334,13 @@
   --c-surface-raised: #2a2a2a;
   --c-surface-hover: rgba(255, 255, 255, 0.06);
   --c-primary-subtle: rgba(250, 250, 248, 0.08);
+}
+
+/* ── Container query breakpoints ────────────────────────────────────────────── */
+:root {
+  /* Width below which a product card switches to its compact (narrow) layout.
+     Used by @container product-card rules in woocommerce.css. */
+  --cq-product-card-compact: 180px;
 }
 
 /* ── Reduced motion ─────────────────────────────────────────────────────────── */

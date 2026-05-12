@@ -155,15 +155,15 @@ add_filter('script_loader_tag', function ($tag, $handle) {
  */
 add_action('init', function () {
     $meta = [
-        '_sobe_page_hero'  => 'boolean',
+        '_sobe_page_hero' => 'boolean',
         '_sobe_hide_title' => 'boolean',
     ];
     foreach ($meta as $key => $type) {
         register_post_meta('page', $key, [
-            'show_in_rest'  => true,
-            'single'        => true,
-            'type'          => $type,
-            'default'       => false,
+            'show_in_rest' => true,
+            'single' => true,
+            'type' => $type,
+            'default' => false,
             'auth_callback' => fn () => current_user_can('edit_posts'),
         ]);
     }
@@ -174,10 +174,10 @@ add_action('init', function () {
  */
 add_action('init', function () {
     register_post_meta('post', '_sobe_post_cta', [
-        'show_in_rest'  => true,
-        'single'        => true,
-        'type'          => 'string',
-        'default'       => '',
+        'show_in_rest' => true,
+        'single' => true,
+        'type' => 'string',
+        'default' => '',
         'auth_callback' => fn () => current_user_can('edit_posts'),
     ]);
 });

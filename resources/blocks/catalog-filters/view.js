@@ -1,4 +1,6 @@
 import noUiSlider from 'nouislider';
+import { buildFilterUrl, hasActiveFilters as checkActiveFilters } from '../../js/filter-utils.js';
+import { commit as commitFilterStore } from '../../js/filter-store.js';
 
 (function () {
   const params = window.sobeCatalogParams;
@@ -81,64 +83,25 @@ import noUiSlider from 'nouislider';
     return state;
   }
 
-  function buildFilterUrl(state) {
-    // Always build from the original page path — never from window.location.href which
-    // may have drifted to /shop/ if a previous server response had a bad base URL.
-    const url = new URL(_pageBase);
-
+  function _buildFilterUrl(state) {
     const sliderEl = root.querySelector('[data-range-slider]');
-    const defaultMin = parseFloat(sliderEl?.dataset.min ?? 0);
-    const defaultMax = parseFloat(sliderEl?.dataset.max ?? Infinity);
-
-    for (const [key, val] of Object.entries(state)) {
-      if (key === 'paged') continue; // handled below
-
-      // Skip the archive taxonomy term — it's implicit in the page path, not a filter param.
-      // Normalize to string for comparison so both string ('slug') and array (['slug']) forms match.
-      if (key === archiveKey) {
-        const slugs = Array.isArray(val) ? val : [val];
-        if (slugs.length === 1 && slugs[0] === params.archiveTerm) continue;
-        // User added extra brands — encode them as a filter param and move on.
-        url.searchParams.set('filter_' + key.replace(/^filter_/, ''), slugs.join('+'));
-        continue;
+    return buildFilterUrl(
+      state,
+      _pageBase,
+      archiveKey,
+      params.archiveTerm ?? null,
+      {
+        min: parseFloat(sliderEl?.dataset.min ?? 0),
+        max: parseFloat(sliderEl?.dataset.max ?? Infinity),
       }
-
-      if (key === 'orderby') {
-        // Don't pollute the URL with the WC default — it's applied server-side anyway.
-        if (val && val !== 'menu_order') url.searchParams.set('orderby', val);
-        continue;
-      }
-      if (key === 's') {
-        if (val) url.searchParams.set('s', val);
-        continue;
-      }
-      if (key === 'price_type') {
-        if (val && val !== 'all') url.searchParams.set('price_type', val);
-        continue;
-      }
-      if (key === 'min_price') {
-        if (parseFloat(val) > defaultMin) url.searchParams.set('min_price', val);
-        continue;
-      }
-      if (key === 'max_price') {
-        if (parseFloat(val) < defaultMax) url.searchParams.set('max_price', val);
-        continue;
-      }
-      if (Array.isArray(val)) {
-        url.searchParams.set('filter_' + key.replace(/^filter_/, ''), val.join('+'));
-      } else if (val !== '' && val !== null && val !== undefined) {
-        url.searchParams.set(key, val);
-      }
-    }
-    const page = parseInt(state.paged, 10) || 1;
-    if (page > 1) url.searchParams.set('paged', String(page));
-    return url.toString();
+    );
   }
 
   // ── AJAX fetch ──────────────────────────────────────────────────────────────
 
   let _activeFetch = null;
   let _fetchSeq = 0;
+  let _gridCtx = null;
 
   async function fetchFiltered(state) {
     if (_activeFetch) _activeFetch.abort();
@@ -167,8 +130,23 @@ import noUiSlider from 'nouislider';
       // A newer request was dispatched while this one was in-flight — discard stale response.
       if (mySeq !== _fetchSeq) return;
 
+      if (data.success === false) {
+        throw new Error(data.data?.message ?? params.errorText);
+      }
+
       if (grid && data.html !== undefined) {
+        // Revert the previous gsap.context() — kills all animations (ScrollTriggers,
+        // tweens, etc.) that were scoped to the old grid, preventing memory leaks.
+        _gridCtx?.revert();
+
         grid.innerHTML = data.html;
+
+        // Create a new context so all animations spawned by initAnimationBus are
+        // trackable and can be reverted atomically on the next filter apply.
+        _gridCtx = window.gsap?.context(() => {
+          window.initAnimationBus?.();
+        });
+        window.ScrollTrigger?.refresh();
       }
 
       if (paginationZone && data.pagination_html !== undefined) {
@@ -182,21 +160,32 @@ import noUiSlider from 'nouislider';
         countEl.outerHTML = data.count_html;
       }
 
+      commitFilterStore(state, params.action, params.nonce);
       syncChips(state);
       if (data.filters) updateFilterCounts(data);
       updateClearAllVisibility(state);
-      history.pushState({}, '', buildFilterUrl(state));
+      history.pushState({}, '', _buildFilterUrl(state));
 
-      // Scroll to product listing so users see fresh results without manual scrolling.
+      // Scroll to listing — respect prefers-reduced-motion.
       const shopMain = document.querySelector('.shop-main');
       const target = shopMain ?? grid;
       if (target) {
         const y = target.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({ top: Math.max(0, y - 24), behavior: 'smooth' });
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        window.scrollTo({ top: Math.max(0, y - 24), behavior: reducedMotion ? 'instant' : 'smooth' });
       }
+
+      // Move focus to result count so screen readers announce the updated count.
+      const newCountEl = document.querySelector('[data-result-count]');
+      newCountEl?.focus({ preventScroll: true });
     } catch (err) {
-      if (err.name !== 'AbortError') {
-        // silently fail — page state unchanged
+      if (err.name === 'AbortError') return;
+      console.error('[sobe catalog-filters]', err);
+      // Surface a user-facing message inside the pagination zone so it's visible
+      // without scrolling (the grid may be blank if the request partially failed).
+      if (paginationZone) {
+        paginationZone.innerHTML =
+          `<p class="sobe-filter-error" role="alert">${params.errorText ?? err.message}</p>`;
       }
     }
   }
@@ -521,7 +510,79 @@ import noUiSlider from 'nouislider';
     });
   }
 
+  // ── URL state hydration ──────────────────────────────────────────────────────
+  // Pre-check / pre-select filter inputs to match the current URL query string so
+  // that a direct load of e.g. ?filter_color=blue shows the correct active state.
+
+  function hydrateFromUrl() {
+    const urlParams = new URLSearchParams(location.search);
+
+    urlParams.forEach((val, key) => {
+      if (key === 'paged' || key === 's') return;
+
+      if (key === 'orderby') {
+        const orderSelect = document.querySelector('.woocommerce-ordering select[name="orderby"]');
+        if (orderSelect) orderSelect.value = val;
+        return;
+      }
+
+      if (key === 'min_price') {
+        const el = root.querySelector('[data-price-min]');
+        if (el) el.value = val;
+        return;
+      }
+
+      if (key === 'max_price') {
+        const el = root.querySelector('[data-price-max]');
+        if (el) el.value = val;
+        return;
+      }
+
+      if (key === 'price_type') {
+        const radio = root.querySelector(`input[type="radio"][name="price_type"][value="${CSS.escape(val)}"]`);
+        if (radio) radio.checked = true;
+        return;
+      }
+
+      // Multi-value filter params are encoded as blue+red (URLSearchParams keeps raw '+').
+      const slugs = val.split(' ').filter(Boolean); // URLSearchParams decodes '+' to space
+      const inputName = key.endsWith('[]') ? key : key + '[]';
+
+      slugs.forEach((slug) => {
+        const escaped = CSS.escape(slug);
+        // Try checkbox (filter_X[] format)
+        const cb = root.querySelector(`input[type="checkbox"][name="${inputName}"][value="${escaped}"]`);
+        if (cb) { cb.checked = true; return; }
+        // Try radio (product_cat, product_tag — single-value)
+        const rb = root.querySelector(`input[type="radio"][name="${key}"][value="${escaped}"]`);
+        if (rb) { rb.checked = true; return; }
+        // Try data-filter-select
+        const sel = root.querySelector(`[data-filter-select="${CSS.escape(key)}"]`);
+        if (sel) sel.value = slug;
+      });
+    });
+
+    // Sync noUiSlider to hydrated price inputs
+    const sliderEl = root.querySelector('[data-range-slider]');
+    if (sliderEl?.noUiSlider) {
+      const minInput = root.querySelector('[data-price-min]');
+      const maxInput = root.querySelector('[data-price-max]');
+      sliderEl.noUiSlider.set([
+        parseFloat(minInput?.value || sliderEl.dataset.min),
+        parseFloat(maxInput?.value || sliderEl.dataset.max),
+      ]);
+    }
+  }
+
   // ── Init ─────────────────────────────────────────────────────────────────────
 
-  updateClearAllVisibility(collectState());
+  hydrateFromUrl();
+
+  // Commit URL-established filter state to the store so shop-load-more.js reads
+  // the correct initial state on direct URL loads (e.g. ?filter_color=blue)
+  // before any AJAX filter call fires.
+  const _initState = collectState();
+  commitFilterStore(_initState, params.action, params.nonce);
+
+  updateClearAllVisibility(_initState);
 })();
