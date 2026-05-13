@@ -10,6 +10,13 @@ The full working Sobe theme lives in `WP-boilerplate-demo`. Client projects can 
 - `WP-boilerplate-demo`: rich Sobe starter with blocks, patterns, sidecart, dark mode, wishlist, headers, footers, and demo presentation. Fork once only.
 - Client theme: owns branding, templates, blocks, customizer, WooCommerce presentation, and business logic.
 
+## Version Policy
+
+- `v1.x.x` (`v1.0.0-rich-sobe-starter`): full theme with blocks, patterns, customizer, sidecart, and presentation features. Existing clients pin to this line. New clients should not use it.
+- `v2.x.x` (`v2.0.0-thin-infra`): infrastructure only, including the block system, asset pipeline, WooCommerce wrappers, setup, and hardening. New clients track this as `upstream`.
+
+Existing rich clients should not blindly merge `upstream/main`. Cherry-pick specific security or infrastructure fixes from v2, or rebase intentionally during a maintenance window. See [Merge Strategy](docs/merge-strategy.md) for the detailed policy.
+
 ## New Client Workflow
 
 ```bash
