@@ -1,50 +1,7 @@
-@import 'tailwindcss';
 @import './tokens.css';
-
-/* ────────────────────────────────────────────────────────────────────────────
-   BLOCK EDITOR STYLES
-   Loaded via block_editor_settings_all in app/setup.php.
-   tokens.css import ensures all --c-* CSS custom properties resolve in the
-   editor canvas, so Gutenberg colour classes (has-accent-color etc.) use the
-   live design tokens rather than the hardcoded hex values from theme.json.
-   ──────────────────────────────────────────────────────────────────────────── */
 
 .editor-styles-wrapper {
   font-family: var(--font-sans);
   color: var(--c-text);
-  background-color: var(--c-background);
+  background: var(--c-background);
 }
-
-.editor-styles-wrapper h1,
-.editor-styles-wrapper h2,
-.editor-styles-wrapper h3,
-.editor-styles-wrapper h4,
-.editor-styles-wrapper h5,
-.editor-styles-wrapper h6 {
-  font-family: var(--font-heading);
-  color: var(--c-heading);
-  line-height: 1.1;
-  letter-spacing: -0.015em;
-}
-
-/* Constrain default block width to reading column */
-.wp-block { max-width: 720px; }
-
-/* Gutenberg colour class → design token mapping (mirrors app.css @layer utilities) */
-.has-background-background-color    { background-color: var(--c-background)          !important; }
-.has-surface-1-background-color     { background-color: var(--c-surface-1)            !important; }
-.has-surface-2-background-color     { background-color: var(--c-surface-2)            !important; }
-.has-surface-3-background-color     { background-color: var(--c-surface-3)            !important; }
-.has-surface-invert-background-color { background-color: var(--c-surface-invert)      !important; }
-.has-primary-background-color       { background-color: var(--c-primary)              !important; }
-.has-accent-background-color        { background-color: var(--c-accent)               !important; }
-
-.has-heading-color            { color: var(--c-heading)            !important; }
-.has-text-color               { color: var(--c-text)               !important; }
-.has-text-muted-color         { color: var(--c-text-muted)         !important; }
-.has-text-subtle-color        { color: var(--c-text-subtle)        !important; }
-.has-surface-invert-fg-color  { color: var(--c-surface-invert-fg)  !important; }
-.has-primary-color            { color: var(--c-primary)            !important; }
-.has-accent-color             { color: var(--c-accent)             !important; }
-.has-accent-fg-color          { color: var(--c-accent-fg)          !important; }
-.has-border-color             { color: var(--c-border)             !important; }

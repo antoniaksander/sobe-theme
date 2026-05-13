@@ -66,14 +66,9 @@ const editorFontSizes = [
 
 const editorFonts = [
   {
-    name: 'Cabinet Grotesk',
-    slug: 'cabinet-grotesk',
-    fontFamily: "'CabinetGrotesk', ui-sans-serif, system-ui, sans-serif",
-  },
-  {
-    name: 'Satoshi',
-    slug: 'satoshi',
-    fontFamily: "'Satoshi', ui-sans-serif, system-ui, sans-serif",
+    name: 'Sans',
+    slug: 'sans',
+    fontFamily: 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
   },
   {
     name: 'Serif',
