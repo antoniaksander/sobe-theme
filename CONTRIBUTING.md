@@ -1,6 +1,6 @@
-# ARCHITECT.md — Sobe Native Hybrid Monolith
+# Sobe WP contributing
 
-> This file is the binding architectural reference for every developer and AI agent working on this codebase. Every section is a decision, not a suggestion. Reading CLAUDE.md first is a prerequisite.
+> This file is the binding architectural reference for every developer and AI agent working on this codebase. Every section is a decision, not a suggestion. Internal team members may also use `CLAUDE.md` for private AI-oriented context, but this file is the public source of truth.
 
 ---
 
@@ -10,7 +10,7 @@ This theme is built on the **Native Hybrid Monolith** pattern. Every capability 
 
 1. **Editor experience is React/JSX only**, confined to `edit.jsx` inside the block folder. React never outputs frontend HTML.
 2. **Frontend rendering is Blade only.** The `save()` function in every block always returns `null`. WordPress calls a PHP `render_callback` that delegates to a Blade view.
-3. **WooCommerce integration is hooks only**, confined to `app/woocommerce.php`. No WC logic lives anywhere else.
+3. **WooCommerce integration prefers hooks first**, with template overrides allowed when hooks are insufficient for the required markup or layout change.
 4. **Styling is the CSS token cascade.** No raw hex values outside `tokens.css`. No inline styles. No `style=""` attributes.
 5. **The DOM is semantic.** Every HTML element has a reason to exist. No div soup. No wrapper elements added for styling convenience.
 
@@ -59,8 +59,8 @@ sobe/
     │       ├── edit.jsx
     │       ├── save.jsx            Always returns null.
     │       ├── editor.scss         Editor chrome only. Usually empty.
-    │       └── style.scss          Shared front+editor. Usually empty (Tailwind-first).
-    │       (view.js must not exist — delete the scaffold stub immediately)
+    │       ├── style.scss          Shared front+editor. Usually empty (Tailwind-first).
+    │       └── view.js             Optional. Only for block-specific frontend JS.
     │
     ├── patterns/
     │   └── {pattern-slug}.php      Native Gutenberg block patterns. See SOP: Block Patterns.
@@ -72,14 +72,10 @@ sobe/
         ├── components/             Blade components: <x-button>, <x-section>, <x-side-cart>, etc.
         ├── partials/               Reusable includes: entry-meta, comments, page-header, etc.
         ├── blocks/                 Blade renderers for custom blocks. hero.blade.php, etc.
-        └── woocommerce/            Only the four approved wrapper files (see WC SOP).
-            ├── archive-product.blade.php
-            ├── single-product.blade.php
-            ├── content-product.blade.php
-            └── content-single-product.blade.php
+        └── woocommerce/            WooCommerce Blade wrappers and overrides.
 ```
 
-> `resources/views/woocommerce/` must contain only the four wrapper files listed above. Any additional WC template copied here is an AP-1 violation.
+> `resources/views/woocommerce/` is the home for WooCommerce Blade wrappers and overrides. Prefer hooks and filters where possible, but template overrides are permitted when WooCommerce does not expose a usable hook for the required markup or layout change.
 
 > `resources/views/blocks/` file names must match the block slug exactly. `sobe/hero` → `hero.blade.php`.
 
@@ -168,7 +164,7 @@ resources/blocks/your-block-name/
 └── save.jsx
 ```
 
-**Immediately delete `view.js`** if the scaffold created it (AP-6). Do not create `editor.scss` or `style.scss` unless the block has a proven need for non-Tailwind CSS.
+Delete `view.js` if the block does not need frontend behavior. Keep it only for block-specific frontend interactivity such as sliders, filters, or animated UI that cannot live in shared app code. Do not create `editor.scss` or `style.scss` unless the block has a proven need for non-Tailwind CSS.
 
 ### Step 2 — Write `block.json`
 
@@ -181,7 +177,7 @@ Mandatory fields — copy this shape exactly:
   "name": "sobe/your-block-name",
   "version": "0.1.0",
   "title": "Your Block Title",
-  "category": "sobe-blocks",
+  "category": "sobe-general",
   "description": "One sentence description.",
   "example": {},
   "supports": {
@@ -201,7 +197,7 @@ Mandatory fields — copy this shape exactly:
 | --------------- | --------------------------------------------------------------- |
 | `apiVersion`    | Always `3`                                                      |
 | `supports.html` | Always `false` — prevents Gutenberg from serialising block HTML |
-| `category`      | Always `sobe-blocks`                                            |
+| `category`      | Use a registered category such as `sobe-general`, `sobe-woocommerce`, or `sobe-content` |
 | `textdomain`    | Always `sage` — never `woocommerce` or `default`                |
 | `name`          | Always `sobe/{slug}` using kebab-case                           |
 
@@ -255,6 +251,17 @@ export default function Edit({ attributes, setAttributes }) {
 **`edit.jsx` must never:** fetch data at render time, import jQuery or lodash, produce markup intended for the frontend, or use `useState` for data that belongs in `setAttributes`.
 
 All `wp.*` globals are available without importing. Use them as shown above.
+
+### WooCommerce customization rule
+
+Prefer hooks and filters first. Use Blade WooCommerce template overrides only when hooks are insufficient for the required result.
+
+Examples:
+
+- Prefer hooks: reposition or inject elements in the single-product summary using hooks such as `woocommerce_single_product_summary` and hook priorities.
+- Use a template override: when the required change restructures markup or layout in a way WooCommerce does not expose through hooks, such as a custom single-product wrapper structure or bespoke related-products markup.
+
+When you add or change a WooCommerce template override, document the reason in the client repo because those files are upgrade-sensitive.
 
 ### Step 5 — Register in `setup.php`
 
@@ -340,7 +347,7 @@ Then add it to the Vite `input` array. Never write Tailwind utility classes insi
 
 ### Common mistakes
 
-- Leaving `console.log("Hello World!")` in `view.js` — **delete `view.js` immediately** (AP-6).
+- Leaving the scaffolded `console.log("Hello World!")` stub in `view.js` — delete the stub or the file if the block does not need frontend JS (AP-6).
 - Adding `lodash`, `underscore`, or `jquery` to `$deps` (AP-7).
 - Forgetting the `type="module"` filter — block scripts will silently corrupt Underscore.js.
 - Putting a `WP_Query` in the Blade template — move it to a Composer.
@@ -663,7 +670,7 @@ These patterns are explicitly forbidden. Each entry states what it is, where it 
 
 **Why harmful:** If the file is ever referenced (e.g., `viewScript` added to `block.json`) it ships console noise to every page load in production. Even unreferenced, it suggests false functionality and confuses future developers.
 
-**Rule:** Delete `view.js` immediately when scaffolding a new block. Never commit it.
+**Rule:** Delete the scaffolded stub immediately when scaffolding a new block. Only keep `view.js` if the block needs real frontend behaviour.
 
 ---
 

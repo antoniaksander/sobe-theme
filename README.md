@@ -13,6 +13,7 @@ Most modern WordPress themes force you to choose between messy PHP spaghetti or 
 5. **The DOM must be semantic.** No "div soup."
 
 Before writing any code, read [CONTRIBUTING.md](CONTRIBUTING.md) to understand the architectural rules.
+For maintenance and repo workflow, use the files in [docs/](docs/overview.md).
 
 ## Stack
 
@@ -23,7 +24,7 @@ Before writing any code, read [CONTRIBUTING.md](CONTRIBUTING.md) to understand t
 
 ## Prerequisites
 
-- **Node.js**: `^20.19.0` or `>=22.12.0`
+- **Node.js**: `>=22.12.0`
 - **PHP**: `8.3` or higher
 - **Composer**: v2.x
 
@@ -74,8 +75,9 @@ npm run make:block -- my-block-name --category=sobe-woocommerce
 
 - `sobe-general` — Default. Hero, callout, FAQ, content sections.
 - `sobe-woocommerce` — Product carousels, feature grids, shop components.
-- `sobe-sliders` — Marquees, carousels, swipeable galleries.
 - `sobe-content` — Text-heavy layouts, editorial patterns.
+
+> Note: `sobe-layout` exists as an internal block category in `app/setup.php` and is not intended for scaffolded content blocks.
 
 The scaffold creates:
 
