@@ -30,12 +30,10 @@ export default defineConfig({
         'resources/css/editor.css',
         'resources/js/editor.js',
         'resources/css/woocommerce.css',
-        'resources/js/product-gallery.js',
-        'resources/js/shop-load-more.js',
         ...getBlockEntries(),
       ],
       refresh: true,
-      assets: ['resources/images/**', 'resources/fonts/**'],
+      assets: ['resources/images/**'],
     }),
 
     wordpressPlugin(),
@@ -111,7 +109,6 @@ export default defineConfig({
     alias: {
       '@scripts': '/resources/js',
       '@styles': '/resources/css',
-      '@fonts': '/resources/fonts',
       '@images': '/resources/images',
     },
   },

@@ -3,19 +3,14 @@
 /**
  * Theme configuration — the primary control panel for client forks.
  *
- * Change `prefix` first when forking. Everything that uses a `sobe_` key in PHP
- * and a `sobe-` handle in JS reads from here. i18n textdomain strings in __()
- * calls must stay literal (`'sobe'`) — they cannot be dynamic.
- *
- * Also update:
- *   style.css               — Theme Name, Text Domain
- *   resources/blocks/ * /block.json — "name" and "category" (static JSON, manual)
- *   resources/css/tokens.css — brand colours, fonts
- *   resources/scripts/build-theme-json.js — editorFonts array
+ * The thin boilerplate keeps the Sobe namespace as its infrastructure signature.
+ * Client presentation lives in demo/client repositories.
  */
 
 return [
     'prefix' => 'sobe',
+
+    'textdomain' => 'sobe',
 
     'excerpt_length' => 15,
 

@@ -1,0 +1,21 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/example",
+  "version": "0.1.0",
+  "title": "Example",
+  "category": "sobe-general",
+  "description": "Minimal dynamic block used to verify the Sobe block infrastructure.",
+  "textdomain": "sobe",
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "className": true
+  },
+  "attributes": {
+    "content": {
+      "type": "string",
+      "default": "Infrastructure block"
+    }
+  }
+}

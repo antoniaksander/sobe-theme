@@ -9,7 +9,7 @@
  *        node resources/scripts/check-patterns.js
  */
 
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 // ── Allowlist (mirrors allowed_block_types_all in app/setup.php) ─────────────
@@ -38,7 +38,9 @@ function isAllowed(name) {
 // ── Check patterns ────────────────────────────────────────────────────────────
 
 const patternsDir = resolve('resources/patterns');
-const files = readdirSync(patternsDir).filter((f) => f.endsWith('.php'));
+const files = existsSync(patternsDir)
+  ? readdirSync(patternsDir).filter((f) => f.endsWith('.php'))
+  : [];
 
 let errors = 0;
 

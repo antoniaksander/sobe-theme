@@ -1,35 +1,5 @@
 {
-  "hero": {
+  "example": {
     "category": "sobe-general"
-  },
-  "faq": {
-    "category": "sobe-general"
-  },
-  "product-feature": {
-    "category": "sobe-woocommerce"
-  },
-  "product-carousel": {
-    "category": "sobe-woocommerce"
-  },
-  "catalog-filters": {
-    "category": "sobe-woocommerce"
-  },
-  "brand-carousel": {
-    "category": "sobe-woocommerce"
-  },
-  "site-header": {
-    "category": "sobe-layout"
-  },
-  "site-footer": {
-    "category": "sobe-layout"
-  },
-  "our-brands": {
-    "category": "sobe-woocommerce"
-  },
-  "reviews-slider": {
-    "category": "sobe-woocommerce"
-  },
-  "product-categories-grid": {
-    "category": "sobe-woocommerce"
   }
 }

@@ -68,7 +68,7 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
 
     return new \WP_Error(
         'rest_not_logged_in',
-        __('You must be logged in to access the REST API.', 'sobe'),
+        __('You must be logged in to access the REST API.', config('theme.textdomain')),
         ['status' => 401]
     );
 }, 10, 3);
