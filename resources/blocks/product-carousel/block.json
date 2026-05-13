@@ -1,0 +1,73 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/product-carousel",
+  "version": "0.1.0",
+  "title": "Product Carousel",
+  "icon": "cart",
+  "category": "sobe-woocommerce",
+  "description": "A swipeable carousel of WooCommerce products with optional WebGL shimmer.",
+  "example": {
+    "attributes": {
+      "heading": "New Arrivals",
+      "paragraph": "Discover our latest collection of carefully curated products.",
+      "count": 8,
+      "orderBy": "latest",
+      "linkText": "Shop All",
+      "linkUrl": "#"
+    }
+  },
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "className": true,
+    "align": ["wide", "full"]
+  },
+  "textdomain": "sage",
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    },
+    "count": {
+      "type": "number",
+      "minimum": 1,
+      "maximum": 12,
+      "default": 8
+    },
+    "orderBy": {
+      "type": "string",
+      "enum": ["latest", "featured", "best_selling", "top_rated", "on_sale", "random"],
+      "default": "latest"
+    },
+    "categoryId": {
+      "type": "number",
+      "default": 0
+    },
+    "brandId": {
+      "type": "number",
+      "default": 0
+    },
+    "heading": {
+      "type": "string",
+      "default": ""
+    },
+    "paragraph": {
+      "type": "string",
+      "default": ""
+    },
+    "linkText": {
+      "type": "string",
+      "default": ""
+    },
+    "linkUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "linkType": {
+      "type": "string",
+      "enum": ["btn-dark", "btn-light", "btn-outline-dark", "btn-outline-light", "link-dark", "link-light"],
+      "default": "btn-dark"
+    }
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/brand-carousel",
+  "version": "0.1.0",
+  "title": "Brand Carousel",
+  "icon": "screenoptions",
+  "category": "sobe-woocommerce",
+  "description": "Endless CSS marquee of brand logos with WebGL liquid-shimmer hover effect.",
+  "example": {
+    "attributes": {
+      "useManualEntry": true,
+      "speed": "30s",
+      "pauseOnHover": true,
+      "showImages": false,
+      "brands": [
+        { "id": "1", "name": "Acme", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "2", "name": "Globex", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "3", "name": "Initech", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "4", "name": "Umbrella", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "5", "name": "Soylent", "imageUrl": "", "imageAlt": "", "link": "" },
+        { "id": "6", "name": "Meridian", "imageUrl": "", "imageAlt": "", "link": "" }
+      ]
+    }
+  },
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "className": true,
+    "align": ["wide", "full"]
+  },
+  "textdomain": "sage",
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    },
+    "useManualEntry": {
+      "type": "boolean",
+      "default": false
+    },
+    "brands": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "id":       { "type": "number" },
+          "name":     { "type": "string" },
+          "url":      { "type": "string" },
+          "logoUrl":  { "type": "string" },
+          "logoId":   { "type": "number" },
+          "wcTermId": { "type": "number" },
+          "imageUrl": { "type": "string" },
+          "imageAlt": { "type": "string" },
+          "link":     { "type": "string" }
+        }
+      }
+    },
+    "speed": {
+      "type": "string",
+      "enum": ["15s", "20s", "30s", "40s", "60s"],
+      "default": "30s"
+    },
+    "pauseOnHover": {
+      "type": "boolean",
+      "default": true
+    },
+    "showImages": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

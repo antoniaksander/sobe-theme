@@ -1,0 +1,92 @@
+// brand-carousel — frontend + editor shared styles
+// All --c-* tokens are globally available via tokens.css.
+// DO NOT @import 'tokens.css' here.
+
+@keyframes brand-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.sobe-brand-carousel {
+  overflow: hidden;
+}
+
+.brand-carousel__viewport {
+  overflow: hidden;
+  width: 100%;
+  padding-block: var(--space-xl);
+}
+
+.brand-carousel__track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  animation: brand-marquee var(--carousel-speed, 30s) linear infinite;
+  will-change: transform;
+}
+
+// Pause animation when hovering the viewport (CSS-only, no JS required).
+.sobe-brand-carousel[data-pause-on-hover='true']
+  .brand-carousel__viewport:hover
+  .brand-carousel__track {
+  animation-play-state: paused;
+}
+
+.brand-carousel__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-inline: var(--space-2xl);
+  flex-shrink: 0;
+  position: relative; // Required for the WebGL canvas overlay in view.js
+}
+
+.brand-carousel__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: inherit;
+  outline-offset: 4px;
+}
+
+.brand-carousel__logo {
+  display: block;
+  height: var(--brand-logo-height, 4rem); // explicit height — SVGs need this
+  width: auto;
+  max-width: 12rem;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+
+  .brand-carousel__item:hover & {
+    transform: scale(1.05);
+  }
+}
+
+.brand-carousel__name {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  transition: transform 0.3s ease;
+
+  .brand-carousel__item:hover & {
+    transform: scale(1.05);
+  }
+}
+
+// Stop the marquee entirely when the user prefers reduced motion.
+@media (prefers-reduced-motion: reduce) {
+  .brand-carousel__track {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+    justify-content: center;
+    gap: 1.5rem;
+    padding-inline: 2rem;
+  }
+}

@@ -50,7 +50,23 @@ Application::configure()
 |
 */
 
-collect(['helpers', 'setup', 'blocks', 'assets', 'filters', 'woocommerce', 'security'])
+collect([
+    'helpers',
+    'setup',
+    'blocks',
+    'assets',
+    'filters',
+    'woocommerce',
+    'security',
+    'setup-patterns',
+    'setup-customizer',
+    'setup-demo-layout',
+    'setup-search',
+    'woocommerce-sidecart',
+    'woocommerce-catalog',
+    'woocommerce-pdp',
+    'woocommerce-filters',
+])
     ->each(function ($file) {
         if (! locate_template($file = "app/{$file}.php", true, true)) {
             wp_die(

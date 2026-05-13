@@ -1,0 +1,52 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/catalog-filters",
+  "version": "0.1.0",
+  "title": "Catalog Filters",
+  "icon": "filter",
+  "category": "sobe-woocommerce",
+  "description": "Product filter panel with categories, brands, attributes, and price range. Place in the Shop Sidebar widget area.",
+  "example": {
+    "attributes": {
+      "showCategories": true,
+      "showBrands": true,
+      "showAttributes": true,
+      "showPriceRange": true,
+      "collapseByDefault": false
+    }
+  },
+  "supports": {
+    "html": false,
+    "anchor": false,
+    "className": false,
+    "layout": false
+  },
+  "textdomain": "sage",
+  "attributes": {
+    "brandsTaxonomy": {
+      "type": "string",
+      "default": "product_brand"
+    },
+    "showCategories": {
+      "type": "boolean",
+      "default": true
+    },
+    "showBrands": {
+      "type": "boolean",
+      "default": true
+    },
+    "showAttributes": {
+      "type": "boolean",
+      "default": true
+    },
+    "showPriceRange": {
+      "type": "boolean",
+      "default": true
+    },
+    "collapseByDefault": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

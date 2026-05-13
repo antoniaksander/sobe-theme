@@ -1,0 +1,33 @@
+// hero — frontend + editor shared styles
+// All --c-* tokens are globally available via tokens.css.
+// DO NOT @import 'tokens.css' here.
+
+// Header overlap: pull the hero up behind the site header when it's the first block.
+.entry-content > .wp-block-sobe-hero:first-child,
+.wp-block-post-content > .wp-block-sobe-hero:first-child {
+  margin-top: -4rem; /* matches .site-header height (h-16 / 4rem) */
+}
+
+// Split-screen: clip the background image to the right 50%.
+// The left half reveals the page's solid background color, creating a clean magazine split.
+.wp-block-sobe-hero.hero--split {
+  .hero__bg-media img {
+    clip-path: inset(0 0 0 50%);
+  }
+}
+
+// Editorial: display-scale heading that dominates the canvas.
+.wp-block-sobe-hero.hero--editorial {
+  .hero__heading {
+    font-size: clamp(4rem, 12vw, 10rem);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+  }
+}
+
+// Respect prefers-reduced-motion: disable the WebGL canvas entirely.
+@media (prefers-reduced-motion: reduce) {
+  .hero__webgl {
+    display: none;
+  }
+}

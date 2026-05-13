@@ -1,0 +1,101 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/hero",
+  "version": "0.1.0",
+  "title": "Hero",
+  "icon": "cover-image",
+  "category": "sobe-general",
+  "description": "Full-bleed hero section with background image, animated content, and optional WebGL cursor effect.",
+  "example": {
+    "attributes": {
+      "heading": "Make Something Great",
+      "paragraph": "A bold statement that captures attention and drives action.",
+      "ctaText": "Get Started",
+      "ctaUrl": "#",
+      "alignment": "left",
+      "height": "80vh",
+      "align": "full",
+      "ctaType": "btn-light",
+      "headingColor": "fg",
+      "paragraphColor": "fg-muted",
+      "headingSize": "default"
+    }
+  },
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "className": true,
+    "align": ["wide", "full"],
+    "layout": false
+  },
+  "textdomain": "sage",
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    },
+    "heading": {
+      "type": "string",
+      "default": ""
+    },
+    "paragraph": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaText": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "ctaType": {
+      "type": "string",
+      "enum": ["btn-light", "btn-dark", "btn-outline-light", "btn-outline-dark", "link-light", "link-dark"],
+      "default": "btn-light"
+    },
+    "headingColor": {
+      "type": "string",
+      "enum": ["fg", "heading", "text", "accent"],
+      "default": "fg"
+    },
+    "paragraphColor": {
+      "type": "string",
+      "enum": ["fg-muted", "text", "text-muted", "text-subtle"],
+      "default": "fg-muted"
+    },
+    "headingSize": {
+      "type": "string",
+      "enum": ["default", "lg", "xl"],
+      "default": "default"
+    },
+    "alignment": {
+      "type": "string",
+      "enum": ["left", "center", "split-screen", "editorial"],
+      "default": "left"
+    },
+    "height": {
+      "type": "string",
+      "enum": ["70vh", "80vh", "90vh", "100vh"],
+      "default": "80vh"
+    },
+    "backgroundImageId": {
+      "type": "number",
+      "default": 0
+    },
+    "backgroundImageUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "darkOverlay": {
+      "type": "boolean",
+      "default": false
+    },
+    "enableWebgl": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
