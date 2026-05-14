@@ -75,7 +75,7 @@ writeFileSync(`${BLOCK_DIR}/block.json`, JSON.stringify({
   title,
   category,
   description: '',
-  textdomain: 'sage',
+  textdomain: 'sobe',
   supports: {
     html: false,
     anchor: true,
@@ -116,13 +116,13 @@ export default function Edit({ attributes, setAttributes }) {
   return (
     <>
       <InspectorControls>
-        <PanelBody title={__('Settings', 'sage')} initialOpen={true}>
+        <PanelBody title={__('Settings', 'sobe')} initialOpen={true}>
           {/* Add controls here */}
         </PanelBody>
       </InspectorControls>
 
       <div {...blockProps}>
-        <p>{__('${title} — editor preview', 'sage')}</p>
+        <p>{__('${title} — editor preview', 'sobe')}</p>
       </div>
     </>
   );
@@ -133,7 +133,7 @@ writeFileSync(`${BLOCK_DIR}/save.jsx`,
 `// Returning null is intentional: this is a dynamic block.
 // WordPress never uses the client-side save output — the Blade template
 // at resources/views/blocks/${slug}.blade.php renders the frontend HTML
-// via the render_callback registered in app/setup.php.
+// via the render_callback registered in app/blocks.php.
 export default function save() {
   return null;
 }

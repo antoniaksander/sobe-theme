@@ -30,7 +30,8 @@ sobe/
 ├── vite.config.js                  Explicit entry points (no globbing), wordpressThemeJson plugin, bundle budget.
 │
 ├── app/
-│   ├── setup.php                   Explicit block registration ($custom_blocks array). Theme supports. Customizer.
+│   ├── setup.php                   Theme supports, menus, image sizes.
+│   ├── blocks.php                  Manifest-driven block registration, script enqueueing, block type allowlist.
 │   ├── filters.php                 WordPress filter hooks only (nav, excerpt, SVG MIME, etc.)
 │   ├── woocommerce.php             ALL WooCommerce integration. Hooks only. No exceptions.
 │   ├── security.php                XML-RPC off, REST access control, wp_head cleanup.
@@ -154,21 +155,34 @@ This also fixes `--wc-form-focus-ring-color`, which aliases `--c-ring`.
 
 ## SOP: Adding a New Block
 
-### Step 1 — Create the folder
+### Step 1 — Run the scaffold command
+
+```bash
+npm run make:block -- your-block-name
+# With a specific category:
+npm run make:block -- your-block-name --category=sobe-woocommerce
+```
+
+This creates all required files and adds the block to `blocks-manifest.json` in one step:
 
 ```
 resources/blocks/your-block-name/
 ├── block.json
 ├── index.jsx
 ├── edit.jsx
-└── save.jsx
+├── save.jsx
+├── style.scss
+└── editor.scss
+resources/views/blocks/your-block-name.blade.php
 ```
 
-Delete `view.js` if the block does not need frontend behavior. Keep it only for block-specific frontend interactivity such as sliders, filters, or animated UI that cannot live in shared app code. Do not create `editor.scss` or `style.scss` unless the block has a proven need for non-Tailwind CSS.
+**The manifest entry is the only registration required.** `app/blocks.php` (PHP) and `resources/scripts/blocks-entries.js` (Vite) both read from `blocks-manifest.json`. Do not touch `vite.config.js` or any PHP setup file.
 
-### Step 2 — Write `block.json`
+Available categories: `sobe-general` (default), `sobe-woocommerce`, `sobe-content`.
 
-Mandatory fields — copy this shape exactly:
+### Step 2 — Define attributes in `block.json`
+
+The scaffold creates a minimal `block.json`. Add your attributes and supports:
 
 ```json
 {
@@ -183,7 +197,7 @@ Mandatory fields — copy this shape exactly:
   "supports": {
     "html": false
   },
-  "textdomain": "sage",
+  "textdomain": "sobe",
   "attributes": {
     "yourAttribute": {
       "type": "string",
@@ -198,7 +212,7 @@ Mandatory fields — copy this shape exactly:
 | `apiVersion`    | Always `3`                                                      |
 | `supports.html` | Always `false` — prevents Gutenberg from serialising block HTML |
 | `category`      | Use a registered category such as `sobe-general`, `sobe-woocommerce`, or `sobe-content` |
-| `textdomain`    | Always `sage` — never `woocommerce` or `default`                |
+| `textdomain`    | Always `sobe`                                                   |
 | `name`          | Always `sobe/{slug}` using kebab-case                           |
 
 ### Step 3 — Write `save.jsx`
@@ -232,16 +246,16 @@ export default function Edit({ attributes, setAttributes }) {
   return (
     <>
       <InspectorControls>
-        <PanelBody title={__('Content', 'sage')}>
+        <PanelBody title={__('Content', 'sobe')}>
           <TextControl
-            label={__('Heading', 'sage')}
+            label={__('Heading', 'sobe')}
             value={heading}
             onChange={(val) => setAttributes({ heading: val })}
           />
         </PanelBody>
       </InspectorControls>
       <div {...blockProps}>
-        <h2>{heading || __('Your heading here…', 'sage')}</h2>
+        <h2>{heading || __('Your heading here…', 'sobe')}</h2>
       </div>
     </>
   );
@@ -263,36 +277,9 @@ Examples:
 
 When you add or change a WooCommerce template override, document the reason in the client repo because those files are upgrade-sensitive.
 
-### Step 5 — Register in `setup.php`
+### Step 5 — Build the Blade renderer
 
-Add the block slug to the `$custom_blocks` array at the top of the `init` hook:
-
-```php
-$custom_blocks = ['hero', 'your-block-name'];
-```
-
-The loop handles the rest. No other changes to `setup.php` are needed.
-
-**Why `type="module"`:** The Vite-built bundle's minified variable names collide with `window._` (Underscore.js), breaking the Customizer. Module scope contains the collision. The `script_loader_tag` filter applies to all `sobe-*` handles automatically.
-
-**Why no `lodash`/`underscore`/`jquery` in `$deps`:** These are non-module scripts. WordPress loads them before a module script executes, causing sequencing failures. Never add them (AP-7). Use `wp.*` globals instead.
-
-### Step 6 — Add to Vite entry points
-
-In `vite.config.js`, add the entry points explicitly to the `input` array:
-
-```js
-'resources/blocks/your-block-name/index.jsx',
-// Add editor.scss and style.scss only if the block requires them:
-// 'resources/blocks/your-block-name/editor.scss',
-// 'resources/blocks/your-block-name/style.scss',
-```
-
-**No globbing. No auto-discovery. Every entry point is declared by hand.** This is intentional — the small cost of a manual edit prevents silent pathing errors and unpredictable builds.
-
-### Step 7 — Create the Blade renderer
-
-File: `resources/views/blocks/your-block-name.blade.php`
+The scaffold creates `resources/views/blocks/your-block-name.blade.php`. Build it out:
 
 ```blade
 @php
@@ -312,7 +299,7 @@ Rules:
 - Output user-controlled string attributes with `{!! wp_kses_post($value) !!}` (see Security Baseline).
 - Never hardcode a bare `class=` on the block root element.
 
-### Step 8 — Create a Blade Composer for data-heavy blocks
+### Step 6 — Create a Blade Composer for data-heavy blocks
 
 If the block needs data beyond `$attributes` (e.g., a `WP_Query`), create a Composer. Never run queries inside a Blade template.
 
@@ -334,22 +321,38 @@ class YourBlockName extends Composer
 
 Acorn auto-discovers Composers in `app/View/Composers/` — no manual registration needed.
 
-### Step 9 — Block-specific CSS (when and when not)
+### Step 7 — Block-specific CSS (when and when not)
 
-**Do not create `style.scss`** if the block's visual treatment is entirely achievable with Tailwind utilities in the Blade template. This is true for most blocks.
+The scaffold creates `style.scss` and `editor.scss` for every block. **Delete them if the block does not need them** — `blocks-entries.js` checks file existence and only includes files that are present in the block folder.
 
-**Create `style.scss`** only when:
+**Keep `style.scss`** only when:
 
 - You need `clip-path`, scoped `@keyframes`, CSS `counter`, or another feature Tailwind v4 cannot express.
 - The same rule must appear on both frontend and in the editor preview.
 
-Then add it to the Vite `input` array. Never write Tailwind utility classes inside `style.scss`. Never import `tokens.css` in a block-level CSS file — the tokens are already globally available.
+Never write Tailwind utility classes inside `style.scss`. Never import `tokens.css` in a block-level CSS file — the tokens are already globally available.
+
+### How registration works
+
+Adding a slug to `resources/blocks/blocks-manifest.json` is the only manual step when not using `make:block`:
+
+```json
+{
+  "your-block-name": { "category": "sobe-general" }
+}
+```
+
+`app/blocks.php` reads this manifest at every request to register the PHP `render_callback` and enqueue scripts. `resources/scripts/blocks-entries.js` reads it at build time to tell Vite which files to compile. Both use file-existence checks, so `style.scss`, `editor.scss`, and `view.js` are included in the build only when they physically exist in the block folder.
+
+**Why `type="module"`:** The Vite-built bundle's minified variable names collide with `window._` (Underscore.js), breaking the Customizer. Module scope contains the collision. The `script_loader_tag` filter in `blocks.php` applies to all `sobe-*` handles automatically.
+
+**Why no `lodash`/`underscore`/`jquery` in `$deps`:** These are non-module scripts. WordPress loads them before a module script executes, causing sequencing failures. Never add them (AP-7). Use `wp.*` globals instead.
 
 ### Common mistakes
 
+- Creating block files by hand without adding the slug to `blocks-manifest.json` — the block will never register.
 - Leaving the scaffolded `console.log("Hello World!")` stub in `view.js` — delete the stub or the file if the block does not need frontend JS (AP-6).
 - Adding `lodash`, `underscore`, or `jquery` to `$deps` (AP-7).
-- Forgetting the `type="module"` filter — block scripts will silently corrupt Underscore.js.
 - Putting a `WP_Query` in the Blade template — move it to a Composer.
 - Using `{!! $attributes['title'] !!}` without `wp_kses_post()` (AP-8/Security).
 - Writing full class names via PHP string concatenation: `'text-' . $size` (AP-8 / Tailwind v4 rule).
@@ -491,13 +494,13 @@ Register a pattern category and individual patterns in an `init` hook:
 add_action('init', function () {
     // Register the Sobe pattern category (once, at theme level)
     register_block_pattern_category('sobe-patterns', [
-        'label' => __('Sobe Layouts', 'sage'),
+        'label' => __('Sobe Layouts', 'sobe'),
     ]);
 
     // Register individual patterns
     register_block_pattern('sobe/homepage-hero', [
-        'title'       => __('Homepage Hero', 'sage'),
-        'description' => __('Full-width hero with headline, subtitle, and CTA.', 'sage'),
+        'title'       => __('Homepage Hero', 'sobe'),
+        'description' => __('Full-width hero with headline, subtitle, and CTA.', 'sobe'),
         'categories'  => ['sobe-patterns'],
         'content'     => require resource_path('patterns/homepage-hero.php'),
     ]);
@@ -564,15 +567,15 @@ Also check patterns:
 grep -r 'sobe/block-name' resources/patterns/
 ```
 
-### Step 2 — Remove registration from `setup.php`
+### Step 2 — Remove from `blocks-manifest.json`
 
-Remove the block slug from the `$custom_blocks` array in the `init` hook. That is the only change needed in `setup.php`.
+Remove the block slug from `resources/blocks/blocks-manifest.json`. This is the only registration change required — `app/blocks.php` and `blocks-entries.js` both read from the manifest.
 
 The `allowed_block_types_all` filter auto-discovers `sobe/*` blocks via the registry — no manual update is needed there.
 
-### Step 3 — Remove from `vite.config.js`
+### Step 3 — Verify `vite.config.js` is unchanged
 
-Remove `'resources/blocks/block-name/index.jsx'` (and any associated `scss` entries) from the `input` array.
+`vite.config.js` reads block entry points from the manifest via `getBlockEntries()`. Removing the slug from the manifest is sufficient — no manual edit to `vite.config.js` is needed.
 
 ### Step 4 — Delete the file tree
 
@@ -600,7 +603,7 @@ If the build fails with a missing import, a file elsewhere is still importing th
 - [ ] No PHP warnings in `debug.log` referencing the deleted view or Composer
 - [ ] Database query from Step 1 returns zero results
 - [ ] Pattern files referencing the deleted block have been removed
-- [ ] The block category `sobe-blocks` is not empty (if it is, unregister it from `setup.php`)
+- [ ] The block category `sobe-blocks` is not empty (if it is, unregister it from `blocks.php`)
 
 ---
 
@@ -750,7 +753,7 @@ Every new component, block renderer, section, and partial must meet these requir
 {{-- Correct: user-controlled content, auto-escaped --}}
 {{ $product->get_name() }}
 {{ $siteName }}
-{{ __('Text', 'sage') }}
+{{ __('Text', 'sobe') }}
 
 {{-- Correct: WordPress function returns pre-escaped attribute string --}}
 <div {!! $wrapperAttrs !!}>   {{-- get_block_wrapper_attributes() --}}
@@ -804,13 +807,13 @@ This section is the codified standard derived from the hero block, ready to copy
 
 **Golden rule:** Prefer built-in `supports` over custom `InspectorControls` attributes. Add custom controls only for features Gutenberg does not provide natively.
 
-**Textdomain:** All blocks use `'sage'` as the i18n text domain in both PHP and JS, matching `block.json`'s `"textdomain": "sage"`. The existing hero block uses `'sobe'` in `edit.jsx` — a legacy inconsistency that must be corrected before launch. All new blocks use `'sage'`.
+**Textdomain:** All blocks use `'sobe'` as the i18n text domain in both PHP and JS, matching `block.json`'s `"textdomain": "sobe"`. `sobe` is the agency name and the theme's registered text domain. Never use `'sage'`, `'woocommerce'`, or `'default'`.
 
 ---
 
 ### Rule 1 — Dynamic Rendering
 
-`save.jsx` always returns `null`. This is a dynamic block. Blade handles all frontend HTML via the `render_callback` in `setup.php`. No exceptions.
+`save.jsx` always returns `null`. This is a dynamic block. Blade handles all frontend HTML via the `render_callback` in `app/blocks.php`. No exceptions.
 
 ```jsx
 export default function save() {
@@ -822,14 +825,15 @@ export default function save() {
 
 ---
 
-### Rule 2 — Explicit Wiring
+### Rule 2 — Manifest-Driven Registration
 
-A block is not active until it is registered in **both** places:
+A block is not active until its slug appears in `resources/blocks/blocks-manifest.json`. Use `npm run make:block` — it adds the entry automatically. If adding manually:
 
-1. `app/setup.php` — add slug to the `$custom_blocks` array
-2. `vite.config.js` — add `'resources/blocks/{slug}/index.jsx'` (and optional scss files) to the `input` array
+```json
+{ "your-block-name": { "category": "sobe-general" } }
+```
 
-No auto-discovery, no globbing. Both edits are made by hand on every new block.
+`app/blocks.php` reads the manifest to register the PHP `render_callback` and scripts. `resources/scripts/blocks-entries.js` reads it at build time for Vite. Do not edit `vite.config.js` or add anything to `setup.php` for block registration.
 
 ---
 
@@ -862,7 +866,7 @@ import { InspectorControls } from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 ```
 
-**Why:** The `wordpressPlugin()` from `@roots/vite-plugin` externalizes `@wordpress/*` packages — they are not bundled into the output. At runtime WordPress loads them as separate enqueued scripts that populate `window.wp.*`. The block's `$deps` array (`'wp-blocks'`, `'wp-element'`, `'wp-components'`, `'wp-i18n'`, `'wp-block-editor'`) in `setup.php` tells WordPress to enqueue those globals before the block module runs. An ES6 import attempts to resolve from `node_modules` and either bundles the package (bloat, version mismatch) or fails silently. Using `wp.*` accesses the live WordPress-registered copy.
+**Why:** The `wordpressPlugin()` from `@roots/vite-plugin` externalizes `@wordpress/*` packages — they are not bundled into the output. At runtime WordPress loads them as separate enqueued scripts that populate `window.wp.*`. The block's `$deps` array (`'wp-blocks'`, `'wp-element'`, `'wp-components'`, `'wp-i18n'`, `'wp-block-editor'`) in `blocks.php` tells WordPress to enqueue those globals before the block module runs. An ES6 import attempts to resolve from `node_modules` and either bundles the package (bloat, version mismatch) or fails silently. Using `wp.*` accesses the live WordPress-registered copy.
 
 **ES6 imports are only permitted for:**
 
@@ -878,7 +882,7 @@ All client-facing settings live in `<InspectorControls>`, wired to `block.json` 
 - **`Content` panel** (`initialOpen={true}`) — primary text fields and content inputs
 - **`Extra Settings` panel** (`initialOpen={false}`) — layout options, toggles, display variants
 
-All control `label` and `help` props must use `__(…, 'sage')`. All form controls (TextControl, SelectControl, ToggleControl) in WP 6.x must include `__nextHasNoMarginBottom`; TextControl and SelectControl also get `__next40pxDefaultSize`. These suppress deprecation warnings — see note below. Wrap each control in `<PanelRow>` for correct WP spacing. Do **not** pass `__next40pxDefaultSize` to `<Button>` — it is not a form control prop.
+All control `label` and `help` props must use `__(…, 'sobe')`. All form controls (TextControl, SelectControl, ToggleControl) in WP 6.x must include `__nextHasNoMarginBottom`; TextControl and SelectControl also get `__next40pxDefaultSize`. These suppress deprecation warnings — see note below. Wrap each control in `<PanelRow>` for correct WP spacing. Do **not** pass `__next40pxDefaultSize` to `<Button>` — it is not a form control prop.
 
 **Separate boolean toggles from their dependent content.** Never use the value of a string attribute as a toggle state. Use a dedicated boolean attribute so the author's text is preserved when the toggle is off:
 
@@ -887,11 +891,11 @@ All control `label` and `help` props must use `__(…, 'sage')`. All form contro
 { showCta && (
     <PanelRow>
         <TextControl
-            label={ __('CTA Text', 'sage') }
-            help={ __('Text shown on the button.', 'sage') }
+            label={ __('CTA Text', 'sobe') }
+            help={ __('Text shown on the button.', 'sobe') }
             value={ ctaText }
             onChange={ (val) => setAttributes({ ctaText: val }) }
-            placeholder={ __('Get started', 'sage') }
+            placeholder={ __('Get started', 'sobe') }
             __nextHasNoMarginBottom
             __next40pxDefaultSize
         />
@@ -992,7 +996,7 @@ Do **not** manually inject `is-layout-constrained max-w-none` via `get_block_wra
       "margin": true
     }
   },
-  "textdomain": "sage",
+  "textdomain": "sobe",
   "attributes": {
     "heading": {
       "type": "string",
@@ -1035,7 +1039,7 @@ Do **not** manually inject `is-layout-constrained max-w-none` via `get_block_wra
 - `"html": false` — always. Prevents Gutenberg from serialising block HTML.
 - `"apiVersion": 3` — always. Changes how `useBlockProps` works and enables layout support.
 - `"anchor": true` — free jump-link support at no cost.
-- Do **not** add `editorScript`, `editorStyle`, `style`, or `viewScript` keys here. Assets are registered explicitly in `setup.php` via `\Roots\asset()` for Vite manifest integration. Adding them to `block.json` causes double-enqueueing.
+- Do **not** add `editorScript`, `editorStyle`, `style`, or `viewScript` keys here. Assets are registered explicitly in `app/blocks.php` via `\Roots\asset()` for Vite manifest integration. Adding them to `block.json` causes double-enqueueing.
 - `"example"` attributes must match attributes defined in the `attributes` section. Use the same values as `"default"` so the editor preview renders correctly.
 - `"align": ["wide", "full"]` — add to `supports` only if the block legitimately supports full-bleed alignment (most blocks do not need it).
 
@@ -1124,10 +1128,10 @@ export default function Edit({ attributes, setAttributes }) {
     <>
       <InspectorControls>
         {/* Panel 1: Content — primary editing controls, open by default */}
-        <PanelBody title={__('Content', 'sage')} initialOpen={true}>
+        <PanelBody title={__('Content', 'sobe')} initialOpen={true}>
           <PanelRow>
             <TextControl
-              label={__('Heading', 'sage')}
+              label={__('Heading', 'sobe')}
               value={heading ?? ''}
               onChange={(val) => setAttributes({ heading: val })}
               __nextHasNoMarginBottom
@@ -1136,7 +1140,7 @@ export default function Edit({ attributes, setAttributes }) {
           </PanelRow>
           <PanelRow>
             <ToggleControl
-              label={__('Show CTA Button', 'sage')}
+              label={__('Show CTA Button', 'sobe')}
               checked={showCta}
               onChange={(val) => setAttributes({ showCta: val })}
               __nextHasNoMarginBottom
@@ -1146,19 +1150,19 @@ export default function Edit({ attributes, setAttributes }) {
             <>
               <PanelRow>
                 <TextControl
-                  label={__('CTA Text', 'sage')}
-                  help={__('Text shown on the button.', 'sage')}
+                  label={__('CTA Text', 'sobe')}
+                  help={__('Text shown on the button.', 'sobe')}
                   value={ctaText}
                   onChange={(val) => setAttributes({ ctaText: val })}
-                  placeholder={__('Get started', 'sage')}
+                  placeholder={__('Get started', 'sobe')}
                   __nextHasNoMarginBottom
                   __next40pxDefaultSize
                 />
               </PanelRow>
               <PanelRow>
                 <TextControl
-                  label={__('CTA URL', 'sage')}
-                  help={__('Include https:// for external links.', 'sage')}
+                  label={__('CTA URL', 'sobe')}
+                  help={__('Include https:// for external links.', 'sobe')}
                   value={ctaUrl ?? ''}
                   onChange={(val) => setAttributes({ ctaUrl: val })}
                   type="url"
@@ -1172,14 +1176,14 @@ export default function Edit({ attributes, setAttributes }) {
         </PanelBody>
 
         {/* Panel 2: Extra Settings — layout and display options, collapsed by default */}
-        <PanelBody title={__('Extra Settings', 'sage')} initialOpen={false}>
+        <PanelBody title={__('Extra Settings', 'sobe')} initialOpen={false}>
           <PanelRow>
             <SelectControl
-              label={__('Layout', 'sage')}
+              label={__('Layout', 'sobe')}
               value={layout}
               options={[
-                { label: __('Standard', 'sage'), value: 'standard' },
-                { label: __('Wide', 'sage'), value: 'wide' },
+                { label: __('Standard', 'sobe'), value: 'standard' },
+                { label: __('Wide', 'sobe'), value: 'wide' },
               ]}
               onChange={(val) => setAttributes({ layout: val })}
               __nextHasNoMarginBottom
@@ -1188,7 +1192,7 @@ export default function Edit({ attributes, setAttributes }) {
           </PanelRow>
           <PanelRow>
             <ToggleControl
-              label={__('Show Divider', 'sage')}
+              label={__('Show Divider', 'sobe')}
               checked={showDivider}
               onChange={(val) => setAttributes({ showDivider: val })}
               __nextHasNoMarginBottom
@@ -1211,7 +1215,7 @@ export default function Edit({ attributes, setAttributes }) {
                         style={{ maxWidth: '100%', marginBottom: '8px' }}
                       />
                       <Button variant="secondary" onClick={open}>
-                        {__('Change Image', 'sage')}
+                        {__('Change Image', 'sobe')}
                       </Button>
                       <Button
                         variant="link"
@@ -1220,12 +1224,12 @@ export default function Edit({ attributes, setAttributes }) {
                           setAttributes({ imageId: null, imageUrl: '' })
                         }
                       >
-                        {__('Remove Image', 'sage')}
+                        {__('Remove Image', 'sobe')}
                       </Button>
                     </>
                   ) : (
                     <Button variant="secondary" onClick={open}>
-                      {__('Select Image', 'sage')}
+                      {__('Select Image', 'sobe')}
                     </Button>
                   )
                 }
@@ -1237,7 +1241,7 @@ export default function Edit({ attributes, setAttributes }) {
 
       {/* Editor canvas — preview of the block for the author */}
       <div {...blockProps}>
-        <h2>{heading || __('Your heading here…', 'sage')}</h2>
+        <h2>{heading || __('Your heading here…', 'sobe')}</h2>
       </div>
     </>
   );
@@ -1331,28 +1335,26 @@ export default function Edit({ attributes, setAttributes }) {
 If a block requires frontend JavaScript (carousel, accordion, map init):
 
 1. Create `resources/blocks/your-block/view.js`
-2. Add `'resources/blocks/your-block/view.js'` to the Vite `input` array
-3. Register it in `setup.php` using the Vite manifest pattern — do **not** add `viewScript` to `block.json`
+2. `app/blocks.php` detects it automatically — no other file needs to change
+
+`blocks-entries.js` picks it up via a file-existence check and adds it to the Vite input array. `blocks.php` registers the script and sets `view_script` on the block args the same way:
 
 ```php
-// Inside the $custom_blocks loop — conditional guard prevents broken handles
-// on blocks that don't have a view.js.
-$view_path = resource_path('blocks/' . $block_slug . '/view.js');
-$block_args = [
-    'editor_script'   => 'sobe-' . $block_slug,
-    'render_callback' => function ($attributes, $content = '') use ($block_slug) {
-        return view('blocks.' . $block_slug, compact('attributes', 'content'))->render();
-    },
-];
-
-if (file_exists($view_path)) {
-    $view_uri = \Roots\asset('resources/blocks/' . $block_slug . '/view.js')->uri();
-    wp_register_script('sobe-' . $block_slug . '-view', $view_uri, [], null, true);
-    $block_args['view_script'] = 'sobe-' . $block_slug . '-view';
+// Inside the manifest loop in app/blocks.php — already in place:
+$viewPath = resource_path("blocks/{$blockSlug}/view.js");
+if (file_exists($viewPath)) {
+    wp_register_script(
+        "{$pfx}-{$blockSlug}-view",
+        \Roots\asset("resources/blocks/{$blockSlug}/view.js")->uri(),
+        [],
+        null,
+        true
+    );
+    $blockArgs['view_script'] = "{$pfx}-{$blockSlug}-view";
 }
-
-register_block_type(resource_path('blocks/' . $block_slug), $block_args);
 ```
+
+Do **not** add `viewScript` to `block.json`.
 
 **Why not `"viewScript": "file:./view.js"` in `block.json`:** WordPress resolves `file:` paths relative to the block directory at registration time, but Vite's production build hashes filenames (`view-abc123.js`) and outputs to `public/build/`. The path never matches. Registering via `\Roots\asset()` reads the manifest and resolves the correct hashed URL — the same pattern used for `editor_script`.
 
@@ -1362,7 +1364,7 @@ A `view.js` with real frontend behaviour is correct and expected. What AP-6 forb
 
 ### render_callback — `$block` third parameter
 
-The render callback accepts three arguments. The current `setup.php` loop uses a two-argument closure. Adding `$block` is a **non-breaking change** — PHP ignores extra parameters; existing blocks unaffected. Only update the closure when a specific block needs `$block->context` (e.g., query loop context) or `$block->name`.
+The render callback accepts three arguments. The current `blocks.php` loop uses a two-argument closure. Adding `$block` is a **non-breaking change** — PHP ignores extra parameters; existing blocks unaffected. Only update the closure when a specific block needs `$block->context` (e.g., query loop context) or `$block->name`.
 
 ```php
 'render_callback' => function ($attributes, $content, $block) use ($block_slug) {

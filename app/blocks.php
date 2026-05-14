@@ -82,23 +82,12 @@ add_filter('script_loader_tag', function ($tag, $handle) {
 }, 10, 2);
 
 add_filter('allowed_block_types_all', function ($allowedBlocks) {
-    $allowed = [
-        'core/paragraph',
-        'core/heading',
-        'core/list',
-        'core/list-item',
-        'core/image',
-        'core/quote',
-        'core/button',
-        'core/buttons',
-        'core/separator',
-        'core/spacer',
-        'core/shortcode',
-        'core/table',
-        'core/group',
-        'core/columns',
-        'core/column',
-    ];
+    $configPath = resource_path('config/core-allowed-blocks.json');
+    $config = is_readable($configPath)
+        ? json_decode(file_get_contents($configPath), true)
+        : [];
+
+    $allowed = array_merge($config['core'] ?? [], $config['woocommerce'] ?? []);
 
     $pfx = config('theme.prefix');
     foreach (\WP_Block_Type_Registry::get_instance()->get_all_registered() as $name => $block) {

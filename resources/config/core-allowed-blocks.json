@@ -1,0 +1,26 @@
+{
+  "core": [
+    "core/paragraph",
+    "core/heading",
+    "core/list",
+    "core/list-item",
+    "core/image",
+    "core/quote",
+    "core/button",
+    "core/buttons",
+    "core/separator",
+    "core/spacer",
+    "core/shortcode",
+    "core/table",
+    "core/group",
+    "core/columns",
+    "core/column"
+  ],
+  "woocommerce": [
+    "woocommerce/product-filters",
+    "woocommerce/active-filters",
+    "woocommerce/all-products",
+    "woocommerce/product-search",
+    "woocommerce/handpicked-products"
+  ]
+}

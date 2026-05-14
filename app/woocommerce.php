@@ -22,7 +22,7 @@ add_action('after_setup_theme', function (): void {
 }, 21);
 
 add_action('woocommerce_before_main_content', function (): void {
-    echo '<section class="woocommerce"><div class="wp-container">';
+    echo '<section class="wc-content-wrapper"><div class="wp-container">';
 }, 10);
 
 add_action('woocommerce_after_main_content', function (): void {

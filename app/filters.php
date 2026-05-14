@@ -11,7 +11,7 @@ add_filter('excerpt_length', fn () => config('theme.excerpt_length'), 999);
 add_filter('excerpt_more', function () {
     return sprintf(
         ' &hellip; <a href="%s">%s</a>',
-        get_permalink(),
+        esc_url(get_permalink()),
         __('Continued', config('theme.textdomain'))
     );
 });

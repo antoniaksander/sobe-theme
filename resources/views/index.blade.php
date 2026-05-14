@@ -6,7 +6,7 @@
       <article @php(post_class('wp-entry'))>
         <h2>
           <a href="{{ esc_url(get_permalink()) }}">
-            {!! get_the_title() !!}
+            {!! wp_kses_post(get_the_title()) !!}
           </a>
         </h2>
 
