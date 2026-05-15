@@ -1,0 +1,390 @@
+# v2 Platform Migration Plan
+
+Status: Pass 1 checkpoint only. Do not begin Pass 2 classification until this inventory is reviewed.
+
+Reference tags created before audit:
+
+- `pre-enrichment` -> `05eb85b`
+- `enrichment-attempt-1` -> `9886ece`
+
+Branch: `feat/v2-platform-audit`
+
+## Stop-and-Ask Rule
+
+Stop immediately before proceeding if any of these occur:
+
+- An infrastructure item does not cleanly fit `PLATFORM`, `PLATFORM-WITH-HOOKS`, `EXAMPLE`, or `SANDBOX`.
+- A WooCommerce hook surface has multiple reasonable long-term API designs.
+- A library classification depends on a block promotion decision that has not been made.
+- Any decision would require guessing about product or architecture intent.
+
+Do not stop for document formatting, table organization, prose vs. bullets, or other presentation choices.
+
+## Pass 1: Infrastructure Inventory
+
+Source of truth for this pass:
+
+- `demo/sobe` branch for sandbox platform candidates.
+- Current branch, based on `main` after `9886ece`, for already-promoted thin-enrichment state.
+- No source files were moved, copied, modified, or deleted during this inventory.
+
+### Design Tokens
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Font family tokens | `resources/css/tokens.css`, `fonts/*.woff2`, `resources/fonts/**` | Bundled Satoshi and CabinetGrotesk font files; `setup-patterns.php` font preload/inline face output | Demo uses brand-ish font defaults (`Satoshi`, `CabinetGrotesk`). Current main uses neutral system font defaults but still carries top-level font files. |
+| Semantic light color tokens | `resources/css/tokens.css` | Tailwind `@theme`, editor palette extraction, WC aliases | Demo values are Sobe-tinted neutrals plus red accent. Current main has neutral white/slate/blue defaults. |
+| Semantic dark color tokens | `resources/css/tokens.css` | `.dark` class on `html`; Alpine app shell | Demo uses dark gray plus red accent. Current main has neutral slate/blue dark values. |
+| Overlay tokens | `resources/css/tokens.css` | Hero backgrounds, search overlay, filter drawer, image/dark-surface treatments | Demo includes fixed light overlay levels that are intentionally not inverted in dark mode. |
+| Primary/accent/button tokens | `resources/css/tokens.css`, `resources/css/app.css` | Button component classes, WC buttons, editor palette | Demo separates semantic `--c-primary`/`--c-accent` from fixed `--c-btn-navy`/`--c-btn-cream`. Current main lacks the fixed button palette. |
+| WooCommerce alias tokens | `resources/css/tokens.css`, `resources/css/woocommerce.css` | WC grid, PDP, forms, notices, cards, ratings, sale badges | Demo has a broad WC token layer. Current main has a smaller WC token subset for base styling. |
+| Product category grid tokens | `resources/css/tokens.css`, `resources/blocks/product-categories-grid/style.scss` | Product categories grid block | Demo defines `--sobe-cat-grid-*` tokens for grid spacing, radius, sizing, zoom, and mobile slider aspect. |
+| Layout width tokens | `resources/css/tokens.css`, `resources/css/app.css`, `resources/scripts/build-theme-json.js` | WP layout CSS variables, Tailwind max-width utilities, theme.json injection | Demo sets content/wide/standard to `90rem`; current main sets content to `72rem` and wide/standard to `90rem`. |
+| Fluid spacing scale | `resources/css/tokens.css`, `resources/css/app.css` | Tailwind spacing aliases, sections, components, WC UI | Demo and current main both include `--space-xs` through `--space-3xl`. |
+| Fluid text scale | `resources/css/tokens.css`, `resources/css/app.css`, `resources/scripts/build-theme-json.js` | Tailwind font-size aliases, editor font sizes | Demo has both `--text-*` tokens and separate `@theme --font-size-*` values; current main keeps the same token concept with neutral values. |
+| Font weights and tracking | `resources/css/tokens.css`, `resources/css/app.css` | Headings, buttons, labels, WC filter UI | Demo defines normal/medium/semibold/bold plus tight/normal/wide/wider tracking. |
+| Radius scale | `resources/css/tokens.css`, `resources/css/app.css`, block styles | Buttons, cards, forms, overlays, WC UI | Demo uses `2px` to `24px` token scale; `@theme` also defines Tailwind radii. |
+| Shadow scale | `resources/css/tokens.css`, `resources/css/app.css` | Cards, overlays, dropdowns, dark mode | Demo defines light and dark shadow variants. Current main has neutral shadow variants. |
+| Z-index scale | `resources/css/tokens.css`, app/overlay CSS | Dropdown, sticky, fixed, modal, overlay, toast layers | Demo and current main both define `--z-dropdown` through `--z-toast`. |
+| Transition tokens | `resources/css/tokens.css`, app/blocks/WC CSS | Global UI transitions, reduced motion | Demo defines `--sobe-duration`, fast/base/slow transition aliases, and reduced-motion override. |
+| UI surface variant tokens | `resources/css/tokens.css`, `resources/css/app.css` | Search overlay, filter chips, cards | Demo adds `--c-surface-raised`, `--c-surface-hover`, `--c-primary-subtle`, with dark variants. Current main does not include these. |
+| Container query breakpoints | `resources/css/tokens.css`, `resources/css/woocommerce.css` | WC product card compact mode | Demo and current main define `--cq-product-card-compact`; demo WC CSS hardcodes `180px` in the actual `@container` rule. |
+| Reduced motion primitive | `resources/css/tokens.css`, `resources/css/app.css`, `resources/js/app.js`, `resources/js/animations.js` | CSS transition timing, GSAP/Lenis guards | Demo combines token duration reduction with JS `prefers-reduced-motion` checks. |
+| Selection tokens | `resources/css/tokens.css`, `resources/css/app.css` | `::selection` base styles | Demo selection foreground references `--color-background` from Tailwind `@theme`; current main uses primary/accent-derived neutral values. |
+
+### CSS Architecture
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Tailwind v4 import pipeline | `resources/css/app.css`, `resources/css/editor.css`, `vite.config.js` | `tailwindcss`, `@tailwindcss/vite` | Demo uses CSS-first Tailwind v4 with `@import 'tailwindcss'` and no separate Tailwind config file. |
+| Token import | `resources/css/app.css`, `resources/css/editor.css`, `resources/css/woocommerce.css` | `resources/css/tokens.css` | Tokens are imported into frontend, editor, and WC bundles. |
+| Tailwind content scanning | `resources/css/app.css` | `@source "../../app/**/*.php"`, `@source "../**/*.blade.php"`, `@source "../**/*.js"` | Demo scans PHP, Blade, and JS for utility usage. |
+| Class-based dark variant | `resources/css/app.css`, `resources/css/tokens.css`, `resources/js/app.js` | Alpine `dark` state on `html` | Demo defines `@custom-variant dark (&:where(.dark, .dark *))`. Current main uses the same strategy in thinner form. |
+| WordPress layout variable sync | `resources/css/app.css`, `resources/css/tokens.css` | `--layout-content`, `--layout-wide` | Demo overrides `--wp--style--global--content-size` and `--wp--style--global--wide-size` after WP head output. |
+| Front page constrained layout rule | `resources/css/app.css`, `resources/views/front-page.blade.php` | Gutenberg constrained layout classes | Demo gives non-full front-page blocks max-width and padding while letting alignfull blocks span. |
+| Tailwind `@theme` token bridge | `resources/css/app.css`, `resources/scripts/build-theme-json.js` | CSS custom properties and `wordpressThemeJson` plugin | Demo maps design tokens to Tailwind utility namespaces and editor/theme.json settings. |
+| Base layer | `resources/css/app.css` | Tokens, Tailwind layers | Demo defines html/body typography, heading scale, focus-visible, selection, body flex layout. |
+| Components layer | `resources/css/app.css` | Tokens, layout sections, headers, buttons, breadcrumbs, comments | Demo contains site header, WebGL canvas, x-cloak, breadcrumbs, comment form, nav dropdowns, and button system. |
+| Utilities layer | `resources/css/app.css`, `resources/css/editor.css` | Theme.json palette slugs | Demo maps Gutenberg generated color classes back to live CSS variables. |
+| Animation CSS hooks | `resources/css/app.css`, `resources/js/animations.js` | `data-animate`, GSAP | Demo hides unanimated elements until JS marks `data-animated`, with reduced-motion fallback. |
+| Search overlay CSS | `resources/css/app.css`, `resources/views/partials/search-overlay.blade.php`, `resources/js/app.js` | Alpine focus plugin and REST search params | Demo styles modal, result rows, active states, and view-all link. |
+| Search results page CSS | `resources/css/app.css`, `resources/views/search.blade.php`, search result partials | WP search template | Demo includes responsive cards and pagination for search results. |
+| Page hero CSS | `resources/css/app.css`, `resources/views/partials/page-hero.blade.php` | Page meta `_sobe_page_hero` | Demo has generic page hero background/overlay/title styles. |
+| Blog listing CSS | `resources/css/app.css`, `resources/views/index.blade.php`, post partials | Post meta `_sobe_post_cta`, featured images | Demo includes post row layout, media hover, excerpt, CTA styles. |
+| WooCommerce CSS bundle | `resources/css/woocommerce.css` | WooCommerce pages, Swiper CSS, noUiSlider CSS, tokens | Demo WC bundle includes full catalog, product card, filter drawer, PDP grid/gallery, variation swatches, notices, cart/checkout/account support. Current main has a much thinner WC base stylesheet. |
+| Block CSS bundle | `resources/css/blocks.css` | Historical block styles | Demo has a blocks bundle; current main does not. Need inspect during implementation if still referenced or stale. |
+| Editor CSS bundle | `resources/css/editor.css`, `app/assets.php` | Vite editor asset injection | Demo mirrors token font/color mapping in block editor. |
+
+### JS Application Shell
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Alpine app root | `resources/js/app.js`, `resources/views/layouts/app.blade.php` | `alpinejs`, `x-data="app"` on `html` | Demo app owns nav, cart drawer, dark mode, cart announcements, focus restoration. Current main app only owns nav and dark mode. |
+| Alpine Focus plugin | `resources/js/app.js`, overlays/nav templates | `@alpinejs/focus` | Demo uses `x-trap` / `x-trap.inert` for search, nav, and cart drawer accessibility. Current main does not depend on focus plugin. |
+| Dark mode persistence | `resources/js/app.js`, `resources/views/components/dark-mode-toggle.blade.php`, `resources/css/tokens.css` | `localStorage`, `prefers-color-scheme`, `.dark` class | Demo only initializes dark mode if a toggle exists; current main sets initial `.dark` before Alpine starts. |
+| Mobile navigation state | `resources/js/app.js`, header section templates | Alpine `navOpen` | Demo header variants consume a shared `navOpen` state. |
+| Side-cart state and events | `resources/js/app.js`, `resources/views/components/side-cart.blade.php`, `resources/views/partials/side-cart-content.blade.php`, `app/woocommerce-sidecart.php` | WooCommerce fragments, Store API, Alpine, jQuery | Demo handles `open-cart`, `sobe:cart:item-added`, `cart-updated`, focus restoration, Lenis stop/start, and announcements. |
+| Store API add-to-cart bridge | `resources/js/app.js`, `app/woocommerce-sidecart.php`, WC Store API | Woo Store API nonce, jQuery WC fragments | Demo intercepts single product simple/selected variable add-to-cart forms and emits cart events. |
+| Toast manager | `resources/js/app.js`, `resources/views/components/toast-container.blade.php`, `app/Helpers/notice-helpers.php` | Alpine store, WC notices | Demo turns WC notices into toast data when side cart is disabled. |
+| Search overlay Alpine component | `resources/js/app.js`, `app/setup-search.php`, `resources/views/partials/search-overlay.blade.php` | REST endpoint, Alpine Focus | Demo implements debounced query, active result keyboard navigation, close/open methods. |
+| Lenis smooth scrolling | `resources/js/app.js` | `lenis`, GSAP ticker, desktop pointer/media checks | Demo creates `window.lenis` only when reduced motion is not requested and viewport/pointer checks pass. |
+| GSAP animation bus | `resources/js/animations.js`, `resources/js/app.js`, block/WC markup `data-animate` | `gsap`, `ScrollTrigger` | Demo exposes `window.gsap`, `window.ScrollTrigger`, and `window.initAnimationBus` for cross-entry use after AJAX replacements. |
+| Sticky header animation | `resources/js/animations.js`, header templates | GSAP ScrollTrigger | Demo hides/reveals `.site-header` on scroll and exposes `window.showSiteHeader`. |
+| Catalog filter frontend | `resources/blocks/catalog-filters/view.js`, `resources/js/filter-store.js`, `resources/js/filter-utils.js`, `app/WooCommerce/FilterHandler.php` | `nouislider`, AJAX params, GSAP globals | Demo supports filter accordions, price range, chips, mobile drawer, AJAX product grid replacement, URL building, and animation refresh. |
+| Shared filter store | `resources/js/filter-store.js`, `resources/blocks/catalog-filters/view.js`, `resources/js/shop-load-more.js` | Vite shared chunks | Demo creates singleton store for current filter state/action/nonce. |
+| Filter URL utilities | `resources/js/filter-utils.js`, tests | Browser `URL` API | Demo pure functions build canonical filter URLs and detect active filters. |
+| Shop load-more | `resources/js/shop-load-more.js`, `app/woocommerce-catalog.php`, pagination partial | IntersectionObserver, filter store | Demo supports infinite/load-more pagination, including active-filter mode and URL history option. |
+| Product gallery JS | `resources/js/product-gallery.js`, `resources/views/woocommerce/content-single-product.blade.php` | Swiper, jQuery WC variation events, optional global PhotoSwipe | Demo owns quantity +/- controls, Swiper gallery/thumb sync, variation slide injection, static price updates, optional PhotoSwipe bridge. |
+| Editor JS | `resources/js/editor.js`, `app/assets.php` | Vite editor entry, WP editor globals | Demo registers editor-side assets; detailed behavior not central in Pass 1 beyond asset entry. |
+| Block view scripts | `resources/blocks/*/view.js` | Per-block frontend behavior | Demo uses view scripts for hero WebGL, FAQ accordion, product carousel Swiper, catalog filters, brand interactions, category grid Swiper, reviews slider. |
+
+### Libraries
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| `alpinejs` | `package.json`, `resources/js/app.js`, Blade `x-*` markup | App shell, dark mode, nav, cart, search | Public in current main and demo. |
+| `@alpinejs/focus` | `package.json`, `resources/js/app.js` | `x-trap` overlays/drawers | Demo-only dependency currently. Needed by search/nav/cart overlay accessibility if promoted. |
+| `swiper` | `package.json`, `resources/blocks/product-carousel/view.js`, `resources/js/product-gallery.js`, `resources/blocks/product-categories-grid/view.js`, WC CSS | Product carousel, PDP gallery, product categories grid | Public in current main because product-carousel uses it. |
+| `gsap` | `package.json`, `resources/js/app.js`, `resources/js/animations.js`, catalog filters | Animation bus, sticky header, Lenis ticker, AJAX refresh | Demo-only currently. |
+| `lenis` | `package.json`, `resources/js/app.js` | Smooth scroll and cart drawer scroll locking | Demo-only currently. |
+| `nouislider` | `package.json`, `resources/blocks/catalog-filters/view.js`, `resources/css/woocommerce.css` | Catalog price range filter | Demo-only currently. |
+| React build support | `package.json`, `vite.config.js`, block `*.jsx` files | `@vitejs/plugin-react`, WP block editor JSX | Demo and current main use React tooling for editor blocks. |
+| WordPress scripts | `package.json`, block tests/editor code | `@wordpress/scripts` | Dev dependency for WordPress block tooling. |
+| Babel/Jest toolchain | `package.json`, `babel.config.json`, `jest.config.cjs`, tests | JS unit tests and JSX transform | Demo and current main use the same pattern. |
+| Tailwind/Vite/Sage tooling | `package.json`, `vite.config.js`, CSS entries | Vite, Tailwind v4, Roots/Sage plugins, Laravel Vite plugin | Demo and current main share the same core tooling. |
+| Acorn/Sage WooCommerce PHP deps | `composer.json`, `functions.php` | Roots Acorn, `generoi/sage-woocommerce` | Demo and current main both require PHP 8.4, Acorn 6, sage-woocommerce. |
+| PHPStan/Pint/Woo stubs | `composer.json`, `phpstan.neon` | Static analysis | Demo and current main share analysis tooling. |
+| Optional plugin globals | `resources/js/product-gallery.js`, `resources/views/components/breadcrumbs.blade.php`, `resources/views/components/wishlist-icon.blade.php`, `app/setup-search.php` | PhotoSwipe, Yoast, Rank Math, YITH Wishlist, Relevanssi | Demo detects plugins/globals but not all are package dependencies. |
+
+### Customizer Settings
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Header options section | `app/setup-customizer.php` | `config('theme.prefix')` | Registers `{prefix}_header_options`. Demo only; current main has no Customizer settings file. |
+| Header layout setting | `app/setup-customizer.php`, `resources/views/layouts/app.blade.php`, `app/setup-demo-layout.php`, layout patterns | Header variants `header-1`, `header-2`, `header-3` | Drives `sobe_render_layout_pattern('header', ...)`. Current main includes pattern helper in `app/setup.php` rather than separate Customizer controls. |
+| Dark toggle setting | `app/setup-customizer.php`, header sections, dark toggle component, shortcode | Alpine dark mode | Controls whether header renders toggle and shortcode returns markup. |
+| Side-cart enable setting | `app/setup-customizer.php`, header sections, `app/woocommerce-sidecart.php`, notice helpers | WooCommerce | Controls header cart button and runtime side-cart behavior. |
+| Header wishlist setting | `app/setup-customizer.php`, `resources/views/components/wishlist-icon.blade.php` | YITH Wishlist plugin | Shows header wishlist icon only when setting true and YITH class exists. |
+| Light logo setting | `app/setup-customizer.php`, `app/View/Composers/App.php`, header sections, checkout header | WP media library | Stores attachment ID in `{prefix}_logo`. |
+| Dark logo setting | `app/setup-customizer.php`, `app/View/Composers/App.php`, header sections, checkout header | WP media library, dark mode | Stores attachment ID in `{prefix}_dark_logo`. |
+| Footer options section | `app/setup-customizer.php`, `resources/views/sections/footer.blade.php` | Layout pattern helper | Registers `{prefix}_footer_options`. |
+| Footer layout setting | `app/setup-customizer.php`, footer section/block | Footer variants `layout-2`, `none` | Drives `sobe_render_layout_pattern('footer', ...)`. |
+| Product card hover setting | `app/setup-customizer.php`, `resources/views/woocommerce/content-product.blade.php` | WC product gallery image IDs | Selects `zoom` or `swap` hover behavior. |
+| Product catalog mobile columns | `app/setup-customizer.php`, `app/woocommerce-catalog.php`, `resources/css/woocommerce.css` | Body classes | Controls mobile product grid columns. |
+| Product catalog tablet columns | Same as above | Body classes | Controls tablet product grid columns. |
+| Product catalog desktop columns | Same as above plus `loop_shop_columns` | Body classes and WC loop props | Controls desktop grid columns and WC loop columns. |
+| Products per page | `app/setup-customizer.php`, `app/woocommerce-catalog.php`, `app/WooCommerce/FilterHandler.php` | WC query filters/AJAX | Controls catalog and AJAX filter page size. |
+| Shop pagination mode | `app/setup-customizer.php`, `app/woocommerce-catalog.php`, pagination partial, `shop-load-more.js` | AJAX load-more | Selects classic pagination or load-more sentinel. |
+| Pagination history setting | `app/setup-customizer.php`, `app/woocommerce-catalog.php`, `shop-load-more.js` | Browser history | Controls URL updates in load-more mode. |
+| Shop sidebar setting | `app/setup-customizer.php`, `resources/views/woocommerce/archive-product.blade.php` | Sidebar registration and catalog filters | Toggles sidebar/filter layout on shop archives. |
+
+### Layout Pattern System
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Layout pattern registration | `app/setup-patterns.php`, `resources/patterns/header-layout-*.php`, `resources/patterns/footer-layout-2.php` | WP block pattern APIs | Registers hidden header/footer layout patterns under `{prefix}/header-layout-*` and `{prefix}/footer-layout-2`. |
+| Inserter-visible pattern category | `app/setup-patterns.php`, `resources/patterns/homepage-showcase.php` | Demo blocks | Demo registers `sobe/homepage-showcase` as visible pattern. Current main does not include this pattern. |
+| Layout pattern category | `app/setup-patterns.php` | WP pattern registry | Hidden layout category `sobe-layout`; also block category with same slug. |
+| Pattern render helper | `app/setup-demo-layout.php` in demo; `app/setup.php` in current main | `do_blocks`, `config('theme.prefix')` | `sobe_render_layout_pattern($type, $variant)` emits a `site-header` or `site-footer` block with variant attr. Current main already has this helper. |
+| Header layout consumption | `resources/views/layouts/app.blade.php`, `resources/views/sections/header-*.blade.php` | Customizer header layout setting | Demo app renders selected header via helper. Current main also renders helper but with fewer surrounding app-shell features. |
+| Footer layout consumption | `resources/views/sections/footer.blade.php`, `resources/views/blocks/site-footer.blade.php` | Customizer footer layout setting | Demo footer section delegates to layout pattern helper. |
+| Layout example blocks | `resources/blocks/site-header`, `resources/blocks/site-footer`, `resources/views/blocks/site-header.blade.php`, `resources/views/blocks/site-footer.blade.php` | Section partials | These blocks are non-inserter, programmatic examples. Current main already includes thinner copies. |
+| Header section variants | `resources/views/sections/header-1.blade.php`, `header-2.blade.php`, `header-3.blade.php`, `header.blade.php` | App composer logos, nav menu, dark toggle, search, wishlist, side cart | Demo has three named variants plus older `header.blade.php`. Current main has variants from prior enrichment. |
+| Footer section variants | `resources/views/sections/footer-layout-2.blade.php`, `footer.blade.php` | Footer sidebar, site info | Demo has one concrete footer layout plus router section. |
+| Checkout header variant | `resources/views/sections/checkout-header.blade.php`, `resources/views/layouts/app.blade.php` | WooCommerce checkout, App composer logo data | Demo swaps normal header for checkout-specific header on checkout pages. |
+
+### Block Registration Architecture
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Manifest-driven registration | `app/blocks.php`, `resources/blocks/blocks-manifest.json` | JSON manifest, Roots assets, Blade views | Demo and current main register blocks by manifest slug. |
+| Dynamic render callbacks | `app/blocks.php`, `resources/views/blocks/*.blade.php` | Roots `view()` | All registered blocks render server-side through Blade. |
+| Editor script registration | `app/blocks.php`, block `index.jsx` files | WP block editor globals | Registers one editor script per block slug. |
+| Block style registration | `app/blocks.php`, block `style.scss`, `editor.scss` | Vite asset resolution | Conditionally registers frontend and editor styles when files exist. |
+| View script registration | `app/blocks.php`, block `view.js` | Vite asset resolution | Conditionally registers frontend view scripts. |
+| Module script tags | `app/blocks.php` | Handles beginning with `{prefix}-` | Adds `type="module"` to theme block scripts. |
+| Allowed block types | `app/blocks.php`, `resources/scripts/check-patterns.js` | Core allowlist plus registered `{prefix}/*` blocks | Demo has inline core allowlist; current main also has `resources/config/core-allowed-blocks.json`. |
+| Block categories | `app/blocks.php`, `app/setup-patterns.php` | `config('theme.prefix')` | Demo has generic, content, layout, WooCommerce categories. |
+| Block scaffold script | `resources/scripts/make-block.js` | Node FS, manifest | Demo scaffold supports only `sobe-general` and `sobe-content`; current main likely broadened from prior fixes. |
+| Block entry discovery | `resources/scripts/blocks-entries.js`, `vite.config.js` | Manifest and file existence checks | Adds index/style/editor/view entries to Vite input. |
+| Pattern allowlist check | `resources/scripts/check-patterns.js`, `resources/patterns/*.php` | Manifest and hardcoded core/WC allowlists | Ensures patterns only use allowed blocks. Current main has related checker improvements. |
+| Theme JSON build | `resources/scripts/build-theme-json.js`, `vite.config.js`, `theme.json` | Built `public/build/assets/theme.json`, tokens.css | Injects editor palette, font sizes, font families, content/wide sizes after Vite build. |
+
+### Blade Component System
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Alert component | `resources/views/components/alert.blade.php` | Tokens/Tailwind | Used by generic templates such as empty index results. Demo-only currently. |
+| Badge component | `resources/views/components/badge.blade.php` | Tokens/Tailwind | Generic UI primitive. Demo-only currently. |
+| Breadcrumbs component | `resources/views/components/breadcrumbs.blade.php`, `resources/css/app.css` | Yoast/RankMath detection, WP conditional tags | Provides SEO-plugin wrapper with fallback breadcrumb trail. Demo-only currently. |
+| Button component | `resources/views/components/button.blade.php`, `resources/css/app.css` | Button token classes | Used by hero, product-carousel, product-feature. Demo-only currently; current main promoted blocks may need equivalent styling/markup. |
+| Card component | `resources/views/components/card.blade.php` | Tokens/Tailwind | Generic UI primitive. Demo-only currently. |
+| Dark mode toggle component | `resources/views/components/dark-mode-toggle.blade.php`, `resources/js/app.js` | Alpine app dark state | Current main already includes a copy. |
+| Section component | `resources/views/components/section.blade.php`, page/index/single templates | Layout width and padding tokens | Provides width/padding wrapper for content templates. Demo-only currently. |
+| Side-cart component | `resources/views/components/side-cart.blade.php`, `resources/views/partials/side-cart-content.blade.php`, `resources/js/app.js` | WooCommerce, Alpine, Store API | Drawer shell and refreshed content slot. Demo-only currently. |
+| Toast container component | `resources/views/components/toast-container.blade.php`, `resources/js/app.js` | Alpine `toastManager` store | Displays WC/notices as toasts. Demo-only currently. |
+| Wishlist icon component | `resources/views/components/wishlist-icon.blade.php`, `app/setup-customizer.php` | YITH Wishlist plugin | Header icon gated by Customizer and plugin class. Demo-only currently. |
+
+### Helper Functions
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Empty generic helpers namespace | `app/helpers.php` | Composer autoload/files inclusion | Demo has placeholder only. Current main likely same. |
+| Layout pattern renderer | `app/setup-demo-layout.php` in demo; `app/setup.php` in current main | `do_blocks`, block naming convention | Emits programmatic `sobe/site-header` or `sobe/site-footer`. |
+| Side-cart enabled helper | `app/Helpers/notice-helpers.php` | Customizer side-cart setting | Returns side-cart toggle state. |
+| WC notices-to-toast helper | `app/Helpers/notice-helpers.php` | WooCommerce notice API | Converts WC notices to normalized toast arrays and clears notices. |
+| Empty notices wrapper helper | `app/Helpers/notice-helpers.php` | WooCommerce fragments | Returns empty `.woocommerce-notices-wrapper` fragment. |
+| Swatch value helper | `app/woocommerce-filters.php` | Term meta, YITH swatches meta, `sobe_swatch_value` filter | Resolves color/image/text swatch values for catalog filters. |
+| Filtered term counts helper | `app/woocommerce-filters.php`, `app/WooCommerce/FilterHandler.php` | WP_Query, term APIs, direct DB query, cache | Computes interdependent product counts for categories, product_brand, and WC attributes. |
+| App view composer helpers | `app/View/Composers/App.php` | Customizer logo settings | Provides site name, light logo, dark logo, current logo to views. |
+| Post view composer helpers | `app/View/Composers/Post.php` | WP conditionals | Provides archive/search/404/page titles and pagination. Demo-only currently. |
+| Comments view composer helpers | `app/View/Composers/Comments.php` | WP comments APIs | Provides comments title, response markup, previous/next links, closed state. Demo-only currently. |
+| Product block composers | `app/View/Composers/ProductFeature.php`, `ProductCategoriesGrid.php`, `CatalogFilters.php` | WooCommerce products/taxonomies | Resolve runtime data for dynamic WC blocks. |
+
+### WooCommerce Integration
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Base WooCommerce support | `app/woocommerce.php` | WooCommerce plugin | Adds Woo support, lightbox, slider, wrapper removal/replacement, WC CSS enqueue. Current main has a thinner version. |
+| WC frontend script policy | `app/woocommerce.php` | `WC_Frontend_Scripts`, `wc-cart-fragments` | Demo loads WC scripts on PDP/cart/checkout/account and cart fragments elsewhere; current main only loads scripts for product/cart/checkout/account. |
+| Gallery aspect ratio config | `config/theme.php`, `app/woocommerce.php`, `resources/css/woocommerce.css` | Inline CSS var | Demo sets `--pdp-gallery-aspect-ratio` from config. Current main does not include this inline var. |
+| Catalog column filters | `app/woocommerce-catalog.php`, `app/setup-customizer.php`, `resources/css/woocommerce.css` | Customizer settings, body classes | Controls loop columns and CSS grid columns across breakpoints. |
+| Catalog products per page | `app/woocommerce-catalog.php`, `FilterHandler.php`, Customizer | WC query filters | Controls normal and AJAX catalog query size. |
+| Catalog body classes | `app/woocommerce-catalog.php`, `resources/css/woocommerce.css` | Customizer settings | Adds `{prefix}-catalog-*-columns-*` classes to shop/product taxonomy pages. |
+| Shop pagination replacement | `app/woocommerce-catalog.php`, `resources/views/woocommerce/loop/pagination.blade.php`, `resources/js/shop-load-more.js` | WC hooks, Customizer mode | Removes default pagination and renders classic or load-more platform pagination. |
+| Load-more AJAX handler | `app/woocommerce-catalog.php`, `resources/js/shop-load-more.js` | WP AJAX, nonce, WC template parts | Returns product HTML, `has_more`, and next page. |
+| Catalog filters block | `resources/blocks/catalog-filters`, `resources/views/blocks/catalog-filters.blade.php`, `CatalogFilters.php`, `FilterHandler.php`, `woocommerce-filters.php` | Woo product categories, attributes, product_brand, noUiSlider | Full filter UI and AJAX query layer. |
+| Product card template override | `resources/views/woocommerce/content-product.blade.php`, `app/woocommerce-pdp.php`, `resources/css/woocommerce.css` | Woo hook zones, YITH optional shortcode, product_brand | Blade owns product card shell, image hover, wishlist wrapper, sale badge, title, rating/price zones. |
+| Product archive template override | `resources/views/woocommerce/archive-product.blade.php` | Woo hooks, sidebar setting, sidebar-shop | Full shop layout shell with optional sidebar and mobile filter drawer. |
+| Single product template override | `resources/views/woocommerce/single-product.blade.php`, `content-single-product.blade.php` | Woo hooks, Swiper, product gallery JS | Full PDP layout shell. |
+| PDP hook policy | `app/woocommerce-pdp.php` | Woo hooks and tabs | Removes default title/gallery/excerpt/tabs/add-to-cart-card pieces, adds brand label and extra product tabs. |
+| PDP Swiper gallery | `resources/views/woocommerce/content-single-product.blade.php`, `resources/js/product-gallery.js`, `resources/css/woocommerce.css` | Swiper, jQuery WC variation events, optional PhotoSwipe globals | Replaces native WC gallery with Swiper main/thumb gallery and optional lightbox bridge. |
+| PDP accordions/tabs | `resources/views/woocommerce/content-single-product.blade.php`, `app/woocommerce-pdp.php`, `resources/css/woocommerce.css` | `woocommerce_product_tabs` filter | Renders tabs as accordions and adds Shipping Information/Product Details tabs. |
+| Related/upsell overrides | `resources/views/woocommerce/single-product/related.blade.php`, `up-sells.blade.php`, WC CSS | Woo related/upsell data | Provides section wrapper and product loop rendering. |
+| Notice overrides | `resources/views/woocommerce/notices/*.blade.php`, `app/woocommerce-sidecart.php` | Woo notice templates/fragments | Simplified notice markup plus side-cart/toast suppression policy. |
+| Side-cart fragments | `app/woocommerce-sidecart.php`, `resources/views/components/side-cart.blade.php`, `partials.side-cart-content` | Woo fragments, Store API nonce, Alpine | Refreshes cart content and cart count fragments. |
+| Side-cart redirect/open policy | `app/woocommerce-sidecart.php`, `resources/js/app.js` | `sobe_open_cart` query param, WC add-to-cart redirect | Opens cart after non-AJAX PDP add-to-cart. |
+| Store API cart item mutation | `resources/js/app.js`, `partials.side-cart-content` | WC Store API nonce | Updates/removes cart items and refreshes WC fragments. |
+| Checkout header | `resources/views/sections/checkout-header.blade.php`, layout app | Woo checkout conditional | Replaces normal site header on checkout. |
+| Account/cart/checkout styling | `resources/css/woocommerce.css`, `app/woocommerce.php` | Woo page conditionals | Demo stylesheet covers broad WC surfaces; exact coverage needs implementation-phase CSS review. |
+| Variation swatches plugin styling | `resources/css/woocommerce.css` | Woo Variation Swatches plugin classes | Demo includes plugin-specific swatch overrides. |
+| YITH wishlist UI | `components/wishlist-icon.blade.php`, `content-product.blade.php`, `setup-patterns.php`, `setup-customizer.php` | YITH Wishlist plugin/class/shortcodes | Header icon and product-card wrapper are plugin-dependent; fallback shortcode prevents raw text leakage. |
+
+### SEO
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Baseline SEO meta | `resources/views/layouts/app.blade.php` | WP title/excerpt/permalink/site icon APIs | Demo emits canonical, description, OpenGraph, Twitter, and article meta when no SEO plugin is active. Current main does not include this baseline SEO block. |
+| SEO plugin bypass | `resources/views/layouts/app.blade.php` | Yoast, Rank Math, AIOSEO, SEOPress constants/functions; `sobe_disable_baseline_seo` filter | Demo skips baseline meta when a supported SEO plugin is active or filter disables it. |
+| Organization schema | `resources/views/layouts/app.blade.php` | Front page, site icon | Demo emits Organization JSON-LD on front page when baseline SEO is active. |
+| Breadcrumb component | `resources/views/components/breadcrumbs.blade.php`, `resources/css/app.css` | Yoast, Rank Math, WP fallbacks | Uses SEO plugin breadcrumbs when available, otherwise builds simple fallback trail. |
+| Search result semantic cards | `resources/views/search.blade.php`, search result partials | WP search loop, product data | Demo search templates provide content-type labels, excerpts, prices, dates. |
+| Relevanssi taxonomy indexing hook | `app/setup-search.php` | Relevanssi plugin, product_brand taxonomy | Demo adds `product_brand` to indexed taxonomies when Relevanssi is present. |
+| No sitemap hooks found | `app/**`, `resources/**` | N/A | Inventory found baseline meta/schema/breadcrumbs, but no custom sitemap hook implementation. |
+
+### Block Inventory
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| `sobe/example` | `resources/blocks/example/*`, `resources/views/blocks/example.blade.php` | Block registration scaffold | Minimal dynamic infrastructure block. Present in demo and current main. |
+| `sobe/hero` | `resources/blocks/hero/*`, `resources/views/blocks/hero.blade.php` | Button component, tokens, optional `view.js` WebGL, GSAP animation data attrs | Demo full hero supports heading, paragraph, CTA, CTA type, heading/paragraph colors, heading size, left/center/split/editorial alignment, height, background image, dark overlay, WebGL flag. Current main has stripped version from enrichment attempt. |
+| Broken hero WebGL | `resources/blocks/hero/view.js`, `resources/views/layouts/app.blade.php`, `resources/css/app.css` | Global `#global-webgl` canvas, browser canvas APIs, reduced-motion media query | User decision: excluded later because broken in demo, not because WebGL is too advanced. Pass 1 only records it. |
+| `sobe/faq` | `resources/blocks/faq/*`, `resources/views/blocks/faq.blade.php` | FAQ view script, block styles, animation bus data attr | Accordion FAQ with `faqs` array of question/answer. Present in demo and current main. |
+| `sobe/product-carousel` | `resources/blocks/product-carousel/*`, `resources/views/blocks/product-carousel.blade.php` | WooCommerce, Swiper, Button component, product card template | Supports count, orderBy, categoryId, brandId, heading, paragraph, link text/url/type. Current main has promoted version but previous attempt stripped brand filtering. |
+| `sobe/product-feature` | `resources/blocks/product-feature/*`, `resources/views/blocks/product-feature.blade.php`, `ProductFeature.php` | WooCommerce product lookup, product_brand taxonomy, Button component | Two-column product showcase with selected product, layout, image ratio, show/hide product data, custom brand text, editorial copy and CTA. |
+| `sobe/catalog-filters` | `resources/blocks/catalog-filters/*`, `resources/views/blocks/catalog-filters.blade.php`, `CatalogFilters.php`, `FilterHandler.php`, `woocommerce-filters.php` | WooCommerce categories/attributes, product_brand, noUiSlider, AJAX | Full catalog filter UI with active chips, price type, categories, brands, attributes, price range, mobile drawer. |
+| `sobe/brand-carousel` | `resources/blocks/brand-carousel/*`, `resources/views/blocks/brand-carousel.blade.php` | `product_brand` taxonomy or manual entries, CSS marquee, animation bus | Manual or taxonomy-driven brand/logo carousel. Name and auto mode are product_brand coupled. |
+| `sobe/our-brands` | `resources/blocks/our-brands/*`, `resources/views/blocks/our-brands.blade.php` | `product_brand` taxonomy, optional term logos, Lenis smooth scroll | Alphabetical Woo brand directory pulled from product_brand. |
+| `sobe/reviews-slider` | `resources/blocks/reviews-slider/*`, `resources/views/blocks/reviews-slider.blade.php` | WooCommerce reviews or manual entries, custom view script | Full testimonial/review slider with auto/products/manual modes, ratings, product links/images, autoplay. |
+| `sobe/product-categories-grid` | `resources/blocks/product-categories-grid/*`, `resources/views/blocks/product-categories-grid.blade.php`, `ProductCategoriesGrid.php` | WooCommerce product categories, Swiper for mobile/nav | Showcase selected product categories with several layouts and hover effects. |
+| `sobe/site-header` | `resources/blocks/site-header/*`, `resources/views/blocks/site-header.blade.php`, header section templates | Layout pattern router | Non-inserter programmatic header block with `variant`. Present in demo and current main. |
+| `sobe/site-footer` | `resources/blocks/site-footer/*`, `resources/views/blocks/site-footer.blade.php`, footer section templates | Layout pattern router | Non-inserter programmatic footer block with `variant`. Present in demo and current main. |
+| Missing section/testimonial/team/pricing blocks | `resources/blocks/` | N/A | These aspirational blocks do not exist in `demo/sobe`; if referenced later they are follow-up build work, not migration candidates from demo. |
+
+### Patterns
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Homepage showcase pattern | `resources/patterns/homepage-showcase.php`, `app/setup-patterns.php` | Hero, brand carousel, product feature and/or other demo blocks | Inserter-visible demo pattern. Not in current main. |
+| Header layout 1 pattern | `resources/patterns/header-layout-1.php`, `site-header` block | Layout renderer | Hidden internal layout pattern. Present in demo and current main. |
+| Header layout 2 pattern | `resources/patterns/header-layout-2.php`, `site-header` block | Layout renderer | Hidden internal layout pattern. Present in demo and current main. |
+| Header layout 3 pattern | `resources/patterns/header-layout-3.php`, `site-header` block | Layout renderer | Hidden internal layout pattern. Present in demo and current main. |
+| Footer layout 2 pattern | `resources/patterns/footer-layout-2.php`, `site-footer` block | Layout renderer | Hidden internal layout pattern. Present in demo and current main. |
+| Pattern allowlist enforcement | `resources/scripts/check-patterns.js`, `package.json` | Manifest, core/WC allowlist | Demo validates pattern block names in CI. |
+
+### Theme JSON Build
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Built theme.json redirection | `app/assets.php`, `theme.json`, `public/build/assets/theme.json` | `theme_file_path` filter, Vite build | WP reads built theme.json from public build assets. |
+| Vite WordPress theme JSON plugin | `vite.config.js` | `@roots/vite-plugin` | Generates build-time theme.json from Tailwind/CSS inputs. |
+| Post-build injection plugin | `vite.config.js`, `resources/scripts/build-theme-json.js` | Node `execSync`, built theme.json path | Demo injects editor settings after bundle generation. |
+| Palette extraction | `resources/scripts/build-theme-json.js`, `resources/css/tokens.css` | Regex against `:root` token blocks | Extracts hex/rgb colors for curated editor palette. |
+| Font size injection | `resources/scripts/build-theme-json.js` | `--font-size-*` aliases | Injects XS through 7XL font sizes using CSS variable references. |
+| Font family injection | `resources/scripts/build-theme-json.js` | System font stacks | Injects Sans/Serif/Mono families; does not mirror demo bundled brand fonts directly. |
+| Layout injection | `resources/scripts/build-theme-json.js`, `resources/css/tokens.css` | `--layout-content`, `--layout-wide` | Injects `settings.layout.contentSize` and `wideSize`. |
+
+### Translations / i18n
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Textdomain config | `config/theme.php`, PHP/Blade translations | `config('theme.textdomain')` and hardcoded `'sobe'` in many files | Demo uses both configured textdomain and direct `'sobe'`; some block metadata/editor strings still use `'sage'`. |
+| Translation npm scripts | `package.json` | WP CLI i18n commands, `resources/lang` | Demo and current main include `translate:pot`, `translate:update`, `translate:compile`, `translate:js`, `translate:mo`. |
+| PHP/Blade translation usage | `app/**`, `resources/views/**` | WordPress i18n functions | Extensive `__`, `_x`, `_n`, `_nx`, `esc_html__` usage across app, WC, templates, components. |
+| Block editor translation usage | `resources/blocks/**/*.jsx`, `block.json` | `wp.i18n`, block metadata textdomain | Mixed `sobe`/`sage` usage found in demo block files. |
+| POT output target | `package.json` | `resources/lang/sobe.pot` | `resources/lang` directory is not present in the demo tree listing; scripts assume it exists or will be created. |
+
+### Asset Pipeline
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Vite entrypoints | `vite.config.js`, `resources/scripts/blocks-entries.js` | CSS/JS app/editor entries plus manifest block entries | Demo inputs include app CSS/JS, editor CSS/JS, Woo CSS, and all block assets. |
+| Laravel Vite plugin | `vite.config.js`, Blade `@vite` directive | `laravel-vite-plugin`, Acorn/Sage integration | Demo uses `@vite(['resources/css/app.css', 'resources/js/app.js'])` in layout. |
+| Roots WordPress plugin | `vite.config.js`, `app/assets.php` | `@roots/vite-plugin` | Provides WP/editor asset integration and theme.json build support. |
+| React JSX support | `vite.config.js`, block `*.jsx` | `@vitejs/plugin-react`, esbuild automatic JSX | Demo blocks use JSX while relying on WP globals for packages. |
+| Bundle size budget | `vite.config.js` | Vite plugin hook | Demo enforces app CSS <= 150kB and app JS <= 250kB during build. |
+| Editor asset injection | `app/assets.php`, `resources/js/editor.js`, `resources/css/editor.css` | Vite facade, `editor.deps.json` | Demo enqueues media, editor CSS, editor script/deps in block editor. |
+| Asset aliases | `vite.config.js` | `@scripts`, `@styles`, `@images` | Demo defines aliases for source imports. |
+| Public build theme.json | `app/assets.php`, `resources/scripts/build-theme-json.js` | Vite build output | WP theme.json source redirected to build artifact. |
+| Block module output | `app/blocks.php`, `vite.config.js` | Per-block Vite entries and script tag filter | Block scripts are treated as ES modules. |
+
+### Service Providers
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Acorn application boot | `functions.php` | Composer autoload, Roots Acorn | Demo and current main boot Acorn with `ThemeServiceProvider`. |
+| Theme service provider | `app/Providers/ThemeServiceProvider.php` | `Roots\Acorn\Sage\SageServiceProvider` | Demo provider only calls parent register/boot; no custom services. |
+| Composer autoload PSR-4 | `composer.json`, `app/**` | Composer | Maps `App\` to `app/`. |
+
+### Setup Hooks
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Theme support cleanup | `app/setup.php` | WP theme supports | Removes block templates and core block patterns. |
+| Navigation menus | `app/setup.php`, header/footer sections | WP menus | Registers primary and footer navigation. |
+| Core theme supports | `app/setup.php` | WordPress | Adds title tag, thumbnails, align-wide, responsive embeds, feeds, selective refresh. |
+| HTML5 supports | `app/setup.php` | WordPress | Adds HTML5 support for caption, forms, lists, gallery, search, script, style. |
+| Configured image sizes | `app/setup.php`, `config/theme.php` | `config('theme.image_sizes')` | Demo adds `{prefix}-hero` image size. |
+| Excerpt filters | `app/filters.php`, `config/theme.php` | WP excerpt filters | Sets excerpt length and "Continued" link. |
+| Page display meta | `app/setup-patterns.php`, page templates | WP REST meta | Registers `_sobe_page_hero` and `_sobe_hide_title`. |
+| Post CTA meta | `app/setup-patterns.php`, post listing templates | WP REST meta | Registers `_sobe_post_cta`. |
+| Product brand taxonomy | `app/setup-patterns.php`, WC blocks/templates/filters/search | WooCommerce product post type | Registers `product_brand` taxonomy. This is a major shared assumption in demo. |
+| Font preload/inline face hooks | `app/setup-patterns.php`, top-level `fonts/*.woff2` | Filesystem checks, `wp_head` | Preloads and declares Satoshi/CabinetGrotesk if files exist. |
+| Dark toggle shortcode | `app/setup-patterns.php`, dark toggle component, Customizer | `Roots\view` | Registers `{prefix}_dark_toggle` shortcode gated by Customizer setting. |
+| Sidebar registration | `app/setup-patterns.php`, sidebar sections, footer layout, shop archive | WP widgets | Registers primary, footer, and shop sidebar. |
+| YITH wishlist fallback shortcode | `app/setup-patterns.php` | YITH constant detection | Prevents raw wishlist shortcode output if plugin inactive. |
+| Function include list | `functions.php` | `locate_template` | Demo loads helpers, setup, blocks, assets, filters, Woo/security/pattern/customizer/search files. Current main only loads the thin core set. |
+
+### Security Baseline
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Head cleanup | `app/security.php` | WP head actions | Removes generator, RSD, WLW manifest, shortlink tags. Present in demo and current main. |
+| XML-RPC disabled | `app/security.php` | `xmlrpc_enabled`, init request guard | Demo disables XML-RPC and blocks `xmlrpc.php` URI with 403. |
+| REST API access control | `app/security.php` | `rest_pre_dispatch`, login state, Woo Store API, theme search endpoint | Demo blocks unauthenticated REST except WC cart routes and `{prefix}/v1/search`. Current main security must be compared before promotion because endpoint allowlist expands with search/cart. |
+| Store API public routes | `app/security.php`, `resources/js/app.js` | Woo Store API cart/add/items | Required for side-cart and PDP add-to-cart flow. |
+| Search endpoint public route | `app/security.php`, `app/setup-search.php` | `{prefix}/v1/search` route | Required for public search overlay. |
+| Nonce usage | `app/woocommerce-catalog.php`, `app/woocommerce-filters.php`, `app/woocommerce-sidecart.php`, `resources/js/app.js` | WP AJAX and WC Store API nonces | Demo uses separate load-more, filter, and Store API nonces. |
+| Sanitization/escaping | `app/**/*.php`, `resources/views/**/*.blade.php` | WP sanitize/escape helpers | Demo uses sanitize callbacks, `esc_*`, `wp_kses_post`, `wc_kses_notice`; Pass 2/3 should still audit hook contracts for escaping boundaries. |
+
+### Testing & Linting
+
+| Item | Files | Depends on | Notes |
+|---|---|---|---|
+| Jest config | `jest.config.cjs`, `babel.config.json` | `babel-jest`, Node test env | Demo transforms CJS/JS/JSX and maps SCSS to mock. |
+| Block metadata tests | `tests/blocks/meta.test.cjs` | Manifest and block.json files | Ensures name matches `sobe/{slug}`, apiVersion 3, supports.html false, category matches manifest. |
+| Block save tests | `tests/blocks/save.test.cjs` | Block save.jsx files | Ensures dynamic blocks return null. |
+| Filter store tests | `tests/shop/filter-store.test.cjs` | `resources/js/filter-store.js` | Unit tests singleton filter store behavior. Demo-only currently. |
+| Filter URL utility tests | `tests/shop/filter-utils.test.cjs` | `resources/js/filter-utils.js` | Unit tests canonical filter URLs and active filter detection. Demo-only currently. |
+| PHPStan config | `phpstan.neon`, `composer.json` | WordPress and WooCommerce stubs | Level 2 on `app`, with Acorn helper and Vite facade ignores. |
+| Composer analyse script | `composer.json` | PHPStan | Runs `phpstan analyse --memory-limit=2G`. |
+| CI workflow | `.github/workflows/ci.yml` | PHP 8.4, Node 22, composer, npm | Runs composer install, npm ci, environment parity check, build, PHPStan, Jest, pattern allowlist. |
+| Pattern checker script | `resources/scripts/check-patterns.js`, `package.json` | Manifest, pattern files | Included in CI as `npm run check:patterns`. |
+| Environment requirements | `.site-requirements.json`, CI | `jq`, PHP/Node versions | CI verifies PHP and Node parity. |
+| Formatting/linting notes | `package.json`, `composer.json` | Laravel Pint present in require-dev | No explicit npm lint/prettier scripts found in demo package.json; Pint is installed but no composer script is listed for formatting. |
+
+## Pass 1 Current-Main Delta Notes
+
+Current `main` after `9886ece` already contains a thin subset of demo infrastructure:
+
+- Neutral token system, dark overrides, layout width tokens, and reduced-motion duration token.
+- Minimal Alpine app shell for dark mode and nav.
+- Manifest registration for `example`, `hero`, `faq`, `product-carousel`, `site-header`, and `site-footer`.
+- Layout pattern helper and hidden header/footer patterns.
+- Basic WooCommerce support and base stylesheet.
+- Swiper dependency for `sobe/product-carousel`.
+
+Major demo-only areas not yet in current `main`:
+
+- Customizer platform settings.
+- Full JS app shell: Alpine Focus, side-cart, search, toast manager, Store API add-to-cart, Lenis, GSAP animation bus.
+- Full WooCommerce catalog, filters, PDP, side-cart, wishlist, search integration, and template overrides.
+- Blade component library beyond dark mode toggle.
+- Full block set beyond the already-promoted subset.
+- SEO baseline meta/schema and breadcrumbs.
+- Product brand taxonomy and dependent brand/catalog features.
+- Shop filter JS utilities and tests.
+
+## Pass 1 Checkpoint
+
+Pass 1 is complete for review. Pass 2 classification is intentionally not started.
