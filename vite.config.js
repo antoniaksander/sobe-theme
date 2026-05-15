@@ -30,6 +30,8 @@ export default defineConfig({
         'resources/css/editor.css',
         'resources/js/editor.js',
         'resources/css/woocommerce.css',
+        'resources/js/product-gallery.js',
+        'resources/js/shop-load-more.js',
         ...getBlockEntries(),
       ],
       refresh: true,

@@ -12,7 +12,7 @@ Recommended files:
 
 Document:
 
-- major deviations from the public starter
+- major deviations from the public platform
 - client-specific headers, footers, templates, blocks
 - files that should not be overwritten blindly from upstream
 - architectural exceptions made for the client
@@ -43,7 +43,7 @@ Suggested table:
 
 Document:
 
-- when the client repo was synced from the public starter
+- when the client repo was synced from the public platform
 - what was merged or cherry-picked
 - what was intentionally skipped
 - recurring conflicts

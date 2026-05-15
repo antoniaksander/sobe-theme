@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "sobe/our-brands",
+  "version": "0.1.0",
+  "title": "Our Brands",
+  "category": "sobe-woocommerce",
+  "description": "Alphabetical brand directory pulled from the WooCommerce product_brand taxonomy.",
+  "example": {
+    "attributes": {
+      "showLogos": false,
+      "hideEmpty": true
+    }
+  },
+  "textdomain": "sobe",
+  "supports": {
+    "html": false,
+    "anchor": true,
+    "className": true,
+    "align": [
+      "wide",
+      "full"
+    ]
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    },
+    "showLogos": {
+      "type": "boolean",
+      "default": false
+    },
+    "hideEmpty": {
+      "type": "boolean",
+      "default": true
+    }
+  }
+}

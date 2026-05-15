@@ -2,37 +2,40 @@
 
 ## New Clients
 
-1. Fork from latest `main`
-2. Rename prefix in `config/theme.php`
-3. Override brand tokens in `resources/css/tokens.css`
-4. Copy layout example blocks such as `sobe/site-header` into a client namespace
-5. Add client-specific WooCommerce catalog/PDP/side-cart files as needed
+1. Fork from latest `main`.
+2. Change `prefix` in `config/theme.php`.
+3. Keep `textdomain` as `sobe`.
+4. Override brand tokens in `resources/css/tokens.css`.
+5. Add logos, navigation, content, and client-specific blocks in a client namespace.
+6. Extend platform WooCommerce/search/block behavior through documented hooks.
 
-## Existing Clients (e.g., Roxder)
+## Existing Clients
 
-- Already have v1 presentation contract
-- Upstream pulls should ONLY bring:
-  - Asset pipeline improvements
-  - Generic block registration changes
-  - Generic production blocks
-  - Security patches
-  - Testing/linting upgrades
+Existing client repos should pull platform updates deliberately. Upstream pulls can include:
 
-## Danger Zone - Breaking Changes
+- Asset pipeline improvements
+- Token and dark-mode platform changes
+- Public block improvements
+- WooCommerce hook contract improvements
+- Security patches
+- Testing/linting upgrades
 
-These upstream changes can BREAK existing clients:
+## Danger Zone
 
-- `app.blade.php` structural changes
-- WooCommerce hook removals
-- Block namespace convention changes
-- `sobe_render_layout_pattern()` signature changes
+These changes can break client forks and need migration notes:
 
-## Namespace Rule
-
-Universal blocks stay `sobe/*`. Client blocks are copied into a client namespace instead of renaming upstream block files in place.
+- Removing or renaming a `sobe/*` block
+- Removing a documented `sobe/<feature>/<action>` hook
+- Changing hook parameters or return types
+- Changing `sobe_render_layout_pattern()` signature
+- Replacing app-shell event names or `localStorage.theme`
+- Changing WooCommerce fragment selectors such as `div.sobe-side-cart-content` or `span.sobe-cart-count`
+- Renaming `product_brand` without a compatibility path
 
 ## Sync Cadence
 
-- Quarterly review minimum
-- Never auto-merge
-- Always test in Local before merging to client main
+- Review upstream quarterly at minimum.
+- Never auto-merge platform updates into client `main`.
+- Merge upstream into a client feature branch.
+- Run automated validation.
+- Browser-check Local before merging to client `main`.

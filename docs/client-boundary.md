@@ -1,18 +1,22 @@
-# Client vs Boilerplate Boundary
+# Client vs Platform Boundary
 
-| File/Area | Boilerplate Owns | Client Owns |
-|-----------|------------------|-------------|
-| `resources/views/layouts/app.blade.php` | Generic layout shell, dark-mode wrapper, pattern slots | Client-only structural changes in copied fork |
-| `app/setup.php` | Generic theme supports, layout pattern registration | Client pattern additions |
-| `app/blocks.php` | Manifest reader, allowlist logic | Client block additions in client namespace |
-| `app/helpers.php` | Generic utilities, layout pattern renderer | Client helpers in client repo |
-| `config/theme.php` | Default `'sobe'` prefix and neutral defaults | Client prefix (`'roxder'`) and client config |
-| `resources/css/tokens.css` | Base scale, neutral defaults, dark-mode inversion | Brand colors, brand fonts |
-| `resources/blocks/` | Generic production blocks and layout examples | Custom/client blocks in client namespace |
-| `app/woocommerce.php` | Base scaffolding | Catalog, PDP, side-cart files |
-| `resources/css/woocommerce.css` | Base forms, notices, buttons, native grid styling | Client catalog/PDP styling |
-| `resources/config/core-allowed-blocks.json` | Core + WC allowlist | Client additions |
+| File/Area | Platform Owns | Client Owns |
+|-----------|----------------|--------------|
+| `config/theme.php` | Default `sobe` prefix, `sobe` textdomain, neutral config defaults | Client prefix and client-specific config values |
+| `resources/css/tokens.css` | Token names, scales, neutral defaults, dark-mode contract | Brand colors, optional brand font token overrides |
+| `resources/js/app.js` | Alpine app shell, event names, dark mode, nav, search, side-cart, toasts | Client scripts that consume documented events |
+| `resources/views/layouts/app.blade.php` | Platform layout shell, app wrapper, SEO baseline, overlays | Rare structural overrides in client repo |
+| `resources/blocks/sobe/*` | Universal production blocks and examples | Client copies under client namespace |
+| `app/blocks.php` | Manifest registration, categories, allowlist hook | Client manifest entries for client blocks |
+| `app/setup-customizer.php` | Generic platform settings | Client-specific settings in client repo |
+| `app/setup-patterns.php` | Hidden layout patterns, `product_brand` registration contract | Client pattern additions |
+| `app/setup-search.php` | Search endpoint, params, result hooks | Search result tuning via hooks |
+| `app/woocommerce*.php` | Shared WC catalog, PDP, filters, side-cart, hook contracts | Hook callbacks and rare template overrides |
+| `resources/views/woocommerce/` | Platform WC templates | Client overrides only for structural changes |
+| `resources/views/components/` | Generic components and WC/search shells | Client-only components |
+| `resources/patterns/` | Hidden platform layout patterns | Client-owned patterns in client repo |
+| `resources/config/core-allowed-blocks.json` | Core/WC allowlist baseline | Client extensions through hook/config |
 
 ## Rule
 
-Never customize a `sobe/*` block in place for a client. Copy it to a client namespace such as `roxder/*`, then customize the copy.
+If a platform file needs client-specific markup, copy the relevant block or view into the client repo and wire it through hooks or client namespace registration. Do not edit upstream `sobe/*` files in place for a client.

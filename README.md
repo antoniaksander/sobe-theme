@@ -1,30 +1,48 @@
 # WP-boilerplate
 
-Production-ready WordPress theme foundation.
+Production-ready WordPress theme platform for Sobe agency client builds.
+
+This repo is shared infrastructure, not a client theme. Client repositories fork from `main`, inherit the platform, and customize through tokens, Customizer settings, hooks, and client-namespace blocks.
 
 ## Included
 
-- Dark mode system (toggle + CSS variable inversion)
-- Generic production blocks: hero, faq, product-carousel
-- Pedagogical layout examples: site-header, site-footer with pattern system
-- WooCommerce base styles + hook scaffolding (full shop/PDP layer is client-owned)
+- Design token system with neutral defaults, dark mode inversion, layout widths, spacing, type, shadows, transitions, z-index, and WooCommerce aliases
+- Alpine app shell for dark mode, mobile navigation, search overlay, side-cart, toasts, smooth scroll, and animation hooks
+- Public block library: hero, FAQ, product-carousel, product-feature, product-categories-grid, brand-carousel, our-brands, reviews-slider, catalog-filters
+- Layout examples: `sobe/site-header` and `sobe/site-footer` rendered through hidden layout patterns
+- WooCommerce platform layer: catalog, PDP gallery/tabs, side-cart, catalog filters, mini-cart fragments, wishlist surface, load-more pagination
+- Search endpoint and modal UI
+- Baseline SEO metadata with plugin bypass
 - Manifest-driven block registration
-- Vite + Tailwind asset pipeline
-- Testing + linting
+- Vite + Tailwind CSS asset pipeline
+- Jest, pattern checks, PHPStan, and build validation
 
-## For Client Forks
+## Client Forks
 
-1. Clone this repo
-2. Change `prefix` in `config/theme.php` (e.g. `roxder`)
-3. Override brand colors in `resources/css/tokens.css`
-4. Copy `sobe/site-header` -> create new `roxder/site-header` block, customize markup
-   (Do NOT rename `sobe/site-header` in place - keep upstream merges clean)
-5. Add `app/woocommerce-catalog.php` and `app/woocommerce-pdp.php` (copy from `demo/sobe` as starting point)
-6. Add logo assets
+1. Fork from latest `main`.
+2. Change `prefix` in `config/theme.php` for client-owned settings and CSS classes.
+3. Keep `textdomain` as `sobe`.
+4. Override brand values in `resources/css/tokens.css`.
+5. Keep universal blocks under `sobe/*`; create client-specific blocks in a client namespace such as `roxder/*`.
+6. Extend WooCommerce, search, wishlist, hero, and block behavior through hooks before overriding Blade partials.
+7. Add client logos, fonts, navigation, content, and private blocks in the client repo.
 
-## Not Included
+Do not rename `sobe/*` blocks in place. If a client needs a custom header, copy the example to a new block such as `roxder/site-header` and customize the copy.
 
-- Brand colors, logos, custom fonts, or demo content
-- Full WooCommerce catalog/PDP/side-cart layer
-- Client-specific blocks such as maps, custom product grids, or proprietary UI
-- Private block library packages (`sobe-blocks-private` is documented architecture only)
+## Documentation
+
+- [Contributing](CONTRIBUTING.md)
+- [Client Fork Guide](docs/client-fork-guide.md)
+- [Hooks Reference](docs/hooks-reference.md)
+- [Client Boundary](docs/client-boundary.md)
+- [Merge Strategy](docs/merge-strategy.md)
+- [Library Version Policy](docs/library-version-policy.md)
+
+## Validation
+
+```bash
+npm test
+npm run check:patterns
+npm run build
+composer analyse
+```

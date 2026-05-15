@@ -1,50 +1,60 @@
 # Contributing
 
-This repo is the public Sobe WordPress theme foundation. Keep `main` generic and production-ready. Client presentation belongs in client repositories.
+`main` is the Sobe platform contract. Keep it generic, production-ready, and slow to break. Client presentation belongs in client repositories.
+
+## Rules
+
+- Universal blocks stay in the `sobe/*` namespace.
+- Client-specific blocks live in a client namespace such as `roxder/*`.
+- Extend with hooks first; override Blade files only when a hook cannot express the structural change.
+- Use `sobe` for every translation textdomain.
+- Keep brand colors, logos, navigation decisions, campaign content, and proprietary UI out of public `main`.
 
 ## Block System
 
 Blocks are dynamic Gutenberg blocks:
 
-- Editor UI lives in `resources/blocks/{slug}/edit.jsx`
-- Frontend output lives in `resources/views/blocks/{slug}.blade.php`
+- Editor UI: `resources/blocks/{slug}/edit.jsx`
+- Metadata: `resources/blocks/{slug}/block.json`
+- Frontend output: `resources/views/blocks/{slug}.blade.php`
+- Runtime script when needed: `resources/blocks/{slug}/view.js`
 - `save.jsx` returns `null`
 - Registration is driven by `resources/blocks/blocks-manifest.json`
 
-Use existing production blocks as references:
+Use production blocks as references:
 
-- `hero` for image, copy, CTA, and layout controls
-- `faq` for repeatable attributes and frontend view scripts
-- `product-carousel` for WooCommerce queries and Swiper-powered frontend behavior
-- `site-header` and `site-footer` for non-inserter layout example blocks
+- `hero` for media, copy, CTA, layout controls, and render hooks
+- `faq` for repeatable attributes and frontend behavior
+- `product-carousel` for WooCommerce queries and Swiper behavior
+- `catalog-filters` for AJAX-backed WooCommerce block behavior
+- `site-header` and `site-footer` for non-inserter layout examples
 
-Scaffold new generic blocks with:
+Scaffold generic blocks with:
 
 ```bash
 npm run make:block -- your-block-name
 ```
 
-All universal blocks keep the `sobe/*` namespace.
-
 ## WooCommerce
 
-Boilerplate provides base styling and hook scaffolding only. Client repos add:
+The platform owns the shared WooCommerce integration: catalog, PDP shell, gallery, tabs, related products, catalog filters, side-cart, mini-cart count, wishlist surface, and base styling.
 
-- `app/woocommerce-catalog.php` for shop grid + filters
-- `app/woocommerce-pdp.php` for product gallery
-- `app/woocommerce-sidecart.php` for side-cart
+Client repos customize by using hooks documented in [docs/hooks-reference.md](docs/hooks-reference.md). Only override Blade templates when the change is structural and hook-based customization would be impractical.
 
-Copy from `demo/sobe` as a starting point, then customize.
+## Forking For A Client
 
-Do not add full WooCommerce template overrides to public `main`. The public WooCommerce layer should remain merge-friendly: theme support, wrappers, `loop_shop_columns`, base styles, and generic blocks that work with standard WooCommerce output.
+Do not modify upstream `sobe/*` blocks in place. Copy a platform example into the client namespace:
 
-## Forking for a Client
+1. Copy `resources/blocks/site-header` to `resources/blocks/roxder-site-header` or another client-owned folder.
+2. Set `name: roxder/site-header` in `block.json`.
+3. Add the new slug to `resources/blocks/blocks-manifest.json`.
+4. Customize the copy in the client repo.
 
-Client-specific blocks live in a new namespace (`roxder/*`), not under `sobe/*`.
+This keeps `git merge upstream/main` focused on platform changes instead of client markup conflicts.
 
-Copy `sobe/site-header` to a new directory, set `name: roxder/site-header` in `block.json`, and customize. This keeps `git merge upstream/main` conflict-free.
+## Textdomain
 
-The same rule applies to footers, navigation variants, proprietary product UI, and campaign blocks: copy into the client namespace, then modify there.
+Use `sobe` in PHP, Blade, JSX, JS i18n calls, and `block.json` metadata. `sage` may appear only as a framework/dependency name, never as a theme textdomain.
 
 ## Validation
 
@@ -52,8 +62,9 @@ Before committing:
 
 ```bash
 npm test
+npm run check:patterns
 npm run build
 composer analyse
 ```
 
-For browser-facing changes, verify in Local at the project URL and check the browser console.
+For browser-facing changes, verify the Local site and check the console. For WooCommerce changes, test shop archive, product detail, add-to-cart, side-cart, catalog filters, and checkout entry.

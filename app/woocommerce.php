@@ -22,34 +22,29 @@ add_action('after_setup_theme', function (): void {
 }, 21);
 
 add_action('woocommerce_before_main_content', function (): void {
-    echo '<section class="wc-content-wrapper py-12 md:py-16"><div class="wp-container">';
+    echo '<section class="py-16 md:py-24 woocommerce"><div class="max-w-standard mx-auto w-full px-6 lg:px-8">';
 }, 10);
 
 add_action('woocommerce_after_main_content', function (): void {
     echo '</div></section>';
 }, 10);
 
-add_filter('loop_shop_columns', function (): int {
-    return (int) config('theme.wc_columns.desktop', 3);
-}, 20);
-
 add_action('wp_enqueue_scripts', function (): void {
-    $isWooContext = is_woocommerce()
-        || is_cart()
-        || is_checkout()
-        || is_account_page()
-        || has_block('sobe/product-carousel');
-
-    if (! $isWooContext) {
+    if (! (is_woocommerce() || is_cart() || is_checkout() || is_account_page() || has_block('sobe/product-carousel'))) {
         return;
     }
 
+    $handle = config('theme.prefix').'-woocommerce';
+
     wp_enqueue_style(
-        config('theme.prefix').'-woocommerce',
+        $handle,
         \Roots\asset('resources/css/woocommerce.css')->uri(),
         ['woocommerce-general', 'woocommerce-layout', 'woocommerce-smallscreen'],
         null
     );
+
+    $ratio = sanitize_text_field(config('theme.wc_gallery_aspect_ratio', '1 / 1'));
+    wp_add_inline_style($handle, ':root{--pdp-gallery-aspect-ratio:'.$ratio.'}');
 }, 100);
 
 add_action('wp_enqueue_scripts', function (): void {
@@ -57,7 +52,17 @@ add_action('wp_enqueue_scripts', function (): void {
         return;
     }
 
-    if (is_product() || is_cart() || is_checkout() || is_account_page()) {
+    if (is_product()) {
         \WC_Frontend_Scripts::load_scripts();
+
+        return;
     }
+
+    if (is_cart() || is_checkout() || is_account_page()) {
+        \WC_Frontend_Scripts::load_scripts();
+
+        return;
+    }
+
+    wp_enqueue_script('wc-cart-fragments');
 }, 99);
