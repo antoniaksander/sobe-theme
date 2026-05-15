@@ -1,0 +1,108 @@
+// product-categories-grid — editor canvas
+
+.sobe-product-categories-grid-editor {
+  padding-top: var(--space-md);
+  padding-inline: var(--space-md);
+  padding-bottom: calc(var(--space-md) + var(--sobe-cat-grid-section-pb));
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--c-border);
+  background: var(--c-surface-1);
+}
+
+.sobe-product-categories-grid-editor__section-header {
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--c-border);
+}
+
+.sobe-product-categories-grid-editor__section-heading {
+  margin: 0 0 var(--space-xs);
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--c-heading);
+  line-height: 1.25;
+}
+
+.sobe-product-categories-grid-editor__section-desc {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--c-text-muted);
+  line-height: 1.45;
+}
+
+.sobe-product-categories-grid-editor__cards {
+  display: grid;
+  gap: var(--space-md);
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sobe-product-categories-grid-editor__card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--c-border);
+  overflow: hidden;
+  background: var(--c-surface-2);
+}
+
+.sobe-product-categories-grid-editor__card-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  background: var(--c-surface-3);
+}
+
+.sobe-product-categories-grid-editor__card-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.sobe-product-categories-grid-editor__card-body {
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.sobe-product-categories-grid-editor__card-title {
+  margin: 0;
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--c-heading);
+}
+
+.sobe-product-categories-grid-editor__card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.sobe-product-categories-grid-editor__dropdown .components-popover__content {
+  min-width: min(18rem, 85vw);
+}
+
+.sobe-product-categories-grid-editor__picker {
+  max-height: min(22rem, 50vh);
+  overflow-y: auto;
+  padding: var(--space-sm);
+  box-sizing: border-box;
+}
+
+.sobe-product-categories-grid-editor__picker .components-base-control {
+  margin-bottom: var(--space-xs);
+}
+
+.sobe-product-categories-grid-editor__picker
+  .components-base-control:last-child {
+  margin-bottom: 0;
+}
+
+.sobe-product-categories-grid-editor__picker-status {
+  margin: 0;
+}
+
+.sobe-product-categories-grid-editor__picker-error {
+  max-width: 16rem;
+}

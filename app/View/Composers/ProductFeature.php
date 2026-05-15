@@ -14,8 +14,8 @@ class ProductFeature extends Composer
     {
         $attrs = (array) ($this->data['attributes'] ?? []);
         $productId = (int) apply_filters(
-            'sobe/product_feature/product_id',
-            $attrs['productId'] ?? 0,
+            'sobe/product-feature/product_id',
+            (int) apply_filters('sobe/product_feature/product_id', $attrs['productId'] ?? 0, $attrs),
             $attrs
         );
 
@@ -42,8 +42,8 @@ class ProductFeature extends Composer
         }
 
         $brandTaxonomy = sanitize_key((string) apply_filters(
-            'sobe/product_feature/brand_taxonomy',
-            'product_brand',
+            'sobe/product-feature/brand_taxonomy',
+            apply_filters('sobe/product_feature/brand_taxonomy', 'product_brand', $product, $attrs),
             $product,
             $attrs
         ));
@@ -63,7 +63,12 @@ class ProductFeature extends Composer
             'productUrl' => $productUrl,
         ];
 
-        $filtered = apply_filters('sobe/product_feature/data', $data, $product, $attrs);
+        $filtered = apply_filters(
+            'sobe/product-feature/data',
+            apply_filters('sobe/product_feature/data', $data, $product, $attrs),
+            $product,
+            $attrs
+        );
 
         return is_array($filtered) ? $filtered : $data;
     }

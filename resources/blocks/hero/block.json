@@ -6,7 +6,7 @@
   "title": "Hero",
   "icon": "cover-image",
   "category": "sobe-general",
-  "description": "Full-bleed hero section with background image, heading, text, and optional CTA.",
+  "description": "Full-bleed hero section with background image, animated content, CTA, and layout variants.",
   "example": {
     "attributes": {
       "heading": "Make Something Great",
@@ -15,7 +15,11 @@
       "ctaUrl": "#",
       "alignment": "left",
       "height": "80vh",
-      "align": "full"
+      "align": "full",
+      "ctaType": "btn-light",
+      "headingColor": "fg",
+      "paragraphColor": "fg-muted",
+      "headingSize": "default"
     }
   },
   "supports": {
@@ -49,8 +53,23 @@
     },
     "ctaType": {
       "type": "string",
-      "enum": ["btn-dark", "btn-light", "btn-outline-dark", "btn-outline-light", "link-dark", "link-light"],
-      "default": "btn-dark"
+      "enum": ["btn-light", "btn-dark", "btn-outline-light", "btn-outline-dark", "link-light", "link-dark"],
+      "default": "btn-light"
+    },
+    "headingColor": {
+      "type": "string",
+      "enum": ["fg", "heading", "text", "accent"],
+      "default": "fg"
+    },
+    "paragraphColor": {
+      "type": "string",
+      "enum": ["fg-muted", "text", "text-muted", "text-subtle"],
+      "default": "fg-muted"
+    },
+    "headingSize": {
+      "type": "string",
+      "enum": ["default", "lg", "xl"],
+      "default": "default"
     },
     "alignment": {
       "type": "string",
@@ -72,7 +91,7 @@
     },
     "darkOverlay": {
       "type": "boolean",
-      "default": true
+      "default": false
     }
   }
 }

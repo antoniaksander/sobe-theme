@@ -30,10 +30,10 @@
   }
 
   .faq__empty {
-    color: var(--c-text-muted);
+    color: var(--c-muted);
     font-size: var(--font-size-base);
     padding: var(--space-lg);
-    background: var(--c-surface-2);
+    background: var(--c-surface);
     border-radius: 0.5rem;
     text-align: center;
   }
@@ -75,7 +75,7 @@
   .faq__chevron {
     width: var(--faq-chevron-size);
     height: var(--faq-chevron-size);
-    color: var(--c-text-muted);
+    color: var(--c-muted);
     flex-shrink: 0;
     transition:
       transform 0.3s ease,
@@ -107,7 +107,7 @@
   .faq__answer-text {
     font-size: var(--font-size-base);
     line-height: 1.7;
-    color: var(--c-text-muted);
+    color: var(--c-muted);
     margin: 0;
     padding-bottom: var(--space-lg);
   }

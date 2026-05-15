@@ -6,11 +6,11 @@
   "title": "Product Carousel",
   "icon": "cart",
   "category": "sobe-woocommerce",
-  "description": "A swipeable carousel of WooCommerce products.",
+  "description": "A swipeable carousel of WooCommerce products with category and brand filters.",
   "example": {
     "attributes": {
       "heading": "New Arrivals",
-      "paragraph": "Discover the latest products.",
+      "paragraph": "Discover our latest collection of carefully curated products.",
       "count": 8,
       "orderBy": "latest",
       "linkText": "Shop All",
@@ -41,6 +41,10 @@
       "default": "latest"
     },
     "categoryId": {
+      "type": "number",
+      "default": 0
+    },
+    "brandId": {
       "type": "number",
       "default": 0
     },

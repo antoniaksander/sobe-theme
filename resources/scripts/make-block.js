@@ -3,7 +3,7 @@
  *
  * Usage:  npm run make:block -- my-block-slug [--category=sobe-general]
  *
- * Categories: sobe-general (default) | sobe-content | sobe-woocommerce
+ * Categories: sobe-general (default) | sobe-content | sobe-woocommerce | sobe-layout
  *
  * Creates:
  *   resources/blocks/{slug}/block.json
@@ -38,7 +38,7 @@ if (!/^[a-z][a-z0-9-]*$/.test(slug)) {
   process.exit(1);
 }
 
-const VALID_CATEGORIES = ['sobe-general', 'sobe-content', 'sobe-woocommerce'];
+const VALID_CATEGORIES = ['sobe-general', 'sobe-content', 'sobe-woocommerce', 'sobe-layout'];
 const categoryArg = process.argv.find((a) => a.startsWith('--category='));
 const category = categoryArg ? categoryArg.split('=')[1] : 'sobe-general';
 
