@@ -389,7 +389,7 @@ Major demo-only areas not yet in current `main`:
 
 Pass 1 was reviewed and approved. Pass 2 decisions applied:
 
-- `product_brand` taxonomy is `PLATFORM`, registered behind `apply_filters('sobe/register_product_brand', true)`.
+- `product_brand` taxonomy is `PLATFORM`, registered behind `apply_filters('sobe/product_brand/register', true)`.
 - When demo and current main differ, demo wins unless current main has a clear bug fix, cleaner refactor, or more correct WordPress pattern.
 - Demo brand values must be stripped during implementation: brand colors, agency-name copy, brand-specific defaults, hardcoded identifiers.
 - Textdomain standardizes to `sobe` everywhere.
@@ -447,7 +447,7 @@ Bucket meanings:
 | SEO | Breadcrumb component, search result semantic cards | `PLATFORM-WITH-HOOKS` | Default rendering moves with filters/partials for client-specific output. |
 | SEO | No sitemap hooks found | `SANDBOX` | No infrastructure exists to move. If sitemap support is desired it is follow-up work. |
 | Block Inventory | `sobe/example`, `sobe/faq`, `sobe/product-categories-grid` | `PLATFORM` | Generic infrastructure/content/WC blocks. |
-| Block Inventory | `sobe/hero` | `EXAMPLE` | Move full demo hero minus broken WebGL as a strong reference block. Clients can use it directly or create a client hero namespace for bespoke work. |
+| Block Inventory | `sobe/hero` | `PLATFORM-WITH-HOOKS` | Move full demo hero minus broken WebGL as a generic platform block. Clients can use hooks for common customization or create client-namespace heroes for bespoke work. |
 | Block Inventory | Broken hero WebGL | `SANDBOX` | Explicitly excluded because broken in demo. Keep out until rebuilt deliberately. |
 | Block Inventory | `sobe/product-carousel`, `sobe/product-feature`, `sobe/catalog-filters`, `sobe/brand-carousel`, `sobe/our-brands`, `sobe/reviews-slider` | `PLATFORM-WITH-HOOKS` | WC/data-backed public blocks need filters for query/data/rendering. Reviews-slider has a pending recommendation below. |
 | Block Inventory | `sobe/site-header`, `sobe/site-footer` | `EXAMPLE` | Pedagogical layout examples, not client layout ownership. |
@@ -461,7 +461,7 @@ Bucket meanings:
 | Asset Pipeline | Vite entrypoints, Laravel Vite plugin, Roots WordPress plugin, React JSX support, bundle size budget, editor asset injection, asset aliases, public build theme.json, block module output | `PLATFORM` | Build and delivery infrastructure. |
 | Service Providers | Acorn application boot, Theme service provider, Composer autoload PSR-4 | `PLATFORM` | Runtime boot infrastructure. |
 | Setup Hooks | Theme support cleanup, menus, core supports, HTML5 supports, configured image sizes, excerpt filters, page/post meta, font preload/inline hooks, dark toggle shortcode, sidebar registration, function include list | `PLATFORM` | Generic WP setup. Font values need neutral defaults or removable file checks. |
-| Setup Hooks | Product brand taxonomy | `PLATFORM` | Register behind `apply_filters('sobe/register_product_brand', true)`. Empty taxonomy has zero client cost. |
+| Setup Hooks | Product brand taxonomy | `PLATFORM` | Register behind `apply_filters('sobe/product_brand/register', true)`. Empty taxonomy has zero client cost. |
 | Setup Hooks | YITH wishlist fallback shortcode | `PLATFORM-WITH-HOOKS` | Keep as one adapter, but wishlist surface must be plugin-agnostic. |
 | Security Baseline | Head cleanup, XML-RPC disabled, nonce usage, sanitization/escaping | `PLATFORM` | Shared hardening and hygiene. |
 | Security Baseline | REST API access control, Store API public routes, search endpoint public route | `PLATFORM-WITH-HOOKS` | Public route allowlist must be filterable as platform features add routes. |
@@ -469,7 +469,7 @@ Bucket meanings:
 | Testing & Linting | Filter store tests, filter URL utility tests | `PLATFORM` | Move with catalog filter/load-more infrastructure. |
 | Testing & Linting | Formatting/linting notes | `PLATFORM` | Keep tooling observation; Pass 3 should decide whether to add explicit scripts separately. |
 
-Bucket count from the classification above: `PLATFORM` 129, `PLATFORM-WITH-HOOKS` 82, `EXAMPLE` 17, `SANDBOX` 7.
+Bucket count from the classification above: `PLATFORM` 129, `PLATFORM-WITH-HOOKS` 83, `EXAMPLE` 16, `SANDBOX` 7.
 
 ### Hook Contracts
 
@@ -516,6 +516,21 @@ add_filter('sobe/search/result', function (array $result, WP_Post $post): ?array
         $result['type_label'] = 'Case Study';
     }
     return $result;
+}, 10, 2);
+```
+
+#### Hero
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Resolved data | `sobe/hero/data` | filter | `array $data`, `array $attributes`, `WP_Block $block|null` | `array` | Add eyebrow text or normalize CTA data. |
+| Background view | `sobe/hero/background_view` | filter | `string $view`, `array $data`, `array $attributes` | Blade view name | Swap image background for video or gradient. |
+| CTA view | `sobe/hero/cta_view` | filter | `string $view`, `array $data`, `array $attributes` | Blade view name | Render custom button group. |
+| Overall view | `sobe/hero/view` | filter | `string $view`, `array $data`, `array $attributes` | Blade view name | Replace full hero shell while preserving block API. |
+
+```php
+add_filter('sobe/hero/background_view', function (string $view, array $data): string {
+    return ! empty($data['video_url']) ? 'blocks.hero-background-video' : $view;
 }, 10, 2);
 ```
 
@@ -672,7 +687,7 @@ Tradeoffs:
 - Cleaner long-term package dependency and content model.
 - Lets `sobe/testimonial-slider` remain usable without WooCommerce while `sobe/reviews-slider` can depend on product/review hooks.
 
-Pending decision: approve Option B before Pass 3 finalizes file operations. Until approved, this audit counts the current source artifact as `PLATFORM-WITH-HOOKS` because at least one promoted public block should come from it.
+Decision: Option B approved for Pass 3. The implementation plan includes both `sobe/testimonial-slider` and `sobe/reviews-slider`.
 
 ### Catalog Filters Recommendation
 
@@ -686,7 +701,7 @@ Risk: this becomes one of the hardest platform contracts to change. Pass 3 shoul
 
 | Item | Classification | Reasoning |
 |---|---:|---|
-| `product_brand` taxonomy | `PLATFORM` | Shared structure with client-owned terms. Register behind `sobe/register_product_brand`. |
+| `product_brand` taxonomy | `PLATFORM` | Shared structure with client-owned terms. Register behind `sobe/product_brand/register`. |
 | `brand-carousel` | `PLATFORM-WITH-HOOKS` | Useful generic brand showcase now that taxonomy is platform. Needs hooks for taxonomy, term query, logo meta, item data, and render view. |
 | `our-brands` | `PLATFORM-WITH-HOOKS` | Generic brand directory. Needs hooks for taxonomy, grouping, alphabet index, term data, and template. |
 | `product-feature` brand label | `PLATFORM-WITH-HOOKS` | The block is a generic product showcase; brand label should be data-driven and filterable. |
@@ -721,4 +736,328 @@ Demo wins broadly, with these Pass 3 implementation notes:
 
 ### Pass 2 Checkpoint
 
-Pass 2 classification is complete for review. Pass 3 migration planning is intentionally not started.
+Pass 2 classification was reviewed. Pass 3 decisions applied:
+
+- Approved reviews split: `sobe/testimonial-slider` generic and `sobe/reviews-slider` WC-coupled.
+- Approved hook naming style: `sobe/<feature>/<action>`.
+- Normalized product brand registration hook to `sobe/product_brand/register`.
+- Reclassified `sobe/hero` to `PLATFORM-WITH-HOOKS`.
+- Confirmed `resources/lang/` as an implementation-time, low-priority decision.
+
+## Pass 3: Migration Plan
+
+This pass is the implementation plan only. It does not move or edit source files during the audit.
+
+### File Operations
+
+Planned implementation operation counts:
+
+- Create: 25
+- Copy: 53
+- Modify: 54
+- Delete: 3
+
+| Action | Path | Source | Notes |
+|---|---|---|---|
+| Modify | `package.json` | demo/current merge | Add runtime dependencies `@alpinejs/focus`, `gsap`, `lenis`, `nouislider`; keep existing dev tooling. |
+| Modify | `package-lock.json` | npm install during implementation | Regenerate after dependency changes. Do not hand-edit. |
+| Modify | `composer.json` | current main | No dependency change expected; keep Acorn and Sage WooCommerce. |
+| Modify | `composer.lock` | current main | No lock change expected. If Composer changes it without dependency changes, review before committing. |
+| Modify | `functions.php` | demo/sobe | Expand include list for platform modules: patterns, customizer, search, side-cart, catalog, PDP, filters. |
+| Modify | `config/theme.php` | demo/current merge | Keep `prefix` and `textdomain` as `sobe`; add/retain WC gallery aspect ratio and neutral defaults. |
+| Modify | `app/setup.php` | demo/sobe | Keep generic setup; avoid duplicating layout helper if it lives in `setup-demo-layout.php`. |
+| Modify | `app/blocks.php` | demo/current merge | Use demo dynamic registration; preserve current main allowlist/config improvements if cleaner; add client allowlist filters. |
+| Modify | `app/assets.php` | demo/sobe | Restore editor CSS injection and built theme.json redirect. |
+| Modify | `app/security.php` | demo/sobe | Add public route allowlist filters for Store API and search endpoint. |
+| Modify | `app/woocommerce.php` | demo/sobe | Promote base WC support and script/style policy. |
+| Modify | `app/filters.php` | demo/sobe | Keep generic excerpt filters. |
+| Create | `app/setup-customizer.php` | `demo/sobe:app/setup-customizer.php` | Copy and neutralize defaults/copy. |
+| Create | `app/setup-patterns.php` | `demo/sobe:app/setup-patterns.php` | Copy, remove homepage showcase registration, wrap `product_brand` registration in `sobe/product_brand/register`. |
+| Create | `app/setup-demo-layout.php` | `demo/sobe:app/setup-demo-layout.php` | Preserve `sobe_render_layout_pattern()` signature. Rename only in a later refactor. |
+| Create | `app/setup-search.php` | `demo/sobe:app/setup-search.php` | Add search hooks from Pass 2 and generic copy. |
+| Create | `app/woocommerce-catalog.php` | `demo/sobe:app/woocommerce-catalog.php` | Add shop loop hooks and neutralized text. |
+| Create | `app/woocommerce-filters.php` | `demo/sobe:app/woocommerce-filters.php` | Add catalog filter hooks and normalized hook names. |
+| Create | `app/woocommerce-pdp.php` | `demo/sobe:app/woocommerce-pdp.php` | Add PDP gallery/tabs/related hooks; make shipping copy filterable. |
+| Create | `app/woocommerce-sidecart.php` | `demo/sobe:app/woocommerce-sidecart.php` | Add side-cart and mini-cart hooks. |
+| Create | `app/Helpers/notice-helpers.php` | `demo/sobe:app/Helpers/notice-helpers.php` | Add filters for notice normalization and side-cart enabled state. |
+| Create | `app/WooCommerce/FilterHandler.php` | `demo/sobe:app/WooCommerce/FilterHandler.php` | Add query/response hooks and keep testable `process()`. |
+| Create | `app/View/Composers/CatalogFilters.php` | `demo/sobe:app/View/Composers/CatalogFilters.php` | Add filter group/brand taxonomy hooks. |
+| Create | `app/View/Composers/ProductCategoriesGrid.php` | `demo/sobe:app/View/Composers/ProductCategoriesGrid.php` | Copy for public WC block. |
+| Create | `app/View/Composers/ProductFeature.php` | `demo/sobe:app/View/Composers/ProductFeature.php` | Add product-feature data hooks. |
+| Create | `app/View/Composers/Post.php` | `demo/sobe:app/View/Composers/Post.php` | Default WordPress template composer. |
+| Create | `app/View/Composers/Comments.php` | `demo/sobe:app/View/Composers/Comments.php` | Default comments composer. |
+| Modify | `app/View/Composers/App.php` | demo/sobe | Add logo/dark-logo helpers. |
+| Modify | `resources/css/tokens.css` | demo/current merge | Use demo richer token surface with current neutral color/font values. |
+| Modify | `resources/css/app.css` | demo/sobe | Copy richer app CSS; strip WebGL canvas styles if unused; neutralize brand values. |
+| Modify | `resources/css/editor.css` | demo/sobe | Copy richer editor CSS. |
+| Modify | `resources/css/woocommerce.css` | demo/sobe | Copy full WC CSS; ensure tokens are generic and no Sobe color values remain. |
+| Modify | `resources/js/app.js` | demo/sobe | Copy full app shell; preserve current main early dark-mode class behavior if it prevents flash better than demo. |
+| Create | `resources/js/animations.js` | `demo/sobe:resources/js/animations.js` | Promote animation bus and sticky header. |
+| Create | `resources/js/filter-store.js` | `demo/sobe:resources/js/filter-store.js` | Promote with tests. |
+| Create | `resources/js/filter-utils.js` | `demo/sobe:resources/js/filter-utils.js` | Promote with tests. |
+| Create | `resources/js/product-gallery.js` | `demo/sobe:resources/js/product-gallery.js` | Promote PDP gallery JS with config output. |
+| Create | `resources/js/shop-load-more.js` | `demo/sobe:resources/js/shop-load-more.js` | Promote catalog load-more. |
+| Modify | `resources/js/editor.js` | demo/current merge | Keep existing editor behavior; only change if demo has needed editor setup. |
+| Modify | `vite.config.js` | demo/current merge | Add full input set and bundle budget; keep current path/base corrections if more correct. |
+| Modify | `resources/scripts/build-theme-json.js` | demo/current merge | Ensure layout widths and neutral palette come from tokens. |
+| Modify | `resources/scripts/check-patterns.js` | current main preferred | Keep current main improvements if it uses config allowlist; otherwise merge demo WC blocks into allowlist. |
+| Modify | `resources/scripts/make-block.js` | current main preferred | Keep current main scaffold improvements and ensure textdomain `sobe`. |
+| Modify | `resources/scripts/blocks-entries.js` | demo/current merge | Ensure all manifest block assets are discovered. |
+| Modify | `resources/blocks/blocks-manifest.json` | demo-derived | Add promoted blocks, split testimonials/reviews, exclude sandbox homepage-only entries. |
+| Copy | `resources/blocks/brand-carousel/` | `demo/sobe:resources/blocks/brand-carousel/` | Add hooks; textdomain `sobe`; keep taxonomy/manual modes. |
+| Copy | `resources/views/blocks/brand-carousel.blade.php` | `demo/sobe:resources/views/blocks/brand-carousel.blade.php` | Add item data/view hooks. |
+| Copy | `resources/blocks/catalog-filters/` | `demo/sobe:resources/blocks/catalog-filters/` | Add catalog filter hooks; textdomain `sobe`. |
+| Copy | `resources/views/blocks/catalog-filters.blade.php` | `demo/sobe:resources/views/blocks/catalog-filters.blade.php` | Add group/render hooks. |
+| Modify | `resources/blocks/example/` | current main | Keep minimal infrastructure block; ensure textdomain `sobe`. |
+| Modify | `resources/views/blocks/example.blade.php` | current main | No behavioral change expected. |
+| Modify | `resources/blocks/faq/` | demo/sobe | Demo wins; keep current main only if it has bug fixes. |
+| Modify | `resources/views/blocks/faq.blade.php` | demo/sobe | Copy demo version; textdomain `sobe`. |
+| Modify | `resources/blocks/hero/` | demo/sobe excluding `view.js` | Copy full hero editor/styles; remove `enableWebgl` attribute/control and WebGL references. |
+| Modify | `resources/views/blocks/hero.blade.php` | demo/sobe | Add `sobe/hero/*` hooks; no WebGL render path. |
+| Modify | `resources/blocks/product-carousel/` | demo/sobe | Restore full demo features including `brandId`; add query/data hooks. |
+| Modify | `resources/views/blocks/product-carousel.blade.php` | demo/sobe | Add product query and render hooks. |
+| Copy | `resources/blocks/product-feature/` | `demo/sobe:resources/blocks/product-feature/` | Promote product showcase block with data hooks. |
+| Copy | `resources/views/blocks/product-feature.blade.php` | `demo/sobe:resources/views/blocks/product-feature.blade.php` | Add brand/product data hooks. |
+| Copy | `resources/blocks/product-categories-grid/` | `demo/sobe:resources/blocks/product-categories-grid/` | Promote generic WC category showcase. |
+| Copy | `resources/views/blocks/product-categories-grid.blade.php` | `demo/sobe:resources/views/blocks/product-categories-grid.blade.php` | Add category data hooks if needed. |
+| Copy | `resources/blocks/our-brands/` | `demo/sobe:resources/blocks/our-brands/` | Promote as hookable brand directory. |
+| Copy | `resources/views/blocks/our-brands.blade.php` | `demo/sobe:resources/views/blocks/our-brands.blade.php` | Add taxonomy/grouping/render hooks. |
+| Copy | `resources/blocks/reviews-slider/` | `demo/sobe:resources/blocks/reviews-slider/` | Keep WC-coupled auto/products modes. |
+| Copy | `resources/views/blocks/reviews-slider.blade.php` | `demo/sobe:resources/views/blocks/reviews-slider.blade.php` | Keep WC review aggregation; add query/data/render hooks. |
+| Create | `resources/blocks/testimonial-slider/` | derived from `demo/sobe:resources/blocks/reviews-slider/` | Generic manual testimonial slider; no WooCommerce dependency. |
+| Create | `resources/views/blocks/testimonial-slider.blade.php` | derived from `demo/sobe:resources/views/blocks/reviews-slider.blade.php` | Manual testimonials only. |
+| Modify | `resources/blocks/site-header/` | demo/current merge | Keep current main `index.jsx`/`edit.jsx` if demo lacks them; block stays non-inserter. |
+| Modify | `resources/views/blocks/site-header.blade.php` | demo/sobe | Include section variants. |
+| Modify | `resources/blocks/site-footer/` | demo/current merge | Keep current main `index.jsx`/`edit.jsx` if demo lacks them; block stays non-inserter. |
+| Modify | `resources/views/blocks/site-footer.blade.php` | demo/sobe | Include footer variants. |
+| Copy | `resources/views/components/alert.blade.php` | `demo/sobe:resources/views/components/alert.blade.php` | Generic UI primitive. |
+| Copy | `resources/views/components/badge.blade.php` | `demo/sobe:resources/views/components/badge.blade.php` | Generic UI primitive. |
+| Copy | `resources/views/components/breadcrumbs.blade.php` | `demo/sobe:resources/views/components/breadcrumbs.blade.php` | Add breadcrumb hooks. |
+| Copy | `resources/views/components/button.blade.php` | `demo/sobe:resources/views/components/button.blade.php` | Required by hero/product blocks. |
+| Copy | `resources/views/components/card.blade.php` | `demo/sobe:resources/views/components/card.blade.php` | Generic UI primitive. |
+| Modify | `resources/views/components/dark-mode-toggle.blade.php` | demo/current merge | Keep accessible labels; textdomain `sobe`. |
+| Copy | `resources/views/components/section.blade.php` | `demo/sobe:resources/views/components/section.blade.php` | Generic layout primitive. |
+| Copy | `resources/views/components/side-cart.blade.php` | `demo/sobe:resources/views/components/side-cart.blade.php` | Add side-cart hooks/partials. |
+| Copy | `resources/views/components/toast-container.blade.php` | `demo/sobe:resources/views/components/toast-container.blade.php` | Works with Alpine toast store. |
+| Copy | `resources/views/components/wishlist-icon.blade.php` | `demo/sobe:resources/views/components/wishlist-icon.blade.php` | Rewrite around plugin-agnostic wishlist hooks. |
+| Copy | `resources/views/forms/search.blade.php` | `demo/sobe:resources/views/forms/search.blade.php` | Generic search form. |
+| Copy | `resources/views/partials/comments.blade.php` | `demo/sobe:resources/views/partials/comments.blade.php` | Default WP template support. |
+| Copy | `resources/views/partials/content*.blade.php` | `demo/sobe:resources/views/partials/content*.blade.php` | Default post/page/search content partials. |
+| Copy | `resources/views/partials/entry-meta.blade.php` | `demo/sobe:resources/views/partials/entry-meta.blade.php` | Default post meta partial. |
+| Copy | `resources/views/partials/page-header.blade.php` | `demo/sobe:resources/views/partials/page-header.blade.php` | Default page header partial. |
+| Copy | `resources/views/partials/page-hero.blade.php` | `demo/sobe:resources/views/partials/page-hero.blade.php` | Default page hero support. |
+| Copy | `resources/views/partials/search-overlay.blade.php` | `demo/sobe:resources/views/partials/search-overlay.blade.php` | Add search modal hooks. |
+| Copy | `resources/views/partials/search-result-*.blade.php` | `demo/sobe:resources/views/partials/search-result-*.blade.php` | Default search result render views. |
+| Copy | `resources/views/partials/side-cart-content.blade.php` | `demo/sobe:resources/views/partials/side-cart-content.blade.php` | Add item/data hooks. |
+| Modify | `resources/views/layouts/app.blade.php` | demo/sobe | Promote app shell, SEO, header/footer routing, side-cart, toast, search. Remove global WebGL canvas unless another feature uses it. |
+| Copy | `resources/views/front-page.blade.php` | `demo/sobe:resources/views/front-page.blade.php` | Default working front page template without demo content. |
+| Modify | `resources/views/index.blade.php` | demo/sobe | Default archive/blog template. |
+| Modify | `resources/views/page.blade.php` | demo/sobe | Default page template with section/page hero support. |
+| Modify | `resources/views/single.blade.php` | demo/sobe | Default single template with comments/meta support. |
+| Copy | `resources/views/search.blade.php` | `demo/sobe:resources/views/search.blade.php` | Default search results page. |
+| Copy | `resources/views/template-custom.blade.php` | `demo/sobe:resources/views/template-custom.blade.php` | Generic page template using platform page hero/title meta. |
+| Copy | `resources/views/sections/checkout-header.blade.php` | `demo/sobe:resources/views/sections/checkout-header.blade.php` | Add checkout header hooks. |
+| Copy | `resources/views/sections/footer-layout-2.blade.php` | `demo/sobe:resources/views/sections/footer-layout-2.blade.php` | Example footer layout. |
+| Copy | `resources/views/sections/footer.blade.php` | `demo/sobe:resources/views/sections/footer.blade.php` | Footer router section. |
+| Copy | `resources/views/sections/header-1.blade.php` | `demo/sobe:resources/views/sections/header-1.blade.php` | Example header variant. |
+| Copy | `resources/views/sections/header-2.blade.php` | `demo/sobe:resources/views/sections/header-2.blade.php` | Example header variant. |
+| Copy | `resources/views/sections/header-3.blade.php` | `demo/sobe:resources/views/sections/header-3.blade.php` | Example header variant. |
+| Copy | `resources/views/sections/sidebar-shop.blade.php` | `demo/sobe:resources/views/sections/sidebar-shop.blade.php` | Shop sidebar output. |
+| Copy | `resources/views/sections/sidebar.blade.php` | `demo/sobe:resources/views/sections/sidebar.blade.php` | Primary sidebar output. |
+| Copy | `resources/views/woocommerce/archive-product.blade.php` | `demo/sobe:resources/views/woocommerce/archive-product.blade.php` | Add shop loop hooks. |
+| Copy | `resources/views/woocommerce/content-product.blade.php` | `demo/sobe:resources/views/woocommerce/content-product.blade.php` | Add product card hooks and plugin-agnostic wishlist surface. |
+| Copy | `resources/views/woocommerce/content-single-product.blade.php` | `demo/sobe:resources/views/woocommerce/content-single-product.blade.php` | Add PDP gallery/tabs hooks. |
+| Copy | `resources/views/woocommerce/loop/pagination.blade.php` | `demo/sobe:resources/views/woocommerce/loop/pagination.blade.php` | Add pagination hooks. |
+| Copy | `resources/views/woocommerce/notices/error.blade.php` | `demo/sobe:resources/views/woocommerce/notices/error.blade.php` | Notice template override. |
+| Copy | `resources/views/woocommerce/notices/notice.blade.php` | `demo/sobe:resources/views/woocommerce/notices/notice.blade.php` | Notice template override. |
+| Copy | `resources/views/woocommerce/notices/success.blade.php` | `demo/sobe:resources/views/woocommerce/notices/success.blade.php` | Notice template override. |
+| Copy | `resources/views/woocommerce/single-product.blade.php` | `demo/sobe:resources/views/woocommerce/single-product.blade.php` | Single product shell. |
+| Copy | `resources/views/woocommerce/single-product/related.blade.php` | `demo/sobe:resources/views/woocommerce/single-product/related.blade.php` | Add related product hooks. |
+| Copy | `resources/views/woocommerce/single-product/up-sells.blade.php` | `demo/sobe:resources/views/woocommerce/single-product/up-sells.blade.php` | Add upsell hooks. |
+| Modify | `resources/patterns/header-layout-1.php` | demo/sobe | Keep hidden layout pattern. |
+| Modify | `resources/patterns/header-layout-2.php` | demo/sobe | Keep hidden layout pattern. |
+| Modify | `resources/patterns/header-layout-3.php` | demo/sobe | Keep hidden layout pattern. |
+| Modify | `resources/patterns/footer-layout-2.php` | demo/sobe | Keep hidden layout pattern. |
+| Delete | `resources/patterns/homepage-showcase.php` | N/A | Do not promote demo homepage pattern. If present from copy, remove. |
+| Delete | `resources/css/blocks.css` | N/A | Do not promote stale/historical block CSS unless implementation proves it is referenced. |
+| Delete | `fonts/Satoshi-Variable.woff2`, `fonts/CabinetGrotesk-Variable.woff2` | N/A | Remove brand font assets from public platform; clients bring brand fonts. |
+| Modify | `tests/blocks/meta.test.cjs` | current main | Ensure split blocks and textdomain expectations are covered. |
+| Modify | `tests/blocks/save.test.cjs` | current main | Ensure new dynamic blocks return null. |
+| Copy | `tests/shop/filter-store.test.cjs` | `demo/sobe:tests/shop/filter-store.test.cjs` | Move with filter store. |
+| Copy | `tests/shop/filter-utils.test.cjs` | `demo/sobe:tests/shop/filter-utils.test.cjs` | Move with filter URL utilities. |
+| Modify | `README.md` | new docs | Rewrite for platform model. |
+| Modify | `CONTRIBUTING.md` | new docs | Add block SOP, WC policy, namespace and hook rules. |
+| Create | `docs/hooks-reference.md` | new docs | Document all `sobe/<feature>/<action>` hooks. |
+| Create | `docs/client-fork-guide.md` | new docs | Client fork process, namespace rule, tokens, Customizer, WC extension. |
+| Create | `docs/library-version-policy.md` | new docs | Runtime library policy from this plan. |
+| Modify | `docs/client-boundary.md` | new docs | Update boundary from thin infra to platform model. |
+| Modify | `docs/merge-strategy.md` | new docs | Update for platform sync and hook contracts. |
+| Modify | `docs/upstream-sync-notes.md` | new docs | Add v2 platform state and migration notes. |
+| Modify | `docs/v2-platform-plan.md` | this audit | Keep as planning artifact; no source behavior. |
+
+### Order of Operations
+
+1. Start from latest `main` and confirm tags `pre-enrichment` and `enrichment-attempt-1` exist.
+2. Update dependencies first: `package.json`, then run install to regenerate `package-lock.json`.
+3. Promote token system and CSS architecture: `tokens.css`, `app.css`, `editor.css`, `woocommerce.css`.
+4. Add PHP hook contract helpers/modules before views emit hooks: setup patterns/customizer/search, WC files, filter handler, notice helpers.
+5. Update `functions.php` include list after all new PHP files exist.
+6. Promote JS app shell and shared runtime modules: `app.js`, `animations.js`, filter store/utils, gallery, load-more.
+7. Promote generic components and partials used by blocks/templates.
+8. Promote block folders and Blade block views, including hero hooks and testimonial/reviews split.
+9. Promote layout patterns, header/footer examples, and template shells.
+10. Promote WooCommerce views after PHP hooks and JS dependencies exist.
+11. Update block manifest, block registration, scripts, and tests.
+12. Standardize textdomain to `sobe` across PHP, Blade, JSX, and block metadata.
+13. Remove excluded assets/files: demo homepage pattern, stale `blocks.css`, public brand font files.
+14. Rewrite docs and hook reference.
+15. Run automated validation, then manual browser/editor/WC validation.
+
+Parallel-safe work: docs, CSS token neutralization, and independent tests can proceed in parallel. Strictly ordered work: dependencies before JS verification; hook contracts before emitting hooks; manifest before block tests.
+
+### Dependency Changes
+
+`package.json` runtime dependency diff:
+
+```diff
+ "dependencies": {
++  "@alpinejs/focus": "^3.15.11",
+   "alpinejs": "^3.15.11",
++  "gsap": "^3.15.0",
++  "lenis": "^1.3.23",
++  "nouislider": "^15.8.1",
+   "swiper": "^12.1.3"
+ }
+```
+
+`package-lock.json` must be regenerated by npm after this change.
+
+`composer.json` dependency diff:
+
+```diff
+ No dependency changes planned.
+```
+
+If implementation adds PHP hook docs or tests that require tooling, stop before adding a Composer dependency.
+
+### Library Version Policy
+
+| Library | Specificity | Load-bearing? | Upgrade cadence | Breaking major protocol |
+|---|---|---:|---|---|
+| `alpinejs` | caret pinned to minor family, e.g. `^3.15.11` | high | Quarterly review or security fix | Test app shell, nav, dark mode, search, side-cart focus; major upgrade requires platform PR and client migration note. |
+| `@alpinejs/focus` | match Alpine minor, e.g. `^3.15.11` | high | Same as Alpine | Upgrade with Alpine only; verify `x-trap` overlays and keyboard escape/focus restoration. |
+| `swiper` | caret pinned to current major, e.g. `^12.1.3` | high | Quarterly review or block bug fix | Major upgrade requires product-carousel, PDP gallery, category grid visual QA and release note. |
+| `gsap` | caret pinned to current major/minor, e.g. `^3.15.0` | medium-high | Quarterly review | Major upgrade requires animation bus/sticky header/AJAX refresh QA; provide reduced-motion regression checks. |
+| `lenis` | caret pinned to current minor, e.g. `^1.3.23` | medium | Quarterly review | Major upgrade requires scroll, drawer lock, anchor/filter-scroll QA; can be disabled behind feature flag if broken. |
+| `nouislider` | caret pinned to current major, e.g. `^15.8.1` | medium | On-demand or quarterly | Major upgrade requires catalog filter price range QA; swappable if a native range UI replaces it. |
+
+Load-bearing means replacing the library would require cross-client markup/behavior changes. Swappable means replacement can be isolated inside one block or feature. Alpine, Focus, and Swiper are load-bearing. GSAP and Lenis are load-bearing for app feel but can be feature-disabled. noUiSlider is swappable inside catalog filters.
+
+Breaking major protocol:
+
+1. Open a platform upgrade branch.
+2. Read upstream migration guide.
+3. Run automated validation.
+4. Browser-check every public feature that imports the library.
+5. Add changelog migration note before merging.
+6. Never auto-merge library majors into client repos.
+
+### Breaking Change Audit
+
+| Change | Impact on existing client forks | Acceptable? | Migration note |
+|---|---|---:|---|
+| Main becomes full platform instead of thin scaffold | Pulling clients inherit many new templates, blocks, hooks, scripts, and styles. | yes | Major v2 platform note required. |
+| Demo richer tokens replace thin current-main tokens | Visual defaults change, especially color, spacing, WC tokens, buttons. | yes | Tell clients to override brand values in `tokens.css`. |
+| Brand font assets removed from public platform | Sites relying on bundled Satoshi/Cabinet font files lose those fonts. | yes | Clients must own brand font files. |
+| Full Alpine app shell replaces thin dark/nav shell | App state surface expands; custom Alpine code may conflict with `app` data keys. | yes | Document reserved app state keys and events. |
+| GSAP/Lenis introduced publicly | Scroll/animation behavior changes by default. | yes | Reduced-motion and feature-disable notes required. |
+| `product_brand` taxonomy registered | New taxonomy appears for products unless opted out. | yes | Opt out with `sobe/product_brand/register`. |
+| WooCommerce templates become platform-owned | Existing forks with their own WC overrides may conflict or see different layout. | yes | Client repos should extend hooks or keep overrides knowingly. |
+| Side-cart changes add-to-cart behavior | PDP add-to-cart may open cart drawer instead of relying on notices/redirects. | yes | Document side-cart enable setting and hooks. |
+| Search endpoint and modal added | New public REST route and overlay UI. | yes | Document endpoint, security allowlist, and hooks. |
+| Wishlist surface becomes plugin-agnostic | Existing YITH-only assumptions change behind adapter. | yes | Document YITH adapter and custom provider hooks. |
+| Textdomain standardized to `sobe` | Existing translations keyed to `sage` no longer apply. | yes | Translation migration note. |
+| Reviews block split | Content using old `sobe/reviews-slider` manual mode may need migration if manual mode moves. | yes with care | Provide deprecation/transform or keep compatibility shim. |
+
+### Backwards-Compatibility Shims
+
+- Keep `sobe_render_layout_pattern(string $type, string $variant): string` signature unchanged.
+- Keep existing `sobe/hero` attributes from current main and demo, except ignore/remove `enableWebgl`.
+- Keep current `sobe/product-carousel` attributes working; re-add demo `brandId` without breaking content that lacks it.
+- Keep `localStorage.theme` dark-mode key.
+- Keep `open-cart`, `sobe:cart:item-added`, and `cart-updated` browser events.
+- Keep WooCommerce fragment selectors `div.sobe-side-cart-content` and `span.sobe-cart-count`.
+- Keep `sobe_refresh_cart`, `sobe_load_more_products`, and `sobe_filter_products` AJAX action names unless implementation introduces shims for renamed actions.
+- Keep existing block dynamic `save()` returning `null`.
+- Keep `sobe/*` namespace for all universal blocks.
+- If reviews split removes manual mode from `sobe/reviews-slider`, add a deprecation path or transform to `sobe/testimonial-slider`.
+
+### Validation Plan
+
+Automated:
+
+```bash
+npm test
+npm run check:patterns
+npm run build
+composer analyse
+```
+
+Manual browser/editor validation:
+
+- Load homepage, page, post, archive, search, and 404.
+- Toggle dark mode, reload, confirm persistence and no flash regression.
+- Confirm header variants `header-1`, `header-2`, `header-3` and footer layout render through Customizer/pattern router.
+- Open/close mobile nav, search modal, side-cart; verify focus trap, escape key, return focus, body scroll behavior.
+- Insert and render public blocks in editor and frontend: hero, FAQ, product-carousel, product-feature, product-categories-grid, brand-carousel, our-brands, testimonial-slider, reviews-slider, catalog-filters, site-header, site-footer.
+- Verify hero hooks can swap background and CTA views in a temporary snippet.
+- Verify catalog filters: categories, brand facet, attributes, price range, clear all, URL state, AJAX update, load-more interaction.
+- Verify shop archive with and without sidebar.
+- Verify PDP gallery: thumbnails, variation image update, quantity buttons, tabs/accordions, related/upsells.
+- Verify side-cart: AJAX add from loop, PDP add, quantity update, remove, checkout/view-cart links, mini-cart count fragment.
+- Verify wishlist adapter behavior with YITH active and inactive.
+- Verify search modal returns products/posts/pages and search results page renders.
+- Verify baseline SEO is emitted when no SEO plugin is active and suppressed when Yoast/RankMath/AIOSEO/SEOPress is active.
+- Check browser console and PHP logs for notices/errors.
+
+### Risks
+
+| Risk | Detection signal | Mitigation |
+|---|---|---|
+| Catalog filter API becomes unstable or over-coupled to current markup | Tests fail around URL/query state; clients need template overrides for simple facets | Add tests for query args, response shape, filter group hooks; keep render hooks narrow and documented. |
+| WooCommerce template overrides drift from Woo template versions | Woo debug notices or broken shop/PDP after WC update | Record template versions, add quarterly WC template review. |
+| App shell globals/events conflict with client scripts | Duplicate Alpine state, broken modals, console errors | Document reserved events/state; keep hooks and feature flags. |
+| GSAP/Lenis cause scroll or accessibility regressions | Focus trap scroll issues, reduced-motion failures, mobile scroll lock bugs | Guard by reduced-motion/viewport; add manual reduced-motion and mobile checks. |
+| Reviews split breaks existing content | Old manual `sobe/reviews-slider` content loses fields | Add migration/deprecation shim or keep manual fallback until transform is implemented. |
+
+### Documentation Deliverables
+
+- Rewrite `README.md` for v2 platform model.
+- Update `CONTRIBUTING.md` with hook-first extension, block SOP, WC policy, namespace rule, textdomain rule.
+- Create `docs/hooks-reference.md` with all hooks from Pass 2 plus hero hooks.
+- Create `docs/client-fork-guide.md` covering fork flow, client namespace blocks, tokens, Customizer, WC extension.
+- Create `docs/library-version-policy.md` from this plan.
+- Update `docs/client-boundary.md` for platform/client ownership.
+- Update `docs/merge-strategy.md` for v2 platform sync.
+- Update `docs/upstream-sync-notes.md` with v2 migration notes.
+- Keep `docs/v2-platform-plan.md` as the audit artifact.
+
+### Out of Scope
+
+- Implementing the migration during this audit.
+- Creating a private blocks repo.
+- Building brand-specific palettes, logos, fonts, navigation, content, or demo pages.
+- Rebuilding broken hero WebGL.
+- Adding `sobe/team`, `sobe/pricing`, or `sobe/section` from scratch if they do not exist in demo.
+- Creating new testimonial/team/pricing designs beyond the approved `testimonial-slider` split derived from `reviews-slider`.
+- Replacing WooCommerce with a different commerce abstraction.
+- Expanding test coverage beyond migration-critical block/filter/store/query tests.
+- Resolving `resources/lang/`; this is an implementation-time, low-priority decision.
+
+### LOC Estimate
+
+Rough migration size: 12k-18k changed lines, mostly copied Blade/CSS/JS/PHP from `demo/sobe` plus hook-contract edits and docs. The high-variance areas are WooCommerce CSS/templates and the reviews/testimonial split.
+
+### Pass 3 Final Checkpoint
+
+Pass 3 migration planning is complete. Implementation remains a separate task.
