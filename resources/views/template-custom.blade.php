@@ -1,3 +1,7 @@
+{{--
+  Template Name: Custom Template
+--}}
+
 @extends('layouts.app')
 
 @section('content')
@@ -10,11 +14,9 @@
     @if($showHero)
       @include('partials.page-hero')
     @endif
-    <x-section width="standard" :padding="$showHero ? 'hero' : 'default'">
-      @if(!$showHero && !$hideTitle)
-        @include('partials.page-header')
-      @endif
-      @includeFirst(['partials.content-page', 'partials.content'])
-    </x-section>
+    @if(!$showHero && !$hideTitle)
+      @include('partials.page-header')
+    @endif
+    @include('partials.content-page')
   @endwhile
 @endsection
