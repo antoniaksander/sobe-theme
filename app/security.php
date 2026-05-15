@@ -48,22 +48,26 @@ add_filter('rest_pre_dispatch', function ($result, $server, $request) {
     $route = $request->get_route();
     $pfx = config('theme.prefix');
 
-    $public_wc_store_routes = [
-        '/wc/store/v1/cart',
-        '/wc/store/v1/cart/add-item',
-    ];
+    $publicRoutes = apply_filters('sobe/security/public_routes', [
+        'exact' => [
+            '/wc/store/v1/cart',
+            '/wc/store/v1/cart/add-item',
+            "/{$pfx}/v1/search",
+        ],
+        'patterns' => [
+            '#^/wc/store/v1/cart/items/[^/]+$#',
+        ],
+    ]);
+    $publicRoutes = is_array($publicRoutes) ? $publicRoutes : [];
 
-    if (in_array($route, $public_wc_store_routes, true)) {
+    if (in_array($route, $publicRoutes['exact'] ?? [], true)) {
         return null;
     }
 
-    if (preg_match('#^/wc/store/v1/cart/items/[^/]+$#', $route) === 1) {
-        return null;
-    }
-
-    // Theme search endpoint — public, product titles/prices only.
-    if ($route === "/{$pfx}/v1/search") {
-        return null;
+    foreach ($publicRoutes['patterns'] ?? [] as $pattern) {
+        if (is_string($pattern) && preg_match($pattern, $route) === 1) {
+            return null;
+        }
     }
 
     return new \WP_Error(

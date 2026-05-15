@@ -37,31 +37,3 @@ add_action('after_setup_theme', function (): void {
         add_image_size("{$pfx}-{$name}", ...$args);
     }
 }, 20);
-
-add_action('init', function (): void {
-    $pfx = config('theme.prefix');
-
-    register_block_pattern_category('sobe-layout', [
-        'label' => __('Sobe Layout', config('theme.textdomain')),
-    ]);
-
-    foreach ([
-        'header-layout-1' => __('Header Layout 1', config('theme.textdomain')),
-        'header-layout-2' => __('Header Layout 2', config('theme.textdomain')),
-        'header-layout-3' => __('Header Layout 3', config('theme.textdomain')),
-        'footer-layout-2' => __('Footer Layout 2', config('theme.textdomain')),
-    ] as $slug => $title) {
-        $path = resource_path("patterns/{$slug}.php");
-
-        if (! is_readable($path)) {
-            continue;
-        }
-
-        register_block_pattern("{$pfx}/{$slug}", [
-            'title' => $title,
-            'categories' => ['sobe-layout'],
-            'inserter' => false,
-            'content' => require $path,
-        ]);
-    }
-});

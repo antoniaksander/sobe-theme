@@ -96,7 +96,11 @@ add_filter('allowed_block_types_all', function ($allowedBlocks) {
         }
     }
 
-    return $allowed;
+    return apply_filters(
+        'sobe/blocks/allowed_types',
+        array_values(array_unique($allowed)),
+        $allowedBlocks
+    );
 });
 
 add_filter('block_categories_all', function ($categories) {
