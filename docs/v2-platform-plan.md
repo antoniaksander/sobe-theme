@@ -1,6 +1,6 @@
 # v2 Platform Migration Plan
 
-Status: Pass 1 checkpoint only. Do not begin Pass 2 classification until this inventory is reviewed.
+Status: Pass 2 checkpoint. Do not begin Pass 3 migration planning until this classification is reviewed.
 
 Reference tags created before audit:
 
@@ -387,4 +387,338 @@ Major demo-only areas not yet in current `main`:
 
 ## Pass 1 Checkpoint
 
-Pass 1 is complete for review. Pass 2 classification is intentionally not started.
+Pass 1 was reviewed and approved. Pass 2 decisions applied:
+
+- `product_brand` taxonomy is `PLATFORM`, registered behind `apply_filters('sobe/register_product_brand', true)`.
+- When demo and current main differ, demo wins unless current main has a clear bug fix, cleaner refactor, or more correct WordPress pattern.
+- Demo brand values must be stripped during implementation: brand colors, agency-name copy, brand-specific defaults, hardcoded identifiers.
+- Textdomain standardizes to `sobe` everywhere.
+- `resources/lang/` remains unresolved and low priority for Pass 3.
+
+## Pass 2: Boundary Classification
+
+Bucket meanings:
+
+- `PLATFORM`: moves to main as-is or near-as-is after neutralizing brand values.
+- `PLATFORM-WITH-HOOKS`: moves to main, but only with explicit extension hooks.
+- `EXAMPLE`: moves to main as a reference implementation; clients copy to their own namespace or override through documented extension points.
+- `SANDBOX`: stays in `demo/sobe`.
+
+### Classification Index
+
+| Category | Items | Bucket | Reasoning |
+|---|---|---:|---|
+| Design Tokens | Font family tokens | `PLATFORM` | Token names and font-family slots are infrastructure. Demo's Satoshi/Cabinet values are brand defaults and must be reset to neutral system defaults. |
+| Design Tokens | Semantic light color tokens, semantic dark color tokens, primary/accent/button tokens | `PLATFORM` | Color contract belongs in main; values must be neutralized from Sobe red/cream/navy. |
+| Design Tokens | Overlay tokens, selection tokens, UI surface variant tokens | `PLATFORM` | Generic UI primitives used by hero, overlays, filters, and cards. |
+| Design Tokens | WooCommerce alias tokens | `PLATFORM` | Main owns WC integration, so WC token aliases are part of the shared styling contract. |
+| Design Tokens | Product category grid tokens | `PLATFORM` | The product-categories block is a generic WC block; its sizing/motion tokens move with it. |
+| Design Tokens | Layout width tokens, fluid spacing scale, fluid text scale, font weights and tracking, radius scale, shadow scale, z-index scale, transition tokens, container query breakpoints, reduced motion primitive | `PLATFORM` | Core design-system primitives every client inherits and overrides by value, not by renaming. |
+| CSS Architecture | Tailwind v4 import pipeline, token import, Tailwind content scanning, class-based dark variant, WordPress layout variable sync, Tailwind `@theme` token bridge, base layer, utilities layer, editor CSS bundle | `PLATFORM` | These are build/runtime CSS infrastructure. |
+| CSS Architecture | Front page constrained layout rule, page hero CSS, blog listing CSS, comments CSS inside components layer | `EXAMPLE` | Useful default templates, but client presentation may replace them. They should move as working defaults, not as client-specific contract. |
+| CSS Architecture | Components layer, search overlay CSS, search results page CSS | `PLATFORM-WITH-HOOKS` | Shared UI shells move, but clients need class/partial/hook surfaces for structural changes. |
+| CSS Architecture | WooCommerce CSS bundle | `PLATFORM-WITH-HOOKS` | Main owns WC integration; clients must extend tokens/classes and hooks instead of replacing the full layer. |
+| CSS Architecture | Block CSS bundle | `SANDBOX` | Demo `blocks.css` appears historical/stale and is not referenced by the current Vite input. Implementation should not promote it unless a later source check proves it is used. |
+| JS Application Shell | Alpine app root, Alpine Focus plugin, dark mode persistence, mobile navigation state, toast manager, Lenis smooth scrolling, GSAP animation bus, sticky header animation, editor JS, generic block view script convention | `PLATFORM` | These are shared app-shell capabilities. Demo wins over current thin main, with dark-mode initialization reviewed during implementation. |
+| JS Application Shell | Side-cart state and events, Store API add-to-cart bridge, search overlay Alpine component, catalog filter frontend, shared filter store, filter URL utilities, shop load-more, product gallery JS | `PLATFORM-WITH-HOOKS` | These are platform features with long-lived extension APIs. |
+| Libraries | `alpinejs`, `@alpinejs/focus`, `swiper`, `gsap`, `lenis`, `nouislider` | `PLATFORM` | Public dependencies move when the promoted public features that import them move. Details in library audit. |
+| Libraries | React build support, WordPress scripts, Babel/Jest toolchain, Tailwind/Vite/Sage tooling, Acorn/Sage WooCommerce PHP deps, PHPStan/Pint/Woo stubs | `PLATFORM` | Build/test/runtime infrastructure. |
+| Libraries | Optional plugin globals | `PLATFORM-WITH-HOOKS` | Plugin integrations must be detected and hookable, not hard requirements. |
+| Customizer Settings | Header/footer sections and layout settings, dark toggle, side-cart enable, logo settings, product card hover, catalog columns, products per page, pagination mode/history, shop sidebar | `PLATFORM` | Platform settings let clients configure inherited features without source edits. Defaults must be generic. |
+| Customizer Settings | Header wishlist setting | `PLATFORM-WITH-HOOKS` | Wishlist UI must become plugin-agnostic while preserving YITH support as an adapter. |
+| Layout Pattern System | Layout pattern registration, layout pattern category, pattern render helper, header/footer layout consumption | `PLATFORM` | The pattern router is shared infrastructure. |
+| Layout Pattern System | Inserter-visible homepage showcase pattern | `SANDBOX` | Demo homepage composition is sandbox/demo content. |
+| Layout Pattern System | Layout example blocks, header section variants, footer section variants | `EXAMPLE` | Move as pedagogical `sobe/*` examples. Clients copy into their own namespace for bespoke layout. |
+| Layout Pattern System | Checkout header variant | `PLATFORM-WITH-HOOKS` | Checkout shell belongs to WC integration, but clients need hooks/partials for logo, return link, and trust messaging. |
+| Block Registration Architecture | Manifest registration, render callbacks, editor/style/view script registration, module script tags, block categories, block entry discovery, pattern allowlist check, theme JSON build | `PLATFORM` | Core block infrastructure. |
+| Block Registration Architecture | Allowed block types | `PLATFORM-WITH-HOOKS` | Keep core/WC/manifest allowlist, but expose filters for clients to add private blocks and plugin blocks. |
+| Block Registration Architecture | Block scaffold script | `PLATFORM` | Keep scaffold infrastructure; Pass 3 should prefer current main if it has the cleaner namespace/category fixes. |
+| Blade Component System | Alert, badge, button, card, dark-mode-toggle, section | `PLATFORM` | Generic UI primitives used by public blocks/templates. |
+| Blade Component System | Breadcrumbs | `PLATFORM-WITH-HOOKS` | SEO plugin fallback is platform, but clients need filters for trail items and rendering. |
+| Blade Component System | Side-cart, toast container, wishlist icon | `PLATFORM-WITH-HOOKS` | Commerce UI shells need stable hooks and plugin adapters. |
+| Helper Functions | Empty generic helpers namespace, layout pattern renderer | `PLATFORM` | Shared helper namespace and layout router. |
+| Helper Functions | Side-cart helpers, WC notices-to-toast helper, empty notices wrapper helper, swatch value helper, filtered term counts helper | `PLATFORM-WITH-HOOKS` | Shared WC behavior needs filters for notices, swatches, counts, and side-cart state. |
+| Helper Functions | App view composer helpers | `PLATFORM` | Logo/site data is generic platform data. |
+| Helper Functions | Post and comments composers | `EXAMPLE` | Useful default WordPress presentation, not hard platform contract. |
+| Helper Functions | Product block composers | `PLATFORM-WITH-HOOKS` | Public WC blocks need hookable data resolution. |
+| WooCommerce Integration | Base WooCommerce support, frontend script policy, gallery aspect ratio config, catalog products per page, catalog body classes, account/cart/checkout styling | `PLATFORM` | Main owns full working WC integration. |
+| WooCommerce Integration | Catalog column filters, shop pagination replacement, load-more AJAX handler, catalog filters block, product card template override, product archive template override, single product template override, PDP hook policy, PDP Swiper gallery, PDP accordions/tabs, related/upsell overrides, notice overrides, side-cart fragments, side-cart redirect/open policy, Store API cart mutation, checkout header, variation swatches plugin styling, YITH wishlist UI | `PLATFORM-WITH-HOOKS` | These define the commerce extension surface and must be hook-first. |
+| SEO | Baseline SEO meta, SEO plugin bypass, Organization schema, Relevanssi taxonomy indexing hook | `PLATFORM-WITH-HOOKS` | Platform should work without plugins and defer to plugins; clients need filters for SEO data and integration. |
+| SEO | Breadcrumb component, search result semantic cards | `PLATFORM-WITH-HOOKS` | Default rendering moves with filters/partials for client-specific output. |
+| SEO | No sitemap hooks found | `SANDBOX` | No infrastructure exists to move. If sitemap support is desired it is follow-up work. |
+| Block Inventory | `sobe/example`, `sobe/faq`, `sobe/product-categories-grid` | `PLATFORM` | Generic infrastructure/content/WC blocks. |
+| Block Inventory | `sobe/hero` | `EXAMPLE` | Move full demo hero minus broken WebGL as a strong reference block. Clients can use it directly or create a client hero namespace for bespoke work. |
+| Block Inventory | Broken hero WebGL | `SANDBOX` | Explicitly excluded because broken in demo. Keep out until rebuilt deliberately. |
+| Block Inventory | `sobe/product-carousel`, `sobe/product-feature`, `sobe/catalog-filters`, `sobe/brand-carousel`, `sobe/our-brands`, `sobe/reviews-slider` | `PLATFORM-WITH-HOOKS` | WC/data-backed public blocks need filters for query/data/rendering. Reviews-slider has a pending recommendation below. |
+| Block Inventory | `sobe/site-header`, `sobe/site-footer` | `EXAMPLE` | Pedagogical layout examples, not client layout ownership. |
+| Block Inventory | Missing section/testimonial/team/pricing blocks | `SANDBOX` | They do not exist in demo and are follow-up build work, not migration work. |
+| Patterns | Header layout 1/2/3 patterns, footer layout 2 pattern, pattern allowlist enforcement | `PLATFORM` | Hidden layout patterns and validation are shared infrastructure. |
+| Patterns | Homepage showcase pattern | `SANDBOX` | Demo content composition. |
+| Theme JSON Build | Built theme.json redirection, Vite theme JSON plugin, post-build injection, palette extraction, font size/family/layout injection | `PLATFORM` | Editor parity and token propagation are platform build infrastructure. |
+| Translations / i18n | Textdomain config, PHP/Blade translation usage, block editor translation usage | `PLATFORM` | Standardize all strings to `sobe`. |
+| Translations / i18n | Translation npm scripts | `PLATFORM` | Keep workflow scripts. |
+| Translations / i18n | POT output target / `resources/lang/` | `SANDBOX` | Deferred low-priority implementation decision; not a blocker. |
+| Asset Pipeline | Vite entrypoints, Laravel Vite plugin, Roots WordPress plugin, React JSX support, bundle size budget, editor asset injection, asset aliases, public build theme.json, block module output | `PLATFORM` | Build and delivery infrastructure. |
+| Service Providers | Acorn application boot, Theme service provider, Composer autoload PSR-4 | `PLATFORM` | Runtime boot infrastructure. |
+| Setup Hooks | Theme support cleanup, menus, core supports, HTML5 supports, configured image sizes, excerpt filters, page/post meta, font preload/inline hooks, dark toggle shortcode, sidebar registration, function include list | `PLATFORM` | Generic WP setup. Font values need neutral defaults or removable file checks. |
+| Setup Hooks | Product brand taxonomy | `PLATFORM` | Register behind `apply_filters('sobe/register_product_brand', true)`. Empty taxonomy has zero client cost. |
+| Setup Hooks | YITH wishlist fallback shortcode | `PLATFORM-WITH-HOOKS` | Keep as one adapter, but wishlist surface must be plugin-agnostic. |
+| Security Baseline | Head cleanup, XML-RPC disabled, nonce usage, sanitization/escaping | `PLATFORM` | Shared hardening and hygiene. |
+| Security Baseline | REST API access control, Store API public routes, search endpoint public route | `PLATFORM-WITH-HOOKS` | Public route allowlist must be filterable as platform features add routes. |
+| Testing & Linting | Jest config, block metadata/save tests, PHPStan config, Composer analyse, CI workflow, pattern checker, environment requirements | `PLATFORM` | Shared quality gates. |
+| Testing & Linting | Filter store tests, filter URL utility tests | `PLATFORM` | Move with catalog filter/load-more infrastructure. |
+| Testing & Linting | Formatting/linting notes | `PLATFORM` | Keep tooling observation; Pass 3 should decide whether to add explicit scripts separately. |
+
+Bucket count from the classification above: `PLATFORM` 129, `PLATFORM-WITH-HOOKS` 82, `EXAMPLE` 17, `SANDBOX` 7.
+
+### Hook Contracts
+
+Hook naming uses slash-style WordPress hook names under the `sobe/` namespace. Filters return their first parameter. Actions return nothing.
+
+#### Side Cart
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Enable/disable side cart | `sobe/side_cart/enabled` | filter | `bool $enabled` | `bool` | Disable for wholesale users. |
+| Open event detail | `sobe/side_cart/open_detail` | filter | `array $detail`, `string $source` | `array` | Add analytics source metadata. |
+| Close event detail | `sobe/side_cart/close_detail` | filter | `array $detail` | `array` | Add reason such as `escape`, `backdrop`, `checkout`. |
+| Cart items data | `sobe/side_cart/items` | filter | `array $items`, `WC_Cart $cart` | `array` | Add gift-wrap metadata per item. |
+| Cart content partial | `sobe/side_cart/content_view` | filter | `string $view`, `WC_Cart $cart` | Blade view name | Swap `partials.side-cart-content` for a client partial. |
+| Fragments | `sobe/side_cart/fragments` | filter | `array $fragments`, `WC_Cart $cart` | `array` | Add a header subtotal fragment. |
+| Refresh response HTML | `sobe/side_cart/refresh_html` | filter | `string $html`, `WC_Cart $cart` | `string` | Wrap returned HTML in client markup. |
+| After refresh | `sobe/side_cart/refreshed` | action | `WC_Cart $cart`, `array $context` | none | Track cart refresh metrics. |
+
+```php
+add_filter('sobe/side_cart/items', function (array $items, WC_Cart $cart): array {
+    foreach ($items as &$item) {
+        $item['delivery_badge'] = 'Ships in 2 business days';
+    }
+    return $items;
+}, 10, 2);
+```
+
+#### Search Modal
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Search post types | `sobe/search/post_types` | filter | `array $postTypes`, `WP_REST_Request $request` | `array` | Add `portfolio` or remove `page`. |
+| Query args | `sobe/search/query_args` | filter | `array $queryArgs`, `string $query`, `int $limit`, `WP_REST_Request $request` | `array` | Prioritize products or add meta query. |
+| Result item | `sobe/search/result` | filter | `array $result`, `WP_Post $post` | `array|null` | Add SKU, badge, or return `null` to omit. |
+| Results list | `sobe/search/results` | filter | `array $results`, `WP_REST_Request $request` | `array` | Reorder or append promoted results. |
+| Overlay view | `sobe/search/overlay_view` | filter | `string $view` | Blade view name | Swap the modal shell. |
+| Result render view | `sobe/search/result_view` | filter | `string $view`, `array $result` | Blade view name | Use custom result cards. |
+| Runtime params | `sobe/search/params` | filter | `array $params` | `array` | Change limit, placeholder, endpoint namespace. |
+
+```php
+add_filter('sobe/search/post_types', fn (array $types) => array_merge($types, ['case_study']));
+add_filter('sobe/search/result', function (array $result, WP_Post $post): ?array {
+    if ($post->post_type === 'case_study') {
+        $result['type_label'] = 'Case Study';
+    }
+    return $result;
+}, 10, 2);
+```
+
+#### Wishlist Toggle
+
+The platform surface is plugin-agnostic. YITH is one adapter, not the contract.
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Wishlist availability | `sobe/wishlist/enabled` | filter | `bool $enabled`, `int|null $productId` | `bool` | Disable wishlist for B2B catalog. |
+| Provider selection | `sobe/wishlist/provider` | filter | `string|null $provider` | `string|null` | Return `yith`, `ti`, `custom`, or `null`. |
+| Toggle state | `sobe/wishlist/is_active` | filter | `bool $active`, `int $productId`, `int $userId` | `bool` | Read from custom wishlist table. |
+| Toggle URL/data | `sobe/wishlist/toggle_data` | filter | `array $data`, `int $productId` | `array` | Provide AJAX endpoint and nonce. |
+| Toggle HTML | `sobe/wishlist/toggle_html` | filter | `string $html`, `int $productId`, `array $data` | `string` | Render plugin-specific button. |
+| After toggle | `sobe/wishlist/toggled` | action | `int $productId`, `bool $active`, `int $userId` | none | Analytics or CRM sync. |
+
+```php
+add_filter('sobe/wishlist/provider', fn () => class_exists('YITH_WCWL') ? 'yith' : null);
+add_filter('sobe/wishlist/toggle_html', function (string $html, int $productId): string {
+    return shortcode_exists('yith_wcwl_add_to_wishlist')
+        ? do_shortcode('[yith_wcwl_add_to_wishlist product_id="'.$productId.'"]')
+        : $html;
+}, 10, 2);
+```
+
+#### Catalog Filters
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Filter groups | `sobe/catalog_filters/groups` | filter | `array $groups`, `array $context` | `array` | Add material, availability, or remove price. |
+| Brand taxonomy | `sobe/catalog_filters/brand_taxonomy` | filter | `string $taxonomy` | `string` | Use `pa_brand` instead of `product_brand`. |
+| Query state before query | `sobe/catalog_filters/state` | filter | `array $state`, `WP_REST_Request|array $request` | `array` | Normalize custom params. |
+| Query args | `sobe/catalog_filters/query_args` | filter | `array $queryArgs`, `array $state` | `array` | Add stock visibility or custom ordering. |
+| Term counts | `sobe/catalog_filters/term_counts` | filter | `array $counts`, `array $queryArgs` | `array` | Replace counts from external index. |
+| Swatch value | `sobe/catalog_filters/swatch_value` | filter | `?string $value`, `WP_Term $term`, `string $attribute` | `?string` | Resolve colors from client term meta. |
+| Result HTML | `sobe/catalog_filters/results_html` | filter | `string $html`, `WP_Query $query`, `array $state` | `string` | Wrap product cards or add empty state. |
+| Pagination HTML | `sobe/catalog_filters/pagination_html` | filter | `string $html`, `WP_Query $query`, `array $state` | `string` | Swap pagination component. |
+| AJAX response | `sobe/catalog_filters/response` | filter | `array $response`, `WP_Query $query`, `array $state` | `array` | Add analytics metadata. |
+| Block view | `sobe/catalog_filters/view` | filter | `string $view`, `array $attributes` | Blade view name | Replace filter markup while keeping handler. |
+
+```php
+add_filter('sobe/catalog_filters/groups', function (array $groups): array {
+    $groups['availability'] = [
+        'label' => 'Availability',
+        'type' => 'checkbox',
+        'options' => ['in_stock' => 'In stock'],
+    ];
+    return $groups;
+});
+
+add_filter('sobe/catalog_filters/query_args', function (array $args, array $state): array {
+    if (! empty($state['availability'])) {
+        $args['meta_query'][] = ['key' => '_stock_status', 'value' => 'instock'];
+    }
+    return $args;
+}, 10, 2);
+```
+
+#### Shop Loop
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Columns | `sobe/shop_loop/columns` | filter | `int $columns`, `string $breakpoint` | `int` | Use 5 columns for large catalogs. |
+| Products per page | `sobe/shop_loop/per_page` | filter | `int $perPage`, `array $context` | `int` | Increase category pages only. |
+| Main query args | `sobe/shop_loop/query_args` | filter | `array $queryArgs`, `array $context` | `array` | Exclude hidden collection. |
+| Product card view | `sobe/shop_loop/product_card_view` | filter | `string $view`, `WC_Product $product` | Blade view name | Swap product card partial. |
+| Product card data | `sobe/shop_loop/product_card_data` | filter | `array $data`, `WC_Product $product` | `array` | Add badges or brand label. |
+| Before/after card | `sobe/shop_loop/before_product_card`, `sobe/shop_loop/after_product_card` | action | `WC_Product $product`, `array $context` | none | Inject tracking wrappers or badges. |
+
+```php
+add_filter('sobe/shop_loop/product_card_data', function (array $data, WC_Product $product): array {
+    $data['badge'] = $product->is_featured() ? 'Featured' : '';
+    return $data;
+}, 10, 2);
+```
+
+#### PDP Gallery
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Gallery enabled | `sobe/pdp_gallery/enabled` | filter | `bool $enabled`, `WC_Product $product` | `bool` | Fall back to native gallery for a product type. |
+| Image IDs | `sobe/pdp_gallery/image_ids` | filter | `array $imageIds`, `WC_Product $product` | `array` | Add lifestyle image attachments. |
+| Gallery view | `sobe/pdp_gallery/view` | filter | `string $view`, `WC_Product $product` | Blade view name | Replace Swiper gallery shell. |
+| Gallery settings | `sobe/pdp_gallery/settings` | filter | `array $settings`, `WC_Product $product` | `array` | Change aspect ratio or Swiper options. |
+| After gallery render | `sobe/pdp_gallery/after` | action | `WC_Product $product`, `array $imageIds` | none | Add trust badges below gallery. |
+
+```php
+add_filter('sobe/pdp_gallery/settings', function (array $settings): array {
+    $settings['aspect_ratio'] = '4 / 5';
+    return $settings;
+});
+```
+
+#### PDP Tabs / Accordions
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Tabs | `sobe/pdp_tabs/tabs` | filter | `array $tabs`, `WC_Product $product` | `array` | Add care instructions. |
+| Tab title | `sobe/pdp_tabs/title` | filter | `string $title`, `string $key`, `array $tab`, `WC_Product $product` | `string` | Rename shipping tab. |
+| Tab content | `sobe/pdp_tabs/content` | filter | `string $content`, `string $key`, `array $tab`, `WC_Product $product` | `string` | Replace copied shipping text. |
+| Accordion view | `sobe/pdp_tabs/accordion_view` | filter | `string $view`, `array $tabs`, `WC_Product $product` | Blade view name | Use custom accordion markup. |
+
+```php
+add_filter('sobe/pdp_tabs/tabs', function (array $tabs, WC_Product $product): array {
+    $tabs['care'] = [
+        'title' => 'Care',
+        'priority' => 55,
+        'callback' => fn () => print '<p>Wipe clean with a soft cloth.</p>',
+    ];
+    return $tabs;
+}, 10, 2);
+```
+
+#### Related Products
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Related args | `sobe/related_products/args` | filter | `array $args`, `WC_Product $product` | `array` | Change count or columns. |
+| Related products | `sobe/related_products/products` | filter | `array $products`, `WC_Product $product` | `array` | Use curated related IDs. |
+| Section heading | `sobe/related_products/heading` | filter | `string $heading`, `WC_Product $product` | `string` | Rename heading. |
+| Section view | `sobe/related_products/view` | filter | `string $view`, `array $products`, `WC_Product $product` | Blade view name | Swap section markup. |
+
+```php
+add_filter('sobe/related_products/args', fn (array $args) => array_merge($args, ['posts_per_page' => 8]));
+```
+
+#### Mini-Cart Count Fragment
+
+| Concern | Hook | Type | Parameters | Return | Example client use |
+|---|---|---|---|---|---|
+| Count value | `sobe/mini_cart/count` | filter | `int $count`, `WC_Cart $cart` | `int` | Count unique lines instead of quantities. |
+| Count HTML | `sobe/mini_cart/count_html` | filter | `string $html`, `int $count`, `WC_Cart $cart` | `string` | Render custom badge markup. |
+| Count fragments | `sobe/mini_cart/count_fragments` | filter | `array $fragments`, `int $count`, `WC_Cart $cart` | `array` | Add mobile header selector. |
+
+```php
+add_filter('sobe/mini_cart/count', fn (int $count, WC_Cart $cart) => count($cart->get_cart()), 10, 2);
+```
+
+### Reviews Slider Recommendation
+
+Options:
+
+- Option A: keep one `sobe/reviews-slider`, gate `auto`/`products` modes behind WooCommerce checks.
+- Option B: split into generic `sobe/testimonial-slider` plus WC-coupled `sobe/reviews-slider`.
+- Option C: classify as `EXAMPLE` and have clients fork.
+
+Recommendation: Option B.
+
+Reasoning: the current block already contains two products in one API: a generic testimonial slider and a WooCommerce review aggregator. Keeping both in one public block makes every client inherit WC-specific controls even when they only need testimonials. Classifying it as an example wastes a production-ready generic pattern. Split preserves the manual testimonial UX as a universal block while keeping the WC review mode honest as commerce infrastructure.
+
+Tradeoffs:
+
+- More implementation work than Option A because attributes, editor UI, and views split.
+- Cleaner long-term package dependency and content model.
+- Lets `sobe/testimonial-slider` remain usable without WooCommerce while `sobe/reviews-slider` can depend on product/review hooks.
+
+Pending decision: approve Option B before Pass 3 finalizes file operations. Until approved, this audit counts the current source artifact as `PLATFORM-WITH-HOOKS` because at least one promoted public block should come from it.
+
+### Catalog Filters Recommendation
+
+Classification: `PLATFORM-WITH-HOOKS`.
+
+Reasoning: catalog filtering is too central to the platform WC layer to leave as an example. It is significant design work, but the right extension model is clear: expose filter group definitions, query args, term counts, swatch values, result HTML, pagination HTML, and AJAX response data. Clients should not rebuild catalog filtering from scratch just to add one facet or alter a query.
+
+Risk: this becomes one of the hardest platform contracts to change. Pass 3 should include focused tests around query arg generation, URL state, AJAX response shape, and filter group extension.
+
+### product_brand-Related Classifications
+
+| Item | Classification | Reasoning |
+|---|---:|---|
+| `product_brand` taxonomy | `PLATFORM` | Shared structure with client-owned terms. Register behind `sobe/register_product_brand`. |
+| `brand-carousel` | `PLATFORM-WITH-HOOKS` | Useful generic brand showcase now that taxonomy is platform. Needs hooks for taxonomy, term query, logo meta, item data, and render view. |
+| `our-brands` | `PLATFORM-WITH-HOOKS` | Generic brand directory. Needs hooks for taxonomy, grouping, alphabet index, term data, and template. |
+| `product-feature` brand label | `PLATFORM-WITH-HOOKS` | The block is a generic product showcase; brand label should be data-driven and filterable. |
+| `catalog-filters` brand facet | `PLATFORM-WITH-HOOKS` | Brand facet is a first-class filter group, but taxonomy slug, visibility, counts, and labels must be filterable. |
+
+### Library Audit
+
+| Library | Used by public features/blocks | Move to main? | Reason |
+|---|---|---:|---|
+| `alpinejs` | App shell, dark mode, nav, search modal, side-cart, toast container | yes | Core app shell dependency. Already public. |
+| `@alpinejs/focus` | Search modal, mobile nav traps, side-cart focus trap | yes | Promoted overlay/drawer accessibility requires it. |
+| `swiper` | Product carousel, PDP gallery, product-categories-grid | yes | Product-carousel already makes it public; stays public. |
+| `gsap` | Animation bus, sticky header, Lenis ticker integration, catalog filter refresh | yes | Promoted app shell and AJAX animation refresh use it. |
+| `lenis` | Smooth scrolling, side-cart scroll locking coordination | yes | Promoted app shell uses it. Keep guarded by reduced-motion and viewport checks. |
+| `nouislider` | Catalog filters price range | yes | Catalog filters are `PLATFORM-WITH-HOOKS`, so dependency moves. |
+| `@babel/core`, `@babel/preset-env`, `@babel/preset-react`, `babel-jest`, `jest`, `jest-environment-node` | Block/editor tests and JSX transform | yes | Dev tooling for public block library. |
+| `@roots/vite-plugin`, `@tailwindcss/vite`, `@vitejs/plugin-react`, `@wordpress/scripts`, `laravel-vite-plugin`, `tailwindcss`, `vite` | Asset pipeline, block editor, theme.json build | yes | Existing platform build stack. |
+| `roots/acorn`, `generoi/sage-woocommerce` | Theme runtime and Blade WooCommerce integration | yes | Existing PHP runtime stack. |
+| `laravel/pint`, `php-stubs/woocommerce-stubs`, `phpstan/phpstan`, `szepeviktor/phpstan-wordpress` | Analysis/format tooling | yes | Shared quality tooling. |
+| External plugin globals: PhotoSwipe, Yoast, Rank Math, AIOSEO, SEOPress, Relevanssi, YITH | Optional integrations only | no package dependency | Detect at runtime; do not add public package/composer requirements. |
+
+No demo package library is used only by `SANDBOX`-classified blocks after this Pass 2 recommendation. If reviews-slider Option C is chosen later, its custom view script has no extra package dependency, so library movement is unaffected.
+
+### Current Main vs Demo Preference Notes
+
+Demo wins broadly, with these Pass 3 implementation notes:
+
+- Prefer current main's neutral token values as the base replacement for demo's brand color values.
+- Prefer current main's textdomain direction (`sobe`) over demo's mixed `sage`/`sobe`.
+- Prefer current main block scaffold/checker improvements if they are demonstrably cleaner than demo's older scripts.
+- Do not preserve current main's stripped hero/product-carousel behavior; demo feature depth is the intended source, except for broken WebGL and explicitly brand-specific hardcoding.
+
+### Pass 2 Checkpoint
+
+Pass 2 classification is complete for review. Pass 3 migration planning is intentionally not started.
