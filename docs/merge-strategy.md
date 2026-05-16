@@ -3,11 +3,12 @@
 ## New Clients
 
 1. Fork from latest `main`.
-2. Change `prefix` in `config/theme.php`.
-3. Keep `textdomain` as `sobe`.
-4. Override brand tokens in `resources/css/tokens.css`.
-5. Add logos, navigation, content, and client-specific blocks in a client namespace.
-6. Extend platform WooCommerce/search/block behavior through documented hooks.
+2. Update client identity in `style.css`, `config/theme.php`, `composer.json`, `package.json`, `README.md`, and `vite.config.js`.
+3. Change `prefix` in `config/theme.php`, but keep `textdomain` as `sobe`.
+4. Confirm the current v2.0.x layout shell blocks render after the prefix change. Client forks may need client-namespaced copies of `site-header` and `site-footer`.
+5. Override brand tokens in `resources/css/tokens.css`.
+6. Add logos, navigation, homepage content, footer widgets, and client-specific blocks in a client namespace.
+7. Extend platform WooCommerce/search/block behavior through documented hooks.
 
 ## Existing Clients
 
@@ -36,6 +37,10 @@ These changes can break client forks and need migration notes:
 
 - Review upstream quarterly at minimum.
 - Never auto-merge platform updates into client `main`.
-- Merge upstream into a client feature branch.
+- Create a sync branch from client `main`, merge `upstream/main` into that branch, and open a PR back to client `main`.
+- Expect merge conflicts. Resolve them by preserving upstream contracts and re-applying client-specific changes narrowly.
+- For `.gitignore`, keep the union of platform and client rules unless a rule is clearly obsolete.
 - Run automated validation.
-- Browser-check Local before merging to client `main`.
+- Browser-check Local before merging the sync PR to client `main`.
+
+See [client-fork-guide.md](client-fork-guide.md#upstream-sync) for the detailed workflow and conflict-resolution notes.

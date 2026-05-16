@@ -20,14 +20,15 @@ This repo is shared infrastructure, not a client theme. Client repositories fork
 ## Client Forks
 
 1. Fork from latest `main`.
-2. Change `prefix` in `config/theme.php` for client-owned settings and CSS classes.
-3. Keep `textdomain` as `sobe`.
+2. Update client identity in `style.css`, `config/theme.php`, `composer.json`, `package.json`, `README.md`, and `vite.config.js`.
+3. Change `prefix` in `config/theme.php` for client-owned settings and CSS classes, but keep `textdomain` as `sobe`.
 4. Override brand values in `resources/css/tokens.css`.
 5. Keep universal blocks under `sobe/*`; create client-specific blocks in a client namespace such as `roxder/*`.
-6. Extend WooCommerce, search, wishlist, hero, and block behavior through hooks before overriding Blade partials.
-7. Add client logos, fonts, navigation, content, and private blocks in the client repo.
+6. Configure the active WordPress site: navigation, header layout, logo, footer widgets, homepage, and dark mode.
+7. Extend WooCommerce, search, wishlist, hero, and block behavior through hooks before overriding Blade partials.
+8. Add client logos, fonts, navigation, content, and private blocks in the client repo.
 
-Do not rename `sobe/*` blocks in place. If a client needs a custom header, copy the example to a new block such as `roxder/site-header` and customize the copy.
+Do not rename universal `sobe/*` blocks in place. If a client needs a custom header or footer shell after changing the theme prefix, copy the layout block example to a client-owned block such as `roxder/site-header` or `roxder/site-footer` and customize the copy.
 
 ## Documentation
 
