@@ -28,7 +28,7 @@ This repo is shared infrastructure, not a client theme. Client repositories fork
 7. Extend WooCommerce, search, wishlist, hero, and block behavior through hooks before overriding Blade partials.
 8. Add client logos, fonts, navigation, content, and private blocks in the client repo.
 
-Do not rename universal `sobe/*` blocks in place. If a client needs a custom header or footer shell after changing the theme prefix, copy the layout block example to a client-owned block such as `roxder/site-header` or `roxder/site-footer` and customize the copy.
+Do not rename universal `sobe/*` blocks in place. The default header and footer shell blocks stay `sobe/site-header` and `sobe/site-footer` even after changing the client prefix. If a client deliberately needs a custom shell, register a replacement block and point the layout router at it with the `sobe/layout/block_name` filter.
 
 ## Documentation
 

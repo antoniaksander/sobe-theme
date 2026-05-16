@@ -2,7 +2,7 @@
 
 Client repos fork `main`. They do not fork `demo/sobe`.
 
-This guide describes the v2.0.x process for turning the platform into a client
+This guide describes the v2.1.x process for turning the platform into a client
 theme. It is intentionally conservative: keep the upstream contract intact,
 move client identity into client-owned files, and prefer hooks or copied blocks
 over editing platform-owned behavior in place.
@@ -32,7 +32,7 @@ Update these files before the first client build:
 | File | Change | Notes |
 | --- | --- | --- |
 | `style.css` | Change the theme header block: `Theme Name`, `Theme URI`, `Description`, `Author`, and `Author URI`. | Use client-owned public URLs when they exist. If the final URLs are not ready, use obvious placeholders that the client can replace before launch. Keep `Text Domain: sobe` unless a later translation migration explicitly changes it. |
-| `config/theme.php` | Change `prefix` from `sobe` to the client prefix, for example `roxder`. | This controls client-owned Customizer setting keys, image size names, generated handles, and the layout shell block names rendered by the current helper. Keep `textdomain` as `sobe`. |
+| `config/theme.php` | Change `prefix` from `sobe` to the client prefix, for example `roxder`. | This controls client-owned Customizer setting keys, image size names, and generated handles. It does not rename the platform layout shell blocks. Keep `textdomain` as `sobe`. |
 | `composer.json` | Change `name` and `description`. | Use a package name that belongs to the client or project, for example `roxder/wp-theme`. |
 | `package.json` | Change `name`. | `package-lock.json` will update its `name` fields the next time `npm install` writes the lockfile. |
 | `README.md` | Replace the platform README with a client-specific README. | Keep a short note that the client repo tracks the Sobe platform upstream if that helps future maintainers. |
@@ -50,13 +50,13 @@ are upstream contracts.
 | Client-specific block namespace | Yes. Use names such as `roxder/promo-grid`. | Private client blocks should not appear as upstream universal blocks. |
 | `sobe` i18n textdomain in `__()`, `_e()`, `block.json` `textdomain`, and related translation calls | No. Keep `sobe`. | The textdomain is the upstream translation contract in v2.0.x. Renaming it fragments translation files and breaks upstream compatibility. |
 | `sobe/*` hook namespace in `apply_filters()` and `do_action()` calls | No. Keep `sobe/*`. | Hooks are the integration contract. Renaming them breaks existing extensions and upstream merge compatibility. |
-| Universal platform block names such as `sobe/hero` and `sobe/product-carousel` | No. Keep `sobe/*`. | These are shared platform blocks. Customize them through attributes, styles, hooks, or copied client blocks. |
+| Universal platform block names such as `sobe/hero`, `sobe/product-carousel`, `sobe/site-header`, and `sobe/site-footer` | No. Keep `sobe/*`. | These are shared platform blocks. Customize them through attributes, styles, hooks, or copied client blocks. |
 
 ## Setting Up Your Site After Activation
 
 After activating the theme, configure the WordPress site before judging the
 frontend. A fresh client fork can look broken if the navigation, homepage, logo,
-footer widgets, or v2.0.x layout shell blocks have not been set up yet.
+footer widgets, or layout shell blocks have not been set up yet.
 
 ### 1. Confirm The Layout Shell Blocks Render
 
@@ -67,50 +67,20 @@ parts. Header and footer output comes from the Sage layout:
   for the header.
 - `resources/views/sections/footer.blade.php` calls the same helper for the
   footer.
-- `app/setup-demo-layout.php` currently renders `<prefix>/site-header` and
-  `<prefix>/site-footer`.
+- `app/setup-demo-layout.php` renders the stable platform shell blocks
+  `sobe/site-header` and `sobe/site-footer`.
 - `app/setup-patterns.php` registers hidden header/footer layout patterns from
   `resources/patterns/`, but those patterns are examples and are not inserted
   through the Site Editor.
 - The platform ships hidden layout block examples in
   `resources/blocks/site-header` and `resources/blocks/site-footer`.
 
-Important v2.0.x behavior: once `config/theme.php` `prefix` changes to a client
-prefix, the helper expects blocks named `<client-prefix>/site-header` and
-`<client-prefix>/site-footer`. If those client-namespaced shell blocks do not
-exist, the header and footer will not render.
-
-For a client fork, create shell block copies:
-
-1. Copy `resources/blocks/site-header` to a client-owned folder such as
-   `resources/blocks/roxder-site-header`.
-2. Copy `resources/views/blocks/site-header.blade.php` to
-   `resources/views/blocks/roxder-site-header.blade.php`.
-3. In the copied `block.json`, set `name` to `roxder/site-header`, change the
-   `title`, and keep `textdomain` as `sobe`.
-4. Add the copied folder to `resources/blocks/blocks-manifest.json` with
-   `category` and the client block `name`.
-5. Repeat the same process for `site-footer`, using `roxder/site-footer`.
-
-Example shell entries:
-
-```json
-{
-  "roxder-site-header": {
-    "name": "roxder/site-header",
-    "category": "sobe-layout"
-  },
-  "roxder-site-footer": {
-    "name": "roxder/site-footer",
-    "category": "sobe-layout"
-  }
-}
-```
-
-This is awkward because the platform helper depends on the client prefix while
-the bundled shell block examples are still `sobe/*`. v2.1.0 should make this
-layout shell setup less manual. In v2.0.x, document and verify it instead of
-patching platform code in the client fork.
+Changing `config/theme.php` `prefix` must not rename the layout shell. The shell
+block namespace is platform infrastructure, like the `sobe/*` hook namespace and
+the `sobe` textdomain. A client only needs custom shell blocks if it deliberately
+wants to replace the platform shell. In that case, use the
+`sobe/layout/block_name` filter to return a different block name for `header` or
+`footer`.
 
 ### 2. Create And Assign Navigation
 

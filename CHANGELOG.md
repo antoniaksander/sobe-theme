@@ -12,7 +12,7 @@
 
 ### Fixed
 
-- None yet.
+- Fixed layout shell rendering so changing the client `prefix` no longer renames the default `sobe/site-header` and `sobe/site-footer` blocks.
 
 ## v2.0.2 - 2026-05-17
 

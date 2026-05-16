@@ -14,35 +14,33 @@ use function Roots\view;
  * Register block pattern category and patterns.
  */
 add_action('init', function () {
-    $pfx = config('theme.prefix');
-
     // Layout patterns — hidden from inserter; rendered programmatically via \App\sobe_render_layout_pattern().
     register_block_pattern_category('sobe-layout', [
         'label' => __('Sobe Layout', 'sobe'),
     ]);
 
-    register_block_pattern("{$pfx}/header-layout-1", [
+    register_block_pattern('sobe/header-layout-1', [
         'title' => __('Header Layout 1', 'sobe'),
         'categories' => ['sobe-layout'],
         'inserter' => false,
         'content' => require resource_path('patterns/header-layout-1.php'),
     ]);
 
-    register_block_pattern("{$pfx}/header-layout-2", [
+    register_block_pattern('sobe/header-layout-2', [
         'title' => __('Header Layout 2', 'sobe'),
         'categories' => ['sobe-layout'],
         'inserter' => false,
         'content' => require resource_path('patterns/header-layout-2.php'),
     ]);
 
-    register_block_pattern("{$pfx}/header-layout-3", [
+    register_block_pattern('sobe/header-layout-3', [
         'title' => __('Header Layout 3', 'sobe'),
         'categories' => ['sobe-layout'],
         'inserter' => false,
         'content' => require resource_path('patterns/header-layout-3.php'),
     ]);
 
-    register_block_pattern("{$pfx}/footer-layout-2", [
+    register_block_pattern('sobe/footer-layout-2', [
         'title' => __('Footer Layout 2', 'sobe'),
         'categories' => ['sobe-layout'],
         'inserter' => false,
