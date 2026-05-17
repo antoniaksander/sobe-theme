@@ -145,9 +145,10 @@ current year.
 5. Choose the homepage page.
 6. Choose a posts page only if the client site needs a blog index.
 
-The platform includes `resources/views/front-page.blade.php` for the front
-page route, but the page content still comes from WordPress. A blank homepage
-page means the route can render with little visible content.
+The platform includes `resources/views/front-page.blade.php` for the front page
+route. If the selected front page has no meaningful content yet, the theme
+renders a Blade fallback homepage so a fresh install is not blank. Adding real
+page content replaces that fallback.
 
 ### 5. Enable And Preview Dark Mode
 

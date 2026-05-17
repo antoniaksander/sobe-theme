@@ -16,6 +16,7 @@
 - Added header navigation fallback output for fresh installs without an assigned primary menu.
 - Fixed WooCommerce catalog column body classes so client `prefix` changes do not break the platform CSS selectors.
 - Added default footer fallback links for fresh installs without footer widgets or a footer menu.
+- Added a Blade fallback homepage for front pages without meaningful content.
 
 ## v2.0.2 - 2026-05-17
 
