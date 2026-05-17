@@ -21,6 +21,16 @@ Blocks are dynamic Gutenberg blocks:
 - `save.jsx` returns `null`
 - Registration is driven by `resources/blocks/blocks-manifest.json`
 
+Manifest entries are keyed by the block folder slug. Each entry supports:
+
+| Field | Required | Notes |
+| --- | --- | --- |
+| `category` | Yes | Must match the block's `block.json` category. |
+| `name` | No | Full block name for tooling and tests. Defaults to `sobe/<slug>` when omitted. Add it for client-namespace blocks such as `roxder/cta-banner`. |
+
+WordPress registration still reads the runtime block name from `block.json`.
+Keep `block.json` and the manifest `name` in sync when `name` is present.
+
 Use production blocks as references:
 
 - `hero` for media, copy, CTA, layout controls, and render hooks
@@ -47,7 +57,7 @@ Do not modify upstream `sobe/*` blocks in place. Copy a platform example into th
 
 1. Copy `resources/blocks/site-header` to `resources/blocks/roxder-site-header` or another client-owned folder.
 2. Set `name: roxder/site-header` in `block.json`.
-3. Add the new slug to `resources/blocks/blocks-manifest.json`.
+3. Add the new slug to `resources/blocks/blocks-manifest.json` with `name: roxder/site-header` and the client category.
 4. Customize the copy in the client repo.
 
 This keeps `git merge upstream/main` focused on platform changes instead of client markup conflicts.

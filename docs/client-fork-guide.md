@@ -239,15 +239,15 @@ Example category shape:
 ### Blocks Manifest
 
 `resources/blocks/blocks-manifest.json` is the source list for block folders.
-The v2.0.x runtime and Vite entries iterate over the manifest keys, so the key
-must match the folder slug under `resources/blocks`.
+The runtime and Vite entries iterate over the manifest keys, so the key must
+match the folder slug under `resources/blocks`.
 
-Current entry fields:
+Entry fields:
 
 | Field | Required | Notes |
 | --- | --- | --- |
 | `category` | Yes | Must match `block.json` `category`. The platform tests assert this. |
-| `name` | Required for client-namespace blocks by convention | Use the full block name, for example `roxder/hero`. The v2.0.x runtime still reads the registered name from `block.json`, but adding `name` makes client intent explicit and gives client-adjusted tests a stable source of truth. v2.1.0 should formalize this so clients do not need custom test adjustments. |
+| `name` | No | Full block name for tooling and tests. Defaults to `sobe/<slug>` when omitted. Add it for client-namespace blocks, for example `roxder/hero`. The runtime still reads the registered block name from `block.json`, so keep both values in sync when `name` is present. |
 
 Example client block entry:
 
@@ -262,13 +262,9 @@ Example client block entry:
 
 ### Block Tests
 
-The platform block metadata test in `tests/blocks/meta.test.cjs` currently
-expects every manifest key to register as `sobe/<slug>`. Client forks that add
-`roxder/*` blocks may need to adjust that test to read `manifest[slug].name`
-when present and fall back to `sobe/<slug>` for platform blocks.
-
-That test adjustment belongs in the client fork for v2.0.x. v2.1.0 should make
-client-namespace blocks work without a local test patch.
+The platform block metadata test reads `manifest[slug].name` when present and
+falls back to `sobe/<slug>` for platform blocks. Client forks should not need to
+patch the platform test when adding a client-namespace block.
 
 ## WooCommerce Customization
 

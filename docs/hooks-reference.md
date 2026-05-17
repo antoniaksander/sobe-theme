@@ -21,6 +21,12 @@ add_filter('sobe/catalog_filters/brand_taxonomy', fn () => 'product_brand');
 |------|------|------------|--------|
 | `sobe/blocks/allowed_types` | filter | `array $allowed, mixed $originalAllowedBlocks` | Allowed block names |
 
+Block folders are listed in `resources/blocks/blocks-manifest.json`. Manifest
+keys are folder slugs. Each entry requires `category` and may include `name`,
+the full block name used by tooling and tests. When `name` is omitted, tooling
+defaults to `sobe/<slug>`. Runtime registration still reads the block name from
+the block's `block.json`.
+
 Example:
 
 ```php

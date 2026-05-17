@@ -21,12 +21,15 @@ const { core, woocommerce } = JSON.parse(
 const CORE_ALLOWED = new Set(core);
 const WC_ALLOWED = new Set(woocommerce);
 
-// Derive sobe/* blocks from the manifest — stays in sync automatically.
+// Derive custom blocks from the manifest. Names default to sobe/<slug> unless
+// a manifest entry declares an explicit full name for a client namespace block.
 const manifest = JSON.parse(readFileSync(resolve('resources/blocks/blocks-manifest.json'), 'utf8'));
-const SOBE_ALLOWED = new Set(Object.keys(manifest).map((slug) => `sobe/${slug}`));
+const MANIFEST_ALLOWED = new Set(
+  Object.entries(manifest).map(([slug, entry]) => entry.name ?? `sobe/${slug}`),
+);
 
 function isAllowed(name) {
-  return CORE_ALLOWED.has(name) || WC_ALLOWED.has(name) || SOBE_ALLOWED.has(name);
+  return CORE_ALLOWED.has(name) || WC_ALLOWED.has(name) || MANIFEST_ALLOWED.has(name);
 }
 
 // ── Check patterns ────────────────────────────────────────────────────────────
