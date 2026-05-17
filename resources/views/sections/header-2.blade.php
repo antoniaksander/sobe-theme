@@ -17,19 +17,15 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
         </svg>
       </button>
-      @if (has_nav_menu('primary_navigation'))
-        <nav
-          class="hidden md:flex"
-          aria-label="{{ wp_get_nav_menu_name('primary_navigation') }}"
-        >
-          {!! wp_nav_menu([
-            'theme_location' => 'primary_navigation',
-            'menu_class'     => 'flex items-center gap-8 text-sm font-medium list-none text-text',
-            'container'      => false,
-            'echo'           => false,
-          ]) !!}
-        </nav>
-      @endif
+      <nav
+        class="hidden md:flex"
+        aria-label="{{ \App\sobe_navigation_label('primary_navigation', __('Primary navigation', 'sobe')) }}"
+      >
+        {!! \App\sobe_navigation_menu([
+          'theme_location' => 'primary_navigation',
+          'menu_class'     => 'flex items-center gap-8 text-sm font-medium list-none text-text',
+        ]) !!}
+      </nav>
     </div>
 
     {{-- Logo — absolutely centred --}}
@@ -121,14 +117,10 @@
   class="fixed inset-x-0 top-16 z-40 bg-surface-1 border-b border-border md:hidden shadow-sm"
   @keydown.escape.window="navOpen = false"
 >
-  @if (has_nav_menu('primary_navigation'))
-    <nav class="max-w-standard mx-auto px-lg py-md" aria-label="{{ __('Mobile navigation', 'sobe') }}" data-nav-mobile>
-      {!! wp_nav_menu([
-        'theme_location' => 'primary_navigation',
-        'menu_class'     => 'flex flex-col gap-md text-base font-medium list-none text-text',
-        'container'      => false,
-        'echo'           => false,
-      ]) !!}
-    </nav>
-  @endif
+  <nav class="max-w-standard mx-auto px-lg py-md" aria-label="{{ __('Mobile navigation', 'sobe') }}" data-nav-mobile>
+    {!! \App\sobe_navigation_menu([
+      'theme_location' => 'primary_navigation',
+      'menu_class'     => 'flex flex-col gap-md text-base font-medium list-none text-text',
+    ]) !!}
+  </nav>
 </div>

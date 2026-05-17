@@ -162,17 +162,12 @@
     </div>
 
     {{-- Nav links --}}
-    @if (has_nav_menu('primary_navigation'))
-      <nav class="flex-1 px-lg py-xl" aria-label="{{ __('Primary navigation', 'sobe') }}" data-nav-panel>
-        {!! wp_nav_menu([
-          'theme_location' => 'primary_navigation',
-          'menu_class'     => 'flex flex-col gap-1 list-none text-text',
-          'container'      => false,
-          'echo'           => false,
-          'depth'          => 2,
-          'walker'         => null,
-        ]) !!}
-      </nav>
-    @endif
+    <nav class="flex-1 px-lg py-xl" aria-label="{{ __('Primary navigation', 'sobe') }}" data-nav-panel>
+      {!! \App\sobe_navigation_menu([
+        'theme_location' => 'primary_navigation',
+        'menu_class'     => 'flex flex-col gap-1 list-none text-text',
+        'depth'          => 2,
+      ]) !!}
+    </nav>
   </div>
 </div>

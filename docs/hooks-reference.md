@@ -30,6 +30,43 @@ add_filter('sobe/blocks/allowed_types', function (array $allowed): array {
 });
 ```
 
+## Layout Shell
+
+| Hook | Type | Parameters | Return |
+|------|------|------------|--------|
+| `sobe/layout/block_name` | filter | `string $blockName, string $type, string $variant` | Dynamic block name for the layout shell |
+
+The default shell blocks are `sobe/site-header` and `sobe/site-footer`. Client
+prefix changes do not rename them. Override this only when the client fork
+deliberately registers replacement shell blocks.
+
+Example:
+
+```php
+add_filter('sobe/layout/block_name', function (string $blockName, string $type): string {
+    return $type === 'header' ? 'client/site-header' : $blockName;
+}, 10, 2);
+```
+
+## Navigation
+
+| Hook | Type | Parameters | Return |
+|------|------|------------|--------|
+| `sobe/navigation/fallback_html` | filter | `string $html, array $args` | Header navigation fallback HTML |
+
+The header renders the assigned `primary_navigation` menu when present. If no
+menu is assigned, it falls back to a page list, or a Home link when there are no
+pages.
+
+## Footer
+
+| Hook | Type | Parameters | Return |
+|------|------|------------|--------|
+| `sobe/footer/fallback_links` | filter | `array $links` | Footer fallback links |
+
+Fallback links render only when no `Footer Navigation` menu is assigned and the
+`Footer` widget area is empty. Each link item should include `label` and `url`.
+
 ## Hero
 
 | Hook | Type | Parameters | Return |

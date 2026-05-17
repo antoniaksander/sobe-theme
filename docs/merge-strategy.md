@@ -5,7 +5,7 @@
 1. Fork from latest `main`.
 2. Update client identity in `style.css`, `config/theme.php`, `composer.json`, `package.json`, `README.md`, and `vite.config.js`.
 3. Change `prefix` in `config/theme.php`, but keep `textdomain` as `sobe`.
-4. Confirm the current v2.0.x layout shell blocks render after the prefix change. Client forks may need client-namespaced copies of `site-header` and `site-footer`.
+4. Confirm the layout shell blocks render after the prefix change. The default shell remains `sobe/site-header` and `sobe/site-footer`; client-namespaced shell blocks are only needed for deliberate replacement.
 5. Override brand tokens in `resources/css/tokens.css`.
 6. Add logos, navigation, homepage content, footer widgets, and client-specific blocks in a client namespace.
 7. Extend platform WooCommerce/search/block behavior through documented hooks.
