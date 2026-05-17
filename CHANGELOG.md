@@ -14,6 +14,15 @@
 
 - None yet.
 
+## v2.1.2 - 2026-05-18
+
+### Fixed
+
+- Added a prominent `resources/css/tokens.css` warning header directing client
+  brand overrides to `resources/css/client-tokens.css`.
+- Added a Jest checksum guard that fails when `resources/css/tokens.css`
+  diverges from the committed platform baseline.
+
 ## v2.1.1 - 2026-05-17
 
 ### Added

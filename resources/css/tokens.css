@@ -1,9 +1,21 @@
+/* ==========================================================================
+   PLATFORM TOKEN CONTRACT - DO NOT EDIT IN CLIENT FORKS
+
+   resources/css/tokens.css is platform infrastructure. Client brand overrides
+   (colors, fonts, etc.) belong in resources/css/client-tokens.css.
+
+   package.json -> wpBoilerplate.themeJsonTokenOverrides points the theme.json
+   build at client-tokens.css. That file is loaded after tokens.css, so client
+   values win the cascade.
+
+   Editing tokens.css in a fork causes upstream sync conflicts on every update
+   and can trigger duplicate-token cascade bugs.
+   ========================================================================== */
+
 /* ────────────────────────────────────────────────────────────────────────────
    DESIGN TOKENS
-   Single source of truth for all CSS custom properties.
+   Single source of truth for all platform CSS custom properties.
    Imported by both app.css (frontend) and editor.css (block editor).
-   To rebrand a client fork: change values here + matching entries in
-   resources/scripts/build-theme-json.js, then run npm run build.
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* ── Fonts ─────────────────────────────────────────────────────────────────── */
@@ -16,7 +28,7 @@
 }
 
 /* ── Raw colour palette (internal primitives — never use in templates) ───────
-   Swap these values to rebrand; the semantic tokens below inherit from them.  */
+   Platform defaults; client forks override these in client-tokens.css.  */
 :root {
   /* ── Semantic tokens: Light mode ── */
   --c-background: #ffffff;

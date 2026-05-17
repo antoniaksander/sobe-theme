@@ -10,6 +10,23 @@
 - Use `sobe` for every translation textdomain.
 - Keep brand colors, logos, navigation decisions, campaign content, and proprietary UI out of public `main`.
 
+## Brand Tokens
+
+`resources/css/tokens.css` is platform infrastructure. Do not edit it in client
+forks for colors, fonts, or brand-specific values. Put those overrides in
+`resources/css/client-tokens.css`; `package.json` points the theme.json build at
+that file through `wpBoilerplate.themeJsonTokenOverrides`, and it is loaded
+after `tokens.css` so client values win the cascade.
+
+The Jest tokens guard compares `resources/css/tokens.css` to the committed
+platform checksum in `tests/fixtures/tokens-css.sha256`. When the platform
+legitimately changes `tokens.css`, review the token diff and update the
+baseline in the same commit:
+
+```bash
+shasum -a 256 resources/css/tokens.css > tests/fixtures/tokens-css.sha256
+```
+
 ## Block System
 
 Blocks are dynamic Gutenberg blocks:
