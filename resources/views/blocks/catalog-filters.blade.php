@@ -3,7 +3,16 @@
   $instanceId = wp_unique_id('sobe-catalog-filters-');
   $drawerId = "{$instanceId}-drawer";
   $drawerTitleId = "{$instanceId}-drawer-title";
+  $catalogFilterParams = function_exists('App\\sobe_catalog_filter_params')
+    ? \App\sobe_catalog_filter_params()
+    : null;
 @endphp
+
+@if ($catalogFilterParams)
+  <script>
+    window.sobeCatalogParams = window.sobeCatalogParams || {!! wp_json_encode($catalogFilterParams) !!};
+  </script>
+@endif
 
 <div
   class="sobe-catalog-filters-block"

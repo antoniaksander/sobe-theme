@@ -172,11 +172,8 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 
 (new FilterHandler(config('theme.prefix')))->register();
 
-// Inline sobeCatalogParams on shop/taxonomy pages
-add_action('wp_enqueue_scripts', function (): void {
-    if (! is_shop() && ! is_product_taxonomy()) {
-        return;
-    }
+function sobe_catalog_filter_params(): array
+{
     $pfx = config('theme.prefix');
     $queried = get_queried_object();
     $params = [
@@ -191,5 +188,16 @@ add_action('wp_enqueue_scripts', function (): void {
         $params['archiveTaxonomy'] = $queried->taxonomy;
         $params['archiveTerm'] = $queried->slug;
     }
+
+    return $params;
+}
+
+// Inline sobeCatalogParams on shop/taxonomy pages
+add_action('wp_enqueue_scripts', function (): void {
+    if (! is_shop() && ! is_product_taxonomy()) {
+        return;
+    }
+
+    $params = sobe_catalog_filter_params();
     echo '<script>window.sobeCatalogParams = '.\wp_json_encode($params).';</script>';
 }, 20);
