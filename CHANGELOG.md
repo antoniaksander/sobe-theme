@@ -12,6 +12,19 @@
 
 ### Fixed
 
+- None yet.
+
+## v2.1.1 - 2026-05-17
+
+### Added
+
+- Added native client-namespace block manifest support so client blocks can declare explicit names such as `roxder/cta-banner` without patching platform block tests or pattern checks.
+- Added optional client token override support for the editor `theme.json` build via `wpBoilerplate.themeJsonTokenOverrides` in `package.json`.
+
+## v2.1.0 - 2026-05-17
+
+### Fixed
+
 - Fixed layout shell rendering so changing the client `prefix` no longer renames the default `sobe/site-header` and `sobe/site-footer` blocks.
 - Added header navigation fallback output for fresh installs without an assigned primary menu.
 - Fixed WooCommerce catalog column body classes so client `prefix` changes do not break the platform CSS selectors.

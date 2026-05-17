@@ -167,9 +167,16 @@ work on dark backgrounds.
 
 ## Brand Tokens
 
-Override brand values in `resources/css/tokens.css`.
+Keep `resources/css/tokens.css` as the upstream token contract. In client forks,
+put brand overrides in `resources/css/client-tokens.css`; `package.json`
+configures that path through `wpBoilerplate.themeJsonTokenOverrides`.
 
-Keep token names stable. Client changes should set values, not rename the
+The file is optional. When it exists, `npm run build` reads platform tokens
+first, then the client override file, so later client values flow into the
+generated editor `theme.json` automatically. No platform build-script patch is
+needed.
+
+Keep token names stable. Client changes should set values, not rename the token
 contract. Typical client-owned tokens include:
 
 - `--c-primary`
@@ -180,7 +187,10 @@ contract. Typical client-owned tokens include:
 - logo-dependent spacing or header sizing
 
 The bundled Satoshi and CabinetGrotesk fonts are platform defaults. A client
-may keep them or replace the font token values and add its own font files.
+may keep them or replace the font token values and add its own font files. The
+editor font families can be overridden with `--font-sans`, `--font-serif`,
+`--font-mono`, or explicit `--editor-font-*` tokens in the client override
+file.
 
 ## Blocks
 
@@ -201,10 +211,11 @@ without mutating upstream blocks in place.
    - `title`
    - `description`
    - `category`, if the block should appear in a client category
-4. Keep `textdomain` as `sobe` in v2.0.x.
+4. Keep `textdomain` as `sobe`.
 5. Update imports, labels, CSS class names, and editor preview text only where
    they are actually client-owned.
-6. Add the copied folder slug to `resources/blocks/blocks-manifest.json`.
+6. Add the copied folder slug to `resources/blocks/blocks-manifest.json`, using
+   `name` for the full client block name.
 7. Run `npm test`, `npm run check:patterns`, and `npm run build`.
 
 Do not leave copied metadata as `sobe/example`, `sobe/hero`, or another platform
