@@ -167,14 +167,20 @@ work on dark backgrounds.
 
 ## Brand Tokens
 
-Keep `resources/css/tokens.css` as the upstream token contract. In client forks,
-put brand overrides in `resources/css/client-tokens.css`; `package.json`
-configures that path through `wpBoilerplate.themeJsonTokenOverrides`.
+Never edit `resources/css/tokens.css` in a client fork. It is platform
+infrastructure and must stay aligned with upstream. Editing it creates merge
+conflicts on every platform update and can produce duplicate-token cascade bugs
+that are hard to spot visually.
 
-The file is optional. When it exists, `npm run build` reads platform tokens
-first, then the client override file, so later client values flow into the
-generated editor `theme.json` automatically. No platform build-script patch is
-needed.
+Put brand overrides in `resources/css/client-tokens.css` instead. `package.json`
+configures that path through `wpBoilerplate.themeJsonTokenOverrides`, and the
+client override file is loaded after `tokens.css` so client values win the
+cascade.
+
+The client override file is optional. When it exists, `npm run build` reads
+platform tokens first, then the client override file, so later client values
+flow into the generated editor `theme.json` automatically. No platform
+build-script patch is needed.
 
 Keep token names stable. Client changes should set values, not rename the token
 contract. Typical client-owned tokens include:
@@ -363,7 +369,7 @@ Do not pick one side wholesale unless the rule is genuinely obsolete. For
 | File | Why it conflicts | How to resolve |
 | --- | --- | --- |
 | `.gitignore` | Both platform and client add local tooling or generated-output rules. | Keep the union. Remove only duplicates or rules that are clearly wrong. |
-| `resources/css/tokens.css` | Clients customize brand tokens while upstream evolves token contracts. | Preserve client values for existing tokens. Add new upstream tokens and aliases. Do not rename token contracts casually. |
+| `resources/css/client-tokens.css` | Clients override brand token values while upstream evolves the platform token contract in `resources/css/tokens.css`. | Keep client overrides in `client-tokens.css`. Preserve upstream `tokens.css` unless resolving an intentional platform token change. |
 | `resources/blocks/blocks-manifest.json` | Upstream adds platform blocks while clients add private blocks. | Keep both platform and client entries. Ensure each entry's folder exists and `category` matches `block.json`. |
 | `app/blocks.php` | Upstream may evolve category, registration, or allowed-block behavior while clients add categories. | Preserve upstream registration logic and re-apply client categories or filters around it. Keep `sobe/*` hooks intact. |
 | Client-modified tests | Upstream may broaden tests while clients adapt them for private blocks or local behavior. | Keep upstream coverage improvements and re-apply client-specific expectations narrowly. Run the full test suite after resolving. |

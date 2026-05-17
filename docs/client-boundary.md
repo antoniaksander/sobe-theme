@@ -3,7 +3,7 @@
 | File/Area | Platform Owns | Client Owns |
 |-----------|----------------|--------------|
 | `config/theme.php` | Default `sobe` prefix, `sobe` textdomain, neutral config defaults | Client prefix and client-specific config values |
-| `resources/css/tokens.css` | Token names, scales, neutral defaults, dark-mode contract | Brand colors, optional brand font token overrides |
+| `resources/css/tokens.css` | Token names, scales, neutral defaults, dark-mode contract | No client edits. Brand colors and optional brand font token overrides belong in `resources/css/client-tokens.css`. |
 | `resources/js/app.js` | Alpine app shell, event names, dark mode, nav, search, side-cart, toasts | Client scripts that consume documented events |
 | `resources/views/layouts/app.blade.php` | Platform layout shell, app wrapper, SEO baseline, overlays | Rare structural overrides in client repo |
 | `resources/blocks/sobe/*` | Universal production blocks and examples | Client copies under client namespace |

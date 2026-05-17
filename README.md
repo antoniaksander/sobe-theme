@@ -22,7 +22,8 @@ This repo is shared infrastructure, not a client theme. Client repositories fork
 1. Fork from latest `main`.
 2. Update client identity in `style.css`, `config/theme.php`, `composer.json`, `package.json`, `README.md`, and `vite.config.js`.
 3. Change `prefix` in `config/theme.php` for client-owned settings and CSS classes, but keep `textdomain` as `sobe`.
-4. Override brand values in `resources/css/tokens.css`.
+4. Override brand values in `resources/css/client-tokens.css`; do not edit the
+   platform-owned `resources/css/tokens.css`.
 5. Keep universal blocks under `sobe/*`; create client-specific blocks in a client namespace such as `roxder/*`.
 6. Configure the active WordPress site: navigation, header layout, logo, footer widgets, homepage, and dark mode.
 7. Extend WooCommerce, search, wishlist, hero, and block behavior through hooks before overriding Blade partials.
