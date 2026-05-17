@@ -1,12 +1,34 @@
 @php
   $activeCatSlug = $activeFilters['product_cat'] ?? '';
+  $instanceId = wp_unique_id('sobe-catalog-filters-');
+  $drawerId = "{$instanceId}-drawer";
+  $drawerTitleId = "{$instanceId}-drawer-title";
 @endphp
 
 <div
-  class="sobe-catalog-filters"
-  data-catalog-filters
-  aria-label="{{ __('Product filters', 'sobe') }}"
+  class="sobe-catalog-filters-block"
+  data-catalog-filters-instance="{{ esc_attr($instanceId) }}"
 >
+  <button
+    class="sobe-filter-mobile-trigger"
+    data-catalog-filters-open
+    type="button"
+    aria-expanded="false"
+    aria-controls="{{ esc_attr($drawerId) }}"
+    hidden
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75" />
+    </svg>
+    {{ __('Filter', 'sobe') }}
+  </button>
+
+  <div data-catalog-filters-desktop>
+    <div
+      class="sobe-catalog-filters"
+      data-catalog-filters
+      aria-label="{{ __('Product filters', 'sobe') }}"
+    >
 
   {{-- Active filter chips --}}
   <div class="sobe-filter-chips" data-filter-chips aria-label="{{ __('Active filters', 'sobe') }}">
@@ -268,4 +290,38 @@
   </details>
   @endif
 
+    </div>
+  </div>
+
+  <div
+    id="{{ esc_attr($drawerId) }}"
+    class="sobe-filter-drawer"
+    data-catalog-filters-drawer
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="{{ esc_attr($drawerTitleId) }}"
+    hidden
+  >
+    <div class="sobe-filter-drawer__header">
+      <span id="{{ esc_attr($drawerTitleId) }}">{{ __('Filter products', 'sobe') }}</span>
+      <button
+        class="sobe-filter-drawer__close"
+        data-catalog-filters-close
+        type="button"
+        aria-label="{{ __('Close filters', 'sobe') }}"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <div class="sobe-filter-drawer__body" data-catalog-filters-drawer-body></div>
+    <div class="sobe-filter-drawer__footer">
+      <button
+        class="sobe-filter-drawer__apply"
+        data-catalog-filters-close
+        type="button"
+      >{{ __('Close', 'sobe') }}</button>
+    </div>
+  </div>
 </div>
