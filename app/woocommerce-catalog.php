@@ -80,9 +80,9 @@ add_filter('body_class', function (array $classes): array {
         $desktopColumns = (string) config('theme.product_catalog.desktop_columns', 3);
     }
 
-    $classes[] = "{$pfx}-catalog-mobile-columns-{$mobileColumns}";
-    $classes[] = "{$pfx}-catalog-tablet-columns-{$tabletColumns}";
-    $classes[] = "{$pfx}-catalog-desktop-columns-{$desktopColumns}";
+    $classes[] = "sobe-catalog-mobile-columns-{$mobileColumns}";
+    $classes[] = "sobe-catalog-tablet-columns-{$tabletColumns}";
+    $classes[] = "sobe-catalog-desktop-columns-{$desktopColumns}";
 
     return $classes;
 });
