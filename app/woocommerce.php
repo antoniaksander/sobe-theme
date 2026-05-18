@@ -29,8 +29,59 @@ add_action('woocommerce_after_main_content', function (): void {
     echo '</div></section>';
 }, 10);
 
+if (! function_exists('App\sobe_has_woocommerce_render_content')) {
+    function sobe_has_woocommerce_render_content(): bool
+    {
+        $woocommerceShortcodes = [
+            'products',
+            'product_category',
+            'featured_products',
+            'sale_products',
+            'best_selling_products',
+            'recent_products',
+            'top_rated_products',
+            'product',
+            'product_page',
+        ];
+
+        $post = get_post();
+        $content = $post instanceof \WP_Post ? $post->post_content : '';
+
+        if ($content !== '') {
+            foreach ($woocommerceShortcodes as $shortcode) {
+                if (has_shortcode($content, $shortcode)) {
+                    return true;
+                }
+            }
+        }
+
+        $woocommerceBlocks = [
+            'sobe/product-carousel',
+            'woocommerce/product-filters',
+            'woocommerce/active-filters',
+            'woocommerce/all-products',
+            'woocommerce/product-search',
+            'woocommerce/handpicked-products',
+            'woocommerce/product-collection',
+            'woocommerce/featured-product',
+            'woocommerce/featured-category',
+            'woocommerce/product-categories',
+            'woocommerce/catalog-sorting',
+            'woocommerce/product-results-count',
+        ];
+
+        foreach ($woocommerceBlocks as $block) {
+            if (has_block($block)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
 add_action('wp_enqueue_scripts', function (): void {
-    if (! (is_woocommerce() || is_cart() || is_checkout() || is_account_page() || has_block('sobe/product-carousel'))) {
+    if (! (is_woocommerce() || is_cart() || is_checkout() || is_account_page() || sobe_has_woocommerce_render_content())) {
         return;
     }
 

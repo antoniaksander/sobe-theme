@@ -2,23 +2,33 @@
   $pfx     = config('theme.prefix');
   $mode    = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
   global $wp_query;
-  $total   = (int) $wp_query->max_num_pages;
-  // Use $wp_query->get() so it reads the overridden query in AJAX context,
-  // unlike get_query_var() which always reads $wp_the_query (the original request).
-  $current = max(1, (int) ($wp_query->get('paged') ?: 1));
+  $isShortcodePagination = (bool) wc_get_loop_prop('is_shortcode') && (bool) wc_get_loop_prop('is_paginated');
+
+  if ($isShortcodePagination) {
+      $mode = 'paginated';
+      $total = (int) wc_get_loop_prop('total_pages');
+      $current = max(1, (int) wc_get_loop_prop('current_page'));
+      $pageArg = 'product-page';
+  } else {
+      $total = (int) $wp_query->max_num_pages;
+      // Use $wp_query->get() so it reads the overridden query in AJAX context,
+      // unlike get_query_var() which always reads $wp_the_query (the original request).
+      $current = max(1, (int) ($wp_query->get('paged') ?: 1));
+      $pageArg = 'paged';
+  }
 
   // Build a reliable base URL that works in both AJAX and normal page context.
   // get_previous/next_posts_page_link() generate admin-ajax.php URLs in AJAX context.
   if (wp_doing_ajax()) {
       $referer = wp_get_referer();
       $base = $referer
-          ? remove_query_arg('paged', $referer)
+          ? remove_query_arg($pageArg, $referer)
           : get_permalink(wc_get_page_id('shop'));
   } else {
-      $base = remove_query_arg('paged');
+      $base = remove_query_arg($pageArg);
   }
-  $prevUrl = ($current > 1)      ? add_query_arg('paged', $current - 1, $base) : null;
-  $nextUrl = ($current < $total) ? add_query_arg('paged', $current + 1, $base) : null;
+  $prevUrl = ($current > 1)      ? add_query_arg($pageArg, $current - 1, $base) : null;
+  $nextUrl = ($current < $total) ? add_query_arg($pageArg, $current + 1, $base) : null;
 @endphp
 
 @if ($total > 1)
