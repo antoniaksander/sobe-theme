@@ -492,12 +492,14 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
       if (triggerSlot && openBtn.parentElement !== triggerSlot) {
         triggerSlot.appendChild(openBtn);
       }
+      instance.hidden = true;
     }
 
     function moveTriggerHome() {
       if (triggerHome.parentNode && openBtn.nextSibling !== triggerHome) {
         triggerHome.parentNode.insertBefore(openBtn, triggerHome);
       }
+      instance.hidden = false;
     }
 
     function moveToDrawer() {

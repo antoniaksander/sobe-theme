@@ -1,5 +1,12 @@
 @php
   $activeCatSlug = $activeFilters['product_cat'] ?? '';
+  $hasCategories = $showCategories && !empty($categories);
+  $hasBrands = $showBrands && !empty($brands);
+  $hasAttributes = $showAttributes && !empty($attributeGroups);
+  $hasPriceRange = $showPriceRange
+    && isset($priceRange->min, $priceRange->max)
+    && (float) $priceRange->max > (float) $priceRange->min;
+  $hasFilterContent = $hasCategories || $hasBrands || $hasAttributes || $hasPriceRange;
   $instanceId = wp_unique_id('sobe-catalog-filters-');
   $drawerId = "{$instanceId}-drawer";
   $drawerTitleId = "{$instanceId}-drawer-title";
@@ -7,6 +14,10 @@
     ? \App\sobe_catalog_filter_params()
     : null;
 @endphp
+
+@if (! $hasFilterContent)
+  @php return; @endphp
+@endif
 
 @if ($catalogFilterParams)
   <script>
@@ -110,7 +121,7 @@
   </details>
 
   {{-- Categories (single-select radio) --}}
-  @if ($showCategories && !empty($categories))
+  @if ($hasCategories)
   <details class="sobe-accordion" @if (!$collapseByDefault) open @endif>
     <summary class="sobe-accordion__trigger">{{ __('Categories', 'sobe') }}</summary>
     <div class="sobe-accordion__panel">
@@ -147,7 +158,7 @@
   @endif
 
   {{-- Brands (multi-select checkbox) --}}
-  @if ($showBrands && !empty($brands))
+  @if ($hasBrands)
   <details class="sobe-accordion sobe-accordion--scrollable" @if ($brandsOpenByDefault) open @endif>
     <summary class="sobe-accordion__trigger">{{ __('Brands', 'sobe') }}</summary>
     <div class="sobe-accordion__panel">
@@ -185,7 +196,7 @@
   @endif
 
   {{-- Attribute accordions --}}
-  @if ($showAttributes)
+  @if ($hasAttributes)
     @foreach ($attributeGroups as $group)
     @php
       $attrKey    = 'pa_' . $group->attribute_name;
@@ -262,7 +273,7 @@
   @endif
 
   {{-- Price range --}}
-  @if ($showPriceRange)
+  @if ($hasPriceRange)
   <details class="sobe-accordion" @if (!$collapseByDefault) open @endif>
     <summary class="sobe-accordion__trigger">{{ __('Price', 'sobe') }}</summary>
     <div class="sobe-accordion__panel">
