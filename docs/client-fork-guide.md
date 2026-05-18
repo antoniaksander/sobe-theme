@@ -302,6 +302,12 @@ Use hooks for:
 
 Only override Blade templates when the required change is structural.
 
+The `sobe/catalog-filters` block owns its mobile filter trigger and drawer. At
+runtime the drawer is mounted under `document.body` so fixed positioning and
+modal z-index are not constrained by archive/sidebar stacking contexts; the
+block script keeps per-instance trigger, drawer, focus, and desktop-container
+references.
+
 ## Search
 
 The platform provides `/wp-json/sobe/v1/search` and a search overlay. Clients

@@ -28,7 +28,6 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
   const DEBOUNCE_CHECKBOX = 300;
   const DEBOUNCE_PRICE = 500;
   const LG_BREAKPOINT = 768;
-  const legacyOpenButtons = [...document.querySelectorAll('[data-open-filter-drawer]')];
 
   let _activeFetch = null;
   let _fetchSeq = 0;
@@ -86,15 +85,26 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     const openBtn = instance.querySelector('[data-catalog-filters-open]');
     const closeButtons = [...instance.querySelectorAll('[data-catalog-filters-close]')];
     const clearAllBtn = root?.querySelector('[data-clear-all-filters]');
+    const triggerSlot = document.querySelector('[data-catalog-filters-trigger-slot]');
 
     if (!root || !desktopContainer || !drawer || !drawerBody || !openBtn) {
       return null;
     }
 
-    const useLegacyArchiveTrigger = legacyOpenButtons.length > 0 && !activeController;
-    if (!useLegacyArchiveTrigger) {
-      openBtn.hidden = false;
+    const triggerHome = document.createComment('catalog filters trigger home');
+    openBtn.after(triggerHome);
+
+    // Body-mount the block-owned drawer so fixed positioning and z-index are not
+    // trapped by archive/sidebar stacking contexts; JS keeps per-instance refs.
+    if (drawer.parentElement !== document.body) {
+      drawer.style.setProperty(
+        '--filter-drawer-width',
+        getComputedStyle(instance).getPropertyValue('--filter-drawer-width').trim() || '320px'
+      );
+      document.body.appendChild(drawer);
     }
+
+    openBtn.hidden = false;
 
     let lastOpener = null;
 
@@ -222,9 +232,13 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
           window.scrollTo({ top: Math.max(0, y - 24), behavior: reducedMotion ? 'instant' : 'smooth' });
         }
 
-        // Move focus to result count so screen readers announce the updated count.
-        const newCountEl = document.querySelector('[data-result-count]');
-        newCountEl?.focus({ preventScroll: true });
+        if (drawer.hidden) {
+          // Move focus to result count so screen readers announce the updated count.
+          const newCountEl = document.querySelector('[data-result-count]');
+          newCountEl?.focus({ preventScroll: true });
+        } else if (!drawer.contains(document.activeElement)) {
+          getFocusable(drawer)[0]?.focus({ preventScroll: true });
+        }
       } catch (err) {
         if (err.name === 'AbortError') return;
         console.error('[sobe catalog-filters]', err);
@@ -468,12 +482,21 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
 
     function syncExpanded(isOpen) {
       openBtn.setAttribute('aria-expanded', String(isOpen));
+    }
 
-      if (useLegacyArchiveTrigger) {
-        legacyOpenButtons.forEach((button) => {
-          button.setAttribute('aria-expanded', String(isOpen));
-          if (drawer.id) button.setAttribute('aria-controls', drawer.id);
-        });
+    function isDesktop() {
+      return window.innerWidth >= LG_BREAKPOINT;
+    }
+
+    function moveTriggerToSlot() {
+      if (triggerSlot && openBtn.parentElement !== triggerSlot) {
+        triggerSlot.appendChild(openBtn);
+      }
+    }
+
+    function moveTriggerHome() {
+      if (triggerHome.parentNode && openBtn.nextSibling !== triggerHome) {
+        triggerHome.parentNode.insertBefore(openBtn, triggerHome);
       }
     }
 
@@ -492,7 +515,11 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     function closeDrawer({ restoreFocus = true } = {}) {
       drawer.hidden = true;
       syncExpanded(false);
-      moveToDesktop();
+      if (isDesktop()) {
+        moveToDesktop();
+      } else {
+        moveToDrawer();
+      }
 
       if (restoreFocus) {
         const target = lastOpener?.isConnected ? lastOpener : openBtn;
@@ -501,6 +528,10 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     }
 
     function openDrawer(opener = openBtn) {
+      if (activeController && activeController !== controller) {
+        activeController.closeDrawer({ restoreFocus: false });
+      }
+
       setActive();
       lastOpener = opener;
       moveToDrawer();
@@ -511,11 +542,15 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     }
 
     function handleResize() {
-      if (window.innerWidth >= LG_BREAKPOINT) {
+      if (isDesktop()) {
+        moveTriggerHome();
         closeDrawer({ restoreFocus: false });
-      } else if (drawer.hidden) {
-        moveToDesktop();
       } else {
+        if (triggerSlot) {
+          moveTriggerToSlot();
+        } else {
+          moveTriggerHome();
+        }
         moveToDrawer();
       }
     }
@@ -526,12 +561,6 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     window.addEventListener('beforeunload', () => observer.disconnect(), { once: true });
 
     openBtn.addEventListener('click', () => openDrawer(openBtn));
-
-    if (useLegacyArchiveTrigger) {
-      legacyOpenButtons.forEach((button) => {
-        button.addEventListener('click', () => openDrawer(button));
-      });
-    }
 
     closeButtons.forEach((button) => {
       button.addEventListener('click', () => closeDrawer());
@@ -639,6 +668,7 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
 
     const controller = {
       applyFilters,
+      closeDrawer,
       collectState,
       openDrawer,
       root,
