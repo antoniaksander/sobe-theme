@@ -302,11 +302,21 @@ Use hooks for:
 
 Only override Blade templates when the required change is structural.
 
-The `sobe/catalog-filters` block owns its mobile filter trigger and drawer. At
-runtime the drawer is mounted under `document.body` so fixed positioning and
-modal z-index are not constrained by archive/sidebar stacking contexts; the
-block script keeps per-instance trigger, drawer, focus, and desktop-container
-references.
+The supported production placement for `sobe/catalog-filters` is one block in
+the Shop Sidebar widget area. The block owns its mobile filter trigger and
+drawer, so it is no longer coupled to archive-owned drawer markup and can also
+be placed in a standalone single-instance context when a compatible product
+listing target exists.
+
+On the shop archive, the template provides an optional
+`data-catalog-filters-trigger-slot` above the product toolbar. On mobile, the
+block moves its own trigger into that slot so the archive owns placement only;
+the trigger still controls the block-owned drawer. At runtime the drawer is
+mounted under `document.body` so fixed positioning and modal z-index are not
+constrained by archive/sidebar stacking contexts. The block script keeps the
+trigger, drawer, focus, and desktop-container references scoped to the instance,
+but multiple catalog-filter blocks on one page are not a supported production
+feature.
 
 ## Search
 

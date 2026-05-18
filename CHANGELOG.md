@@ -14,6 +14,32 @@
 
 - None yet.
 
+## v2.2.0 - 2026-05-18
+
+### Changed
+
+- Made `sobe/catalog-filters` own its mobile trigger and drawer shell so the
+  drawer is portable outside the WooCommerce archive template. The supported
+  production placement remains a single catalog-filters instance in the shop
+  sidebar; standalone single-instance placements can open the block-owned drawer
+  when a compatible product grid is present.
+- Kept archive layout ownership to placement only: the shop archive now exposes
+  an optional trigger slot above the product toolbar, while the block still owns
+  the trigger element and drawer behavior.
+- Mounted the block-owned filter drawer under `document.body` at runtime so the
+  fixed drawer is not constrained by sidebar or archive stacking contexts.
+
+### Fixed
+
+- Removed the archive-owned mobile filter trigger and drawer markup.
+- Fixed mobile shop layout so the relocated catalog filter widget shell does not
+  leave an empty sidebar box after the trigger and drawer content move.
+- Added an empty-content render guard so catalog filters emit no wrapper or
+  inline script when no usable filter controls exist.
+- Preserved drawer accessibility for the supported single-instance case:
+  focus enters the drawer, remains trapped, returns to the opener, and Escape
+  closes the drawer.
+
 ## v2.1.2 - 2026-05-18
 
 ### Fixed
