@@ -86,6 +86,7 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
     const closeButtons = [...instance.querySelectorAll('[data-catalog-filters-close]')];
     const clearAllBtn = root?.querySelector('[data-clear-all-filters]');
     const triggerSlot = document.querySelector('[data-catalog-filters-trigger-slot]');
+    const widgetShell = instance.closest('.shop-sidebar .widget');
 
     if (!root || !desktopContainer || !drawer || !drawerBody || !openBtn) {
       return null;
@@ -493,6 +494,8 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
         triggerSlot.appendChild(openBtn);
       }
       instance.hidden = true;
+      widgetShell?.classList.add('sobe-catalog-filters-widget--mobile-hidden');
+      if (widgetShell) widgetShell.hidden = true;
     }
 
     function moveTriggerHome() {
@@ -500,6 +503,8 @@ import { commit as commitFilterStore } from '../../js/filter-store.js';
         triggerHome.parentNode.insertBefore(openBtn, triggerHome);
       }
       instance.hidden = false;
+      widgetShell?.classList.remove('sobe-catalog-filters-widget--mobile-hidden');
+      if (widgetShell) widgetShell.hidden = false;
     }
 
     function moveToDrawer() {
