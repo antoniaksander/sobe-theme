@@ -25,11 +25,20 @@ function getScopedElements(root, selector) {
 // Query only elements not yet processed — makes this function safe to call
 // repeatedly after WooCommerce AJAX updates without duplicating animations.
 function initAnimationBus(root = document) {
-  destroyAnimationBus();
+  if (!pageContext) {
+    pageContext = gsap.context(() => {
+      initPageAnimations(root);
+    }, root);
+    return;
+  }
 
-  pageContext = gsap.context(() => {
+  // Add to existing context. Note: the context's SCOPE was set when first created;
+  // pageContext.add() does not re-scope. Callers needing a different root scope must
+  // call destroyAnimationBus() first, then initAnimationBus(newRoot). This is the
+  // explicit lifecycle pattern used by the registry and by AJAX refresh handlers.
+  pageContext.add(() => {
     initPageAnimations(root);
-  }, root);
+  });
 }
 
 function initPageAnimations(root = document) {
