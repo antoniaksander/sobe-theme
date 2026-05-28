@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { registerReinit } from './sobe-reinit.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -11,16 +12,34 @@ const presets = {
   'slide-right': { x: 40, opacity: 0, duration: 0.8, ease: 'power2.out' },
 };
 
+let pageContext = null;
+
+function getScopedElements(root, selector) {
+  const elements = [...(root.querySelectorAll?.(selector) || [])];
+  if (root.nodeType === Node.ELEMENT_NODE && root.matches(selector)) {
+    elements.unshift(root);
+  }
+  return elements;
+}
+
 // Query only elements not yet processed — makes this function safe to call
 // repeatedly after WooCommerce AJAX updates without duplicating animations.
-function initAnimationBus() {
+function initAnimationBus(root = document) {
+  destroyAnimationBus();
+
+  pageContext = gsap.context(() => {
+    initPageAnimations(root);
+  }, root);
+}
+
+function initPageAnimations(root = document) {
   // Bridge: `.animate-{preset}` CSS classes (added via block editor's
   // "Additional CSS class(es)" field) are converted to data-animate so the
   // standard preset handler picks them up without any extra logic.
   const classSelector = Object.keys(presets)
     .map((p) => `.animate-${p}:not([data-animate])`)
     .join(',');
-  document.querySelectorAll(classSelector).forEach((el) => {
+  getScopedElements(root, classSelector).forEach((el) => {
     const type = Object.keys(presets).find((p) =>
       el.classList.contains(`animate-${p}`),
     );
@@ -28,7 +47,8 @@ function initAnimationBus() {
   });
 
   gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
-    const elements = document.querySelectorAll(
+    const elements = getScopedElements(
+      root,
       '[data-animate]:not([data-animated])',
     );
 
@@ -127,9 +147,33 @@ function initAnimationBus() {
   });
 }
 
+function destroyAnimationBus() {
+  pageContext?.revert();
+  pageContext = null;
+}
+
+function resetAnimationMarks(root = document) {
+  if (root.nodeType === Node.ELEMENT_NODE && root.hasAttribute('data-animated')) {
+    root.removeAttribute('data-animated');
+  }
+
+  root.querySelectorAll?.('[data-animated]').forEach((el) => {
+    el.removeAttribute('data-animated');
+  });
+}
+
+let stickyHeaderInitialized = false;
+
+// Persistent shell animations live outside the page gsap.context because their
+// DOM (e.g. .site-header) is outside #main and survives page navigations.
+// Tearing them down on every transition would break sticky header behavior.
 function initStickyHeader() {
+  if (stickyHeaderInitialized) return;
+
   const header = document.querySelector('.site-header');
   if (!header) return;
+
+  stickyHeaderInitialized = true;
 
   // Always defined so cart drawer can call it safely regardless of motion preference
   window.showSiteHeader = () => {};
@@ -166,4 +210,34 @@ window.addEventListener('resize', () => {
   _refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 150);
 });
 
-export { initAnimationBus, initStickyHeader, gsap, ScrollTrigger };
+initStickyHeader();
+
+registerReinit('animation-bus', {
+  init: initAnimationBus,
+  destroy: destroyAnimationBus,
+});
+
+const bootAnimationBus = () => {
+  if (!pageContext) {
+    initAnimationBus(document);
+  }
+};
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', bootAnimationBus);
+} else {
+  bootAnimationBus();
+}
+
+window.gsap = gsap;
+window.ScrollTrigger = ScrollTrigger;
+window.initAnimationBus = initAnimationBus;
+
+export {
+  initAnimationBus,
+  destroyAnimationBus,
+  resetAnimationMarks,
+  initStickyHeader,
+  gsap,
+  ScrollTrigger,
+};
