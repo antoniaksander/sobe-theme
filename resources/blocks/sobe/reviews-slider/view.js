@@ -1,5 +1,20 @@
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.sobe-reviews-slider').forEach((block) => {
+import { registerReinit } from '../../js/sobe-reinit.js';
+
+const instances = new WeakMap();
+const blockSelector = '.sobe-reviews-slider';
+
+function getBlocks(root = document) {
+  const blocks = [...(root.querySelectorAll?.(blockSelector) || [])];
+  if (root.nodeType === Node.ELEMENT_NODE && root.matches(blockSelector)) {
+    blocks.unshift(root);
+  }
+  return blocks;
+}
+
+function init(root = document) {
+  getBlocks(root).forEach((block) => {
+    if (instances.has(block)) return;
+
     const delay = parseInt(block.dataset.autoplayDelay ?? '5000', 10);
     const contents = Array.from(block.querySelectorAll('[data-review-content]'));
     const images = Array.from(block.querySelectorAll('[data-review-image]'));
@@ -9,9 +24,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const total = Math.min(contents.length, images.length);
     if (total <= 1) return;
 
-    let currentIndex = Math.max(0, contents.findIndex((item) => item.classList.contains('is-active')));
-    let timerId = null;
-    let isAnimating = false;
+    const controller = new AbortController();
+    const { signal } = controller;
+    const state = {
+      animationTimerId: null,
+      controller,
+      currentIndex: Math.max(0, contents.findIndex((item) => item.classList.contains('is-active'))),
+      isAnimating: false,
+      timerId: null,
+    };
 
     const syncUi = (nextIndex) => {
       contents.forEach((item, index) => {
@@ -34,45 +55,70 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const queueNext = () => {
-      window.clearTimeout(timerId);
-      timerId = window.setTimeout(() => goTo(currentIndex + 1), delay);
+      window.clearTimeout(state.timerId);
+      state.timerId = window.setTimeout(() => goTo(state.currentIndex + 1), delay);
     };
 
     const goTo = (targetIndex) => {
       const nextIndex = (targetIndex + total) % total;
-      if (nextIndex === currentIndex || isAnimating) return;
+      if (nextIndex === state.currentIndex || state.isAnimating) return;
 
-      isAnimating = true;
-      contents[currentIndex]?.classList.remove('is-active');
-      images[currentIndex]?.classList.remove('is-active');
+      state.isAnimating = true;
+      contents[state.currentIndex]?.classList.remove('is-active');
+      images[state.currentIndex]?.classList.remove('is-active');
 
-      window.setTimeout(() => {
-        currentIndex = nextIndex;
-        syncUi(currentIndex);
-        isAnimating = false;
+      window.clearTimeout(state.animationTimerId);
+      state.animationTimerId = window.setTimeout(() => {
+        state.currentIndex = nextIndex;
+        syncUi(state.currentIndex);
+        state.isAnimating = false;
         queueNext();
       }, 220);
     };
 
     prevBtns.forEach((button) => {
-      button.addEventListener('click', () => goTo(currentIndex - 1));
+      button.addEventListener('click', () => goTo(state.currentIndex - 1), { signal });
     });
 
     nextBtns.forEach((button) => {
-      button.addEventListener('click', () => goTo(currentIndex + 1));
+      button.addEventListener('click', () => goTo(state.currentIndex + 1), { signal });
     });
 
     dots.forEach((dot) => {
       dot.addEventListener('click', () => {
         const index = parseInt(dot.dataset.index ?? '0', 10);
         goTo(index);
-      });
+      }, { signal });
     });
 
-    block.addEventListener('mouseenter', () => window.clearTimeout(timerId));
-    block.addEventListener('mouseleave', queueNext);
+    block.addEventListener('mouseenter', () => window.clearTimeout(state.timerId), { signal });
+    block.addEventListener('mouseleave', queueNext, { signal });
 
-    syncUi(currentIndex);
+    syncUi(state.currentIndex);
     queueNext();
+
+    instances.set(block, state);
   });
-});
+}
+
+function destroy() {
+  document.querySelectorAll(blockSelector).forEach((block) => {
+    const state = instances.get(block);
+    if (!state) return;
+
+    state.controller.abort();
+    window.clearTimeout(state.timerId);
+    window.clearTimeout(state.animationTimerId);
+    instances.delete(block);
+  });
+}
+
+registerReinit('reviews-slider', { init, destroy });
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => init(document));
+} else {
+  init(document);
+}
+
+export { init, destroy };

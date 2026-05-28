@@ -1,45 +1,81 @@
-(function () {
-  var block = document.querySelector('[data-block="our-brands"]');
-  if (!block) return;
+import { registerReinit } from '../../js/sobe-reinit.js';
 
-  var header = document.querySelector('.site-header');
+const instances = new WeakMap();
+const blockSelector = '[data-block="our-brands"]';
 
-  // ── Smooth scroll on letter click, offset for fixed site-header ───────────
-  block.querySelectorAll('.brands-alpha-nav__letter').forEach(function (link) {
-    link.addEventListener('click', function (e) {
-      e.preventDefault();
-      var target = document.querySelector(link.getAttribute('href'));
-      if (!target) return;
+function getBlocks(root = document) {
+  const blocks = [...(root.querySelectorAll?.(blockSelector) || [])];
+  if (root.nodeType === Node.ELEMENT_NODE && root.matches(blockSelector)) {
+    blocks.unshift(root);
+  }
+  return blocks;
+}
 
-      var offset = -(header?.offsetHeight ?? 0);
+function init(root = document) {
+  getBlocks(root).forEach((block) => {
+    if (instances.has(block)) return;
 
-      if (window.lenis) {
-        window.lenis.scrollTo(target, { offset: offset });
-      } else {
-        var top = target.getBoundingClientRect().top + window.scrollY + offset;
-        window.scrollTo({ top: top, behavior: 'smooth' });
-      }
+    const controller = new AbortController();
+    const { signal } = controller;
+    const navLinks = block.querySelectorAll('.brands-alpha-nav__letter');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          const letter = entry.target.dataset.section;
+          navLinks.forEach((link) => {
+            link.classList.toggle('is-active', link.dataset.letter === letter);
+          });
+        }
+      });
+    }, {
+      rootMargin: '-25% 0px -65% 0px',
+      threshold: 0,
     });
-  });
+    const state = { controller, observer };
 
-  // ── IntersectionObserver — highlight active letter as user scrolls ────────
-  var navLinks = block.querySelectorAll('.brands-alpha-nav__letter');
+    navLinks.forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (!target) return;
 
-  var observer = new IntersectionObserver(function (entries) {
-    entries.forEach(function (entry) {
-      if (entry.isIntersecting) {
-        var letter = entry.target.dataset.section;
-        navLinks.forEach(function (l) {
-          l.classList.toggle('is-active', l.dataset.letter === letter);
-        });
-      }
+        const header = document.querySelector('.site-header');
+        const offset = -(header?.offsetHeight ?? 0);
+
+        if (window.lenis) {
+          window.lenis.scrollTo(target, { offset });
+        } else {
+          const top = target.getBoundingClientRect().top + window.scrollY + offset;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+      }, { signal });
     });
-  }, {
-    rootMargin: '-25% 0px -65% 0px',
-    threshold: 0,
-  });
 
-  block.querySelectorAll('.brands-section').forEach(function (section) {
-    observer.observe(section);
+    block.querySelectorAll('.brands-section').forEach((section) => {
+      observer.observe(section);
+    });
+
+    instances.set(block, state);
   });
-})();
+}
+
+function destroy() {
+  document.querySelectorAll(blockSelector).forEach((block) => {
+    const state = instances.get(block);
+    if (!state) return;
+
+    state.controller.abort();
+    state.observer.disconnect();
+    instances.delete(block);
+  });
+}
+
+registerReinit('our-brands', { init, destroy });
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => init(document));
+} else {
+  init(document);
+}
+
+export { init, destroy };
