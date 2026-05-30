@@ -176,10 +176,13 @@ function sobe_catalog_filter_params(): array
 {
     $pfx = config('theme.prefix');
     $queried = get_queried_object();
+    $contextType = is_search() ? 'search' : (is_product_taxonomy() ? 'taxonomy' : 'shop');
     $params = [
         'ajaxUrl' => admin_url('admin-ajax.php'),
         'nonce' => wp_create_nonce("{$pfx}_nonce"),
         'action' => "{$pfx}_filter_products",
+        'contextUrl' => sobe_current_request_url(),
+        'contextType' => $contextType,
         'removeLabel' => __('Remove filter', 'sobe'),
         'removeSymbol' => '&times;',
         'errorText' => __('Something went wrong. Please refresh the page and try again.', 'sobe'),
@@ -187,6 +190,7 @@ function sobe_catalog_filter_params(): array
     if (is_product_taxonomy() && isset($queried->taxonomy, $queried->slug)) {
         $params['archiveTaxonomy'] = $queried->taxonomy;
         $params['archiveTerm'] = $queried->slug;
+        $params['queriedObjectId'] = (int) ($queried->term_id ?? 0);
     }
 
     return $params;
@@ -199,5 +203,5 @@ add_action('wp_enqueue_scripts', function (): void {
     }
 
     $params = sobe_catalog_filter_params();
-    echo '<script>window.sobeCatalogParams = '.\wp_json_encode($params).';</script>';
+    echo '<script>window.sobeCatalogParams = '.\wp_json_encode($params, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT).';</script>';
 }, 20);

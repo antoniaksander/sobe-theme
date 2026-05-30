@@ -13,6 +13,20 @@ function sobe_navigation_label(string $location, string $fallback): string
     return $label !== '' ? $label : $fallback;
 }
 
+/**
+ * Get the front-end URL for the current request, even in AJAX context.
+ *
+ * In AJAX, the request URI is admin-ajax.php, so use the referer when present.
+ */
+function sobe_current_request_url(): string
+{
+    if (wp_doing_ajax()) {
+        return wp_get_referer() ?: home_url('/');
+    }
+
+    return home_url(add_query_arg(null, null));
+}
+
 function sobe_navigation_menu(array $args = []): string
 {
     $location = $args['theme_location'] ?? 'primary_navigation';

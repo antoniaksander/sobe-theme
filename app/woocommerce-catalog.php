@@ -38,6 +38,44 @@ if (! function_exists('App\sobe_catalog_pagination_html')) {
     }
 }
 
+if (! function_exists('App\sobe_load_more_params')) {
+    function sobe_load_more_params(): array
+    {
+        $pfx = config('theme.prefix');
+        $ordering = WC()->query ? WC()->query->get_catalog_ordering_args() : [];
+        $queried = get_queried_object();
+        $isTaxonomy = is_product_taxonomy();
+        $contextType = is_search() ? 'search' : ($isTaxonomy ? 'taxonomy' : 'shop');
+        // WC may return a space-separated compound orderby (e.g. 'menu_order title'); take the first token only.
+        $orderby_raw = explode(' ', $ordering['orderby'] ?? 'menu_order')[0];
+        $orderby = sanitize_key($orderby_raw) ?: 'menu_order';
+
+        $params = [
+            'ajaxUrl' => admin_url('admin-ajax.php'),
+            'ajaxAction' => "{$pfx}_load_more_products",
+            'nonce' => wp_create_nonce("{$pfx}_load_more"),
+            'contextUrl' => sobe_current_request_url(),
+            'contextType' => $contextType,
+            'historyEnabled' => (bool) get_theme_mod("{$pfx}_pagination_history", false),
+            'taxonomy' => $isTaxonomy ? sanitize_key($queried->taxonomy ?? '') : '',
+            'termId' => $isTaxonomy ? (int) ($queried->term_id ?? 0) : 0,
+            'search' => sanitize_text_field(get_search_query()),
+            'orderby' => $orderby,
+            'loadingText' => __('Loading products…', 'sobe'),
+            'loadedText' => __('More products loaded', 'sobe'),
+            'errorText' => __('Failed to load more products. Please refresh the page.', 'sobe'),
+        ];
+
+        if ($isTaxonomy && isset($queried->taxonomy, $queried->slug)) {
+            $params['archiveTaxonomy'] = $queried->taxonomy;
+            $params['archiveTerm'] = $queried->slug;
+            $params['queriedObjectId'] = (int) ($queried->term_id ?? 0);
+        }
+
+        return $params;
+    }
+}
+
 
 
 add_filter('loop_shop_columns', function (): int {
@@ -103,26 +141,8 @@ add_action('wp_enqueue_scripts', function (): void {
 
     $pfx = config('theme.prefix');
     $mode = get_theme_mod("{$pfx}_shop_pagination_mode", 'paginated');
-    $ordering = WC()->query ? WC()->query->get_catalog_ordering_args() : [];
-    $queried = get_queried_object();
-    // WC may return a space-separated compound orderby (e.g. 'menu_order title'); take the first token only.
-    $orderby_raw = explode(' ', $ordering['orderby'] ?? 'menu_order')[0];
-    $orderby = sanitize_key($orderby_raw) ?: 'menu_order';
-
-    $params = [
-        'ajaxUrl' => admin_url('admin-ajax.php'),
-        'ajaxAction' => "{$pfx}_load_more_products",
-        'nonce' => wp_create_nonce("{$pfx}_load_more"),
-        'historyEnabled' => (bool) get_theme_mod("{$pfx}_pagination_history", false),
-        'taxonomy' => is_product_taxonomy() ? sanitize_key($queried->taxonomy ?? '') : '',
-        'termId' => is_product_taxonomy() ? (int) ($queried->term_id ?? 0) : 0,
-        'search' => sanitize_text_field(get_search_query()),
-        'orderby' => $orderby,
-        'loadingText' => __('Loading products…', 'sobe'),
-        'loadedText' => __('More products loaded', 'sobe'),
-        'errorText' => __('Failed to load more products. Please refresh the page.', 'sobe'),
-    ];
-    echo '<script>window.sobeLoadMoreParams = '.\wp_json_encode($params).';</script>';
+    $params = sobe_load_more_params();
+    echo '<script>window.sobeLoadMoreParams = '.\wp_json_encode($params, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT).';</script>';
 
     if ($mode !== 'load-more') {
         return;

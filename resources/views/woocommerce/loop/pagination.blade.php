@@ -55,6 +55,14 @@
       @endif
     </nav>
   @elseif ($mode === 'load-more' && $current < $total)
+    @php
+      $loadMoreParams = function_exists('App\\sobe_load_more_params')
+        ? \App\sobe_load_more_params()
+        : null;
+    @endphp
+    @if ($loadMoreParams)
+      <script type="application/json" data-sobe-params="load-more">{!! wp_json_encode($loadMoreParams, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+    @endif
     <div class="sobe-load-more-sentinel"
          data-load-more-sentinel
          data-page="{{ $current + 1 }}"

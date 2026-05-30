@@ -19,16 +19,14 @@
   @php return; @endphp
 @endif
 
-@if ($catalogFilterParams)
-  <script>
-    window.sobeCatalogParams = window.sobeCatalogParams || {!! wp_json_encode($catalogFilterParams) !!};
-  </script>
-@endif
-
 <div
   class="sobe-catalog-filters-block"
   data-catalog-filters-instance="{{ esc_attr($instanceId) }}"
 >
+  @if ($catalogFilterParams)
+    <script type="application/json" data-sobe-params="catalog-filters">{!! wp_json_encode($catalogFilterParams, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+  @endif
+
   <button
     class="sobe-filter-mobile-trigger"
     data-catalog-filters-open

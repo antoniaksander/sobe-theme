@@ -12,6 +12,7 @@
  *   getAction() → current AJAX action string | null
  *   getNonce()  → current AJAX nonce string | null
  *   subscribe(fn) → returns unsubscribe function
+ *   reset()     → clears all state without notifying
  *   _reset()    → test-only teardown; clears all state without notifying
  */
 
@@ -36,9 +37,13 @@ export function subscribe(fn) {
   return () => _subs.delete(fn);
 }
 
-export function _reset() {
+export function reset() {
   _state  = null;
   _action = null;
   _nonce  = null;
   _subs.clear();
+}
+
+export function _reset() {
+  reset();
 }
