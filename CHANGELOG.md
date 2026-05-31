@@ -8,11 +8,54 @@
 
 ### Added
 
-- None yet.
+- Added module lifecycle registry (`resources/js/sobe-reinit.js`) for
+  coordinating init/destroy of frontend modules across page navigations or AJAX
+  content replacement. Modules register via
+  `registerReinit(name, { init, destroy })`; the page lifecycle calls
+  `destroyPage()` and `initPage(root)` at the appropriate moments.
+- Added DOM-scoped page params helper (`resources/js/dom-params.js`)
+  implementing a script-tag-based pattern: PHP emits per-page params as JSON
+  script tags
+  (`<script type="application/json" data-sobe-params="{module}">`) inside the
+  swappable container; JS reads with `findParamScript`, `readParams`, and
+  `isCurrentContext` helpers. Includes `contextUrl` stale detection.
+- Added body class merge helper (`resources/js/body-class-merge.js`) for
+  merging incoming page body classes while preserving runtime classes. Handles
+  `admin-bar`, `logged-in`, and the mutually exclusive `customize-support` /
+  `no-customize-support` pair.
+- Added shared `App\sobe_current_request_url()` PHP helper (in
+  `app/helpers.php`) that returns the front-end URL even in AJAX context (uses
+  `wp_get_referer()` when `wp_doing_ajax()`).
+
+### Changed
+
+- Refactored five block view scripts (`faq`, `product-carousel`,
+  `reviews-slider`, `our-brands`, `product-categories-grid`) to a lifecycle
+  pattern with named `init`/`destroy` exports, WeakMap-keyed instance tracking,
+  and `AbortController` for element-scoped listeners. `DOMContentLoaded`
+  fallback retained for initial page load.
+- Scoped page-content animations in `resources/js/animations.js` to
+  `gsap.context()` with explicit destroy via `context.revert()`. Persistent
+  shell animations (sticky header) remain outside the context and survive page
+  transitions. `initAnimationBus()` is now additive on re-call rather than
+  destructive.
+- Refactored `resources/blocks/sobe/catalog-filters/view.js` and
+  `resources/js/shop-load-more.js` to the lifecycle pattern with full teardown:
+  moved-DOM restoration, fetch abort via `AbortController`, observer
+  disconnect, `noUiSlider` destroy, `gsap.context` revert, debounce timer
+  cleanup, and filter-store reset. Page-local params now emitted as DOM JSON
+  script tags inside the swappable container in addition to existing window
+  globals (legacy fallback retained for backward compatibility).
 
 ### Fixed
 
 - None yet.
+
+### Notes
+
+- No user-visible behavior changes on hard navigation. The lifecycle
+  infrastructure is in place for an upcoming opt-in page transitions feature
+  that will be introduced in a separate change.
 
 ## v2.3.0 - 2026-05-21
 
