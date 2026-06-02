@@ -321,6 +321,28 @@ Common symptoms:
 | Module state leaks across pages. | `destroy()` is not cleaning up all state. Check `AbortController` usage, observers, timers, third-party instances, and moved DOM. |
 | Console warning about stale context. | Strategy C `contextUrl` does not match the current page. The module skips re-init rather than running with stale data. Check where PHP emits the params and make sure it uses `App\sobe_current_request_url()`. |
 
+## History API Integration
+
+When transitions are enabled, modules that update browser history via
+`pushState` or `replaceState` should preserve Swup's history state structure.
+Swup's `skipPopStateHandling` default ignores popstate events whose
+`state.source` is not `'swup'`, so unmarked history entries break
+back-navigation.
+
+When `window.sobeSwup` is defined, write history entries like this:
+
+```js
+const targetUrl = '/some/url';
+const swupState = window.sobeSwup
+  ? { ...(history.state ?? {}), source: 'swup', url: targetUrl }
+  : (history.state ?? {});
+history.pushState(swupState, '', targetUrl);
+```
+
+This pattern is already applied in the bundled `catalog-filters` block when
+emitting filtered URLs. Forks that introduce new modules with their own
+client-side URL updates should follow the same pattern.
+
 ## Off-By-Default Rationale
 
 Page transitions are a meaningful UX and integration change. Forks pulling
