@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+### Fixed
+
+- Reveal animations gated by `ScrollTrigger` not firing on browser
+  back-navigation. The page transitions engine now refreshes `ScrollTrigger`
+  after `page:view`, deferred until scroll restoration completes.
+- `catalog-filters` block losing Swup history integration when emitting
+  filtered URLs. `pushState` calls now preserve Swup's history state structure
+  (`source: 'swup'`) when `window.sobeSwup` is defined, so back-navigation over
+  filter URLs triggers a Swup visit instead of being ignored.
+
+## v2.4.0 - 2026-06-02
+
 ### Breaking
 
 - None yet.
