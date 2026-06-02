@@ -7,10 +7,22 @@ import { initAnimationBus, initStickyHeader } from './animations.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const storedTheme = localStorage.getItem('theme');
+const themeConfig = window.sobeThemeConfig ?? {};
+const allowedColorModes = ['light', 'dark', 'system'];
+const defaultColorMode = allowedColorModes.includes(themeConfig.defaultColorMode)
+  ? themeConfig.defaultColorMode
+  : 'light';
+const darkModeToggleEnabled = themeConfig.darkModeToggleEnabled === true;
+const storedTheme = darkModeToggleEnabled ? localStorage.getItem('theme') : null;
 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+const defaultModePrefersDark =
+  defaultColorMode === 'dark' ||
+  (defaultColorMode === 'system' && prefersDark);
 
-if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+if (
+  storedTheme === 'dark' ||
+  (!storedTheme && defaultModePrefersDark)
+) {
   document.documentElement.classList.add('dark');
 }
 

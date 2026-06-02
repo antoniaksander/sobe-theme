@@ -22,6 +22,45 @@ if (! class_exists('WooCommerce')) {
 
 }
 
+if (! function_exists('App\sobe_product_brand_taxonomy')) {
+    /**
+     * Detect the registered brand taxonomy across common WooCommerce brand plugins.
+     * Tries 'product_brand' (WooCommerce Brands), 'brand' (YITH Brands), and
+     * 'pa_brand' (WC attribute taxonomy) before falling back to 'product_brand'.
+     */
+    function sobe_product_brand_taxonomy(): string
+    {
+        $candidates = (array) apply_filters('sobe/product_brand_taxonomy_candidates', [
+            'product_brand',
+            'brand',
+            'pa_brand',
+        ]);
+
+        foreach ($candidates as $taxonomy) {
+            if (taxonomy_exists((string) $taxonomy)) {
+                return (string) $taxonomy;
+            }
+        }
+
+        return 'product_brand';
+    }
+}
+
+if (! function_exists('App\sobe_current_products_page')) {
+    /**
+     * Return the current products page number from any of the three $_GET keys
+     * WooCommerce uses across different pagination contexts.
+     *
+     * - 'paged'        — standard WP archive / shop page
+     * - 'product-page' — WooCommerce shortcode pagination
+     * - 'product_page' — older WC / AJAX context
+     */
+    function sobe_current_products_page(): int
+    {
+        return max(1, (int) ($_GET['paged'] ?? $_GET['product-page'] ?? $_GET['product_page'] ?? 1));
+    }
+}
+
 if (! function_exists('App\sobe_catalog_pagination_html')) {
     function sobe_catalog_pagination_html(): string
     {

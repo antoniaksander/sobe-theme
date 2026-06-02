@@ -1,7 +1,16 @@
 @extends('layouts.app')
 
 @section('content')
-  @include('partials.page-header')
+  @php
+    global $wp_query;
+
+    $searchQuery  = get_search_query();
+    $isWooCommerce = class_exists('WooCommerce');
+    $totalPages   = max(1, (int) $wp_query->max_num_pages);
+    $currentPage  = max(1, (int) get_query_var('paged'));
+    $prevUrl      = $currentPage > 1 ? get_pagenum_link($currentPage - 1) : null;
+    $nextUrl      = $currentPage < $totalPages ? get_pagenum_link($currentPage + 1) : null;
+  @endphp
 
   @if (! have_posts())
     <section class="py-16">
@@ -55,39 +64,56 @@
     <section class="py-12">
       <div class="max-w-standard mx-auto px-6 lg:px-8">
 
-        {{-- Header row: count + re-search form --}}
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        {{-- Header: title + result count --}}
+        <header class="mb-8">
+          <h1 class="text-2xl font-semibold text-heading mb-1">
+            @if ($searchQuery)
+              {!! sprintf(__('Results for "%s"', 'sobe'), esc_html($searchQuery)) !!}
+            @else
+              {!! __('Search results', 'sobe') !!}
+            @endif
+          </h1>
           <p class="text-sm text-text-muted">
             {!! sprintf(__('Showing %1$d results for "%2$s"', 'sobe'),
-              $wp_query->found_posts, get_search_query()) !!}
+              $wp_query->found_posts, esc_html($searchQuery)) !!}
           </p>
-          <div class="max-w-xs w-full">
-            {!! get_search_form(false) !!}
-          </div>
-        </div>
+        </header>
 
-        {{-- Results grid --}}
-        <div class="search-results-grid">
-          @while(have_posts()) @php the_post(); @endphp
-            @if(get_post_type() === 'product')
-              @include('partials.search-result-product')
-            @elseif(get_post_type() === 'post')
-              @include('partials.search-result-post')
-            @else
-              @include('partials.search-result-page')
-            @endif
-          @endwhile
+        {{-- Results grid — wrapped in .woocommerce so product cards pick up WC styles --}}
+        <div class="{{ $isWooCommerce ? 'woocommerce' : '' }}">
+          <ul class="products search-results-grid">
+            @while(have_posts()) @php the_post(); @endphp
+              @if(get_post_type() === 'product')
+                @include('partials.search-result-product')
+              @elseif(get_post_type() === 'post')
+                @include('partials.search-result-post')
+              @else
+                @include('partials.search-result-page')
+              @endif
+            @endwhile
+          </ul>
         </div>
 
         {{-- Pagination --}}
-        <div class="mt-12">
-          {!! get_the_posts_pagination([
-            'mid_size'  => 2,
-            'prev_text' => '←',
-            'next_text' => '→',
-            'class'     => 'sobe-wp-pagination',
-          ]) !!}
-        </div>
+        @if ($totalPages > 1)
+          <nav class="sobe-pagination mt-12" aria-label="{{ __('Search pagination', 'sobe') }}">
+            @if ($prevUrl)
+              <a class="sobe-pagination__arrow" href="{!! esc_url($prevUrl) !!}" rel="prev" aria-label="{{ __('Previous page', 'sobe') }}">←</a>
+            @else
+              <span class="sobe-pagination__arrow sobe-pagination__arrow--disabled" aria-disabled="true" aria-label="{{ __('Previous page', 'sobe') }}">←</span>
+            @endif
+
+            <span class="sobe-pagination__current">
+              {{ sprintf(__('Page %1$d of %2$d', 'sobe'), $currentPage, $totalPages) }}
+            </span>
+
+            @if ($nextUrl)
+              <a class="sobe-pagination__arrow" href="{!! esc_url($nextUrl) !!}" rel="next" aria-label="{{ __('Next page', 'sobe') }}">→</a>
+            @else
+              <span class="sobe-pagination__arrow sobe-pagination__arrow--disabled" aria-disabled="true" aria-label="{{ __('Next page', 'sobe') }}">→</span>
+            @endif
+          </nav>
+        @endif
 
       </div>
     </section>

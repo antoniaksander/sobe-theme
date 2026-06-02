@@ -14,6 +14,13 @@ return [
 
     'excerpt_length' => 15,
 
+    'color_mode' => [
+        // Allowed values: 'light', 'dark', or 'system' (follows OS preference).
+        // Used as the site default when the dark-mode toggle is disabled,
+        // and as the first-visit fallback when the toggle is enabled.
+        'default' => 'light',
+    ],
+
     'image_sizes' => [
         'hero' => [1920, 1080, true],
     ],
