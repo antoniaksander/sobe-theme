@@ -56,6 +56,17 @@ if (config?.enabled) {
   swup.hooks.on('page:view', () => {
     const container = document.querySelector(config.containerSelector || '#main');
     initPage(container || document);
+
+    // Refresh ScrollTrigger after scroll restoration completes. Without this,
+    // reveal animations gated by ScrollTrigger don't fire on back-navigation
+    // because triggers were created against the previous page's scroll positions.
+    // The double-defer (rAF + setTimeout 0) waits for the browser to paint the
+    // restored scroll position before re-measuring.
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        window.ScrollTrigger?.refresh();
+      }, 0);
+    });
   });
 
   swup.hooks.on('visit:end', () => {

@@ -368,7 +368,15 @@ function initCatalogFilters(instance, params) {
       syncChips(filterState);
       if (data.filters) updateFilterCounts(data);
       updateClearAllVisibility(filterState);
-      history.pushState({}, '', buildUrl(filterState));
+
+      // When Swup is active, preserve its history state structure so back-nav over
+      // filter URLs triggers a Swup visit. Without source: 'swup', Swup's default
+      // skipPopStateHandling will ignore the popstate event and the DOM won't update.
+      const filterUrl = buildUrl(filterState);
+      const swupState = window.sobeSwup
+        ? { ...(history.state ?? {}), source: 'swup', url: filterUrl }
+        : (history.state ?? {});
+      history.pushState(swupState, '', filterUrl);
 
       const shopMain = document.querySelector('.shop-main');
       const target = shopMain ?? grid;
