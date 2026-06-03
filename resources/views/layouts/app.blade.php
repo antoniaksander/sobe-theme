@@ -72,13 +72,15 @@
 
     @php do_action('get_header'); @endphp
 
+    @include('partials.announcement-bar')
+
     @if (function_exists('is_checkout') && is_checkout())
       @include('sections.checkout-header')
     @else
       {!! \App\sobe_render_layout_pattern('header', get_theme_mod(config('theme.prefix') . '_header_layout', 'header-1')) !!}
     @endif
 
-    <main id="main" class="relative z-10 pt-16">
+    <main id="main" class="relative z-10">
       @yield('content')
     </main>
 

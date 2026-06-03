@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @import './client-tokens.css';
+@import 'swiper/css/bundle';
 
 @source "../../app/**/*.php";
 @source "../**/*.blade.php";
@@ -256,27 +257,108 @@ body.single-post {
     z-index: 10;
   }
 
+  /* ── Announcement bar ── */
+
+  .announcement-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 60;
+    background-color: var(--c-announcement-bar-bg, #111827);
+    color: var(--c-announcement-bar-fg, #f9fafb);
+  }
+
+  .admin-bar .announcement-bar {
+    top: 32px;
+  }
+
+  @media screen and (max-width: 782px) {
+    .admin-bar .announcement-bar {
+      top: 46px;
+    }
+  }
+
+  .announcement-bar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.5rem;
+    padding: 0.5rem 3rem;
+    text-align: center;
+    position: relative;
+  }
+
+  .announcement-bar__text {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    transition: opacity 0.35s;
+  }
+
+  .announcement-bar__close {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.375rem;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+  }
+
+  .announcement-bar__close:hover {
+    opacity: 1;
+  }
+
+  .announcement-bar--ready {
+    transition: transform 0.3s ease;
+  }
+
+  .announcement-bar--scrolled {
+    transform: translateY(-100%);
+  }
+
   /* ── Site header ── */
 
   .site-header {
     position: fixed;
-    top: 0;
+    top: var(--bar-h, 0px);
     left: 0;
     width: 100%;
     z-index: 50;
     background-color: var(--c-surface-1);
     border-bottom: 1px solid var(--c-border);
     color: var(--c-text);
+    transition: top 0.3s ease;
   }
 
   .admin-bar .site-header {
-    top: 32px;
+    top: calc(32px + var(--bar-h, 0px));
   }
 
   @media screen and (max-width: 782px) {
     .admin-bar .site-header {
-      top: 46px;
+      top: calc(46px + var(--bar-h, 0px));
     }
+  }
+
+  #main {
+    padding-top: calc(4rem + var(--bar-h, 0px));
+  }
+
+  /* ── Suppress WooCommerce native store notice (replaced by .announcement-bar) ── */
+
+  .demo_store {
+    display: none !important;
   }
 
   /* ── Alpine.js FOUC prevention ── */

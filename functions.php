@@ -53,6 +53,7 @@ Application::configure()
 collect([
     'helpers',
     'appearance',
+    'store-notice',
     'page-transitions',
     'setup',
     'blocks',

@@ -41,4 +41,13 @@ return [
     // WooCommerce → Settings → Products → Product images.
     // Common values: '1 / 1' (square), '4 / 5' (portrait), '3 / 4' (portrait).
     'wc_gallery_aspect_ratio' => '1 / 1',
+
+    'announcement_bar' => [
+        // WooCommerce sites: the bar is driven by Customizer → WooCommerce → Store Notice.
+        //   Enable/disable via the "Enable store notice" toggle there.
+        //   Pipe-separated text in the notice field creates a multi-message slideshow.
+        // Non-WooCommerce sites: set enabled => true and add messages here instead.
+        'enabled'  => false,
+        'messages' => '', // e.g. 'Free shipping over $50 | Summer sale on now'
+    ],
 ];

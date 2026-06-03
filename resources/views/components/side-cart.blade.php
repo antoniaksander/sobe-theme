@@ -8,7 +8,7 @@
   window.dispatchEvent(new CustomEvent('open-cart')) from JS (AJAX add-to-cart).
   The root <html @open-cart.window> sets cartOpen = true in the app scope.
 --}}
-<div class="fixed inset-0 z-50 pointer-events-none">
+<div class="fixed inset-0 z-[400] pointer-events-none">
 
   {{-- Backdrop --}}
   <div
