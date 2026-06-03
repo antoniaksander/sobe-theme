@@ -67,8 +67,9 @@
     --}}
     <div
       class="flex-1 min-h-0 flex flex-col"
-      x-data="{ refresh() { const p = window.themeCartParams ?? {}; const nonce = p.storeApiNonce ?? ''; const action = p.ajaxAction ?? 'sobe_refresh_cart'; fetch((p.ajaxUrl ?? '{{ admin_url('admin-ajax.php') }}') + '?action=' + encodeURIComponent(action) + '&_wpnonce=' + encodeURIComponent(nonce), { credentials: 'same-origin' }).then(r => r.text()).then(html => { this.$el.innerHTML = html; if (window.Alpine) Alpine.initTree(this.$el) }) } }"
-      @cart-updated.window="setTimeout(() => refresh(), 100)"
+      x-data="sideCartRefresh"
+      data-fallback-ajax-url="{{ esc_url(admin_url('admin-ajax.php')) }}"
+      @cart-updated.window="scheduleRefresh()"
     >
       @include('partials.side-cart-content')
     </div>

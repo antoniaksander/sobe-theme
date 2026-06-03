@@ -4,6 +4,7 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initAnimationBus, initStickyHeader } from './animations.js';
+import './announcement-bar.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -482,6 +483,80 @@ Alpine.data('app', () => ({
   toggleDark() {
     this.dark = !this.dark;
     localStorage.setItem('theme', this.dark ? 'dark' : 'light');
+  },
+}));
+
+Alpine.data('sideCartRefresh', () => ({
+  destroyed: false,
+  fetchController: null,
+  refreshTimer: null,
+
+  get ajaxUrl() {
+    return (
+      window.themeCartParams?.ajaxUrl ||
+      this.$el.dataset.fallbackAjaxUrl ||
+      '/wp-admin/admin-ajax.php'
+    );
+  },
+
+  get ajaxAction() {
+    return window.themeCartParams?.ajaxAction || 'sobe_refresh_cart';
+  },
+
+  get nonce() {
+    return window.themeCartParams?.storeApiNonce || '';
+  },
+
+  scheduleRefresh() {
+    clearTimeout(this.refreshTimer);
+    this.refreshTimer = window.setTimeout(() => this.refresh(), 100);
+  },
+
+  destroy() {
+    this.destroyed = true;
+    clearTimeout(this.refreshTimer);
+    this.fetchController?.abort();
+  },
+
+  async refresh() {
+    this.fetchController?.abort();
+    this.fetchController = new AbortController();
+
+    const controller = this.fetchController;
+    const url = new URL(this.ajaxUrl, window.location.origin);
+
+    url.searchParams.set('action', this.ajaxAction);
+    url.searchParams.set('_wpnonce', this.nonce);
+
+    try {
+      const response = await fetch(url, {
+        credentials: 'same-origin',
+        signal: controller.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cart refresh failed with status ${response.status}.`);
+      }
+
+      const html = await response.text();
+
+      if (controller.signal.aborted || this.destroyed) {
+        return;
+      }
+
+      this.$el.innerHTML = html;
+      window.Alpine?.initTree(this.$el);
+    } catch (error) {
+      if (error.name === 'AbortError') {
+        return;
+      }
+
+      console.warn('[side-cart] Could not refresh cart content.', error);
+    } finally {
+      if (this.fetchController === controller) {
+        this.fetchController = null;
+      }
+    }
   },
 }));
 
