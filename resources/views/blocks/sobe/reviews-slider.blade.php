@@ -83,7 +83,7 @@
   }
 
   $wrapperAttrs = get_block_wrapper_attributes([
-    'class'               => 'sobe-reviews-slider',
+    'class'               => 'reviews-slider reviews-slider--sobe',
     'data-autoplay-delay' => (string) $autoplayDelay,
   ]);
   $view = apply_filters('sobe/reviews_slider/view', '', $slides, $attributes);
