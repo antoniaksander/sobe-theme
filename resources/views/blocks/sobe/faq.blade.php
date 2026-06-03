@@ -1,6 +1,6 @@
 @php
   $faqs = $attributes['faqs'] ?? [];
-  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'sobe-faq']);
+  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'faq faq--sobe']);
 @endphp
 
 <section {!! $wrapperAttrs !!} data-animate="fade-up">

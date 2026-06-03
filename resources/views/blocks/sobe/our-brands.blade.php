@@ -51,7 +51,7 @@
 
   $letters = array_keys($grouped);
 
-  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'sobe-our-brands !px-0']);
+  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'our-brands our-brands--sobe !px-0']);
   $grouped = apply_filters('sobe/our_brands/grouped', $grouped, $attributes);
   $view = apply_filters('sobe/our_brands/view', '', $grouped, $attributes);
 @endphp

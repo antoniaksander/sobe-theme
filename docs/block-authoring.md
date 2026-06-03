@@ -85,6 +85,43 @@ classes should be descriptive and not client-branded. Avoid prefixing every
 internal class with the namespace; favor the block's functional name, such as
 `.hero` or `.product-card`.
 
+### Render context
+
+`app/blocks.php` passes namespace-aware context into every block view, so a
+copied block never has to hard-code an upstream class name:
+
+| Variable | Example (`sobe/product-feature`) |
+| --- | --- |
+| `$blockBaseClass` | `product-feature` |
+| `$blockNamespaceClass` | `product-feature--sobe` |
+| `$blockNamespace` | `sobe` |
+| `$blockSlug` | `product-feature` |
+| `$blockName` | `sobe/product-feature` |
+| `$block` | the `WP_Block` instance (may be `null`) |
+
+### Copyable root-class pattern
+
+Use a **neutral component class plus a generated namespace modifier**, and keep
+inner element classes namespace-neutral (BEM-style):
+
+```php
+$componentClass = $blockBaseClass ?? 'product-feature';
+$namespaceClass = $blockNamespaceClass ?? "{$componentClass}--sobe";
+
+$wrapperAttrs = get_block_wrapper_attributes([
+    'class' => trim("{$componentClass} {$namespaceClass}"),
+]);
+```
+
+```html
+<h2 class="product-feature__heading ...">…</h2>
+```
+
+A client fork that copies the block to its own namespace then renders
+`product-feature product-feature--{client}` automatically, targets brand styles
+at `.product-feature--{client} .product-feature__heading`, and carries no stale
+upstream internals. `sobe/product-feature` is the reference implementation.
+
 ## Tests
 
 Manifest-wide metadata and save tests run automatically. Per-block tests are

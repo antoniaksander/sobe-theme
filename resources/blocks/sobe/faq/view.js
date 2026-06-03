@@ -1,7 +1,7 @@
 import { registerReinit } from '../../js/sobe-reinit.js';
 
 const instances = new WeakMap();
-const blockSelector = '.sobe-faq';
+const blockSelector = '.faq--sobe';
 
 function getBlocks(root = document) {
   const blocks = [...(root.querySelectorAll?.(blockSelector) || [])];
