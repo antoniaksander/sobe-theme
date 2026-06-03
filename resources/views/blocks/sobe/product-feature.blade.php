@@ -25,8 +25,12 @@
   $customBrand = trim($attributes['customBrandText'] ?? '');
 
   $displayBrand = $customBrand ?: $productBrand;
+  $componentClass = $blockBaseClass ?? 'product-feature';
+  $namespaceClass = $blockNamespaceClass ?? "{$componentClass}--sobe";
 
-  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'sobe-product-feature']);
+  $wrapperAttrs = get_block_wrapper_attributes([
+    'class' => trim("{$componentClass} {$namespaceClass}"),
+  ]);
   $view = apply_filters('sobe/product-feature/view', '', [
     'product' => $product,
     'productName' => $productName,
@@ -89,7 +93,7 @@
     <div class="{{ $reversed ? 'md:order-1' : '' }} flex flex-col gap-md">
 
       @if ($heading)
-        <h2 class="text-4xl font-heading font-bold text-heading leading-tight tracking-tight">
+        <h2 class="product-feature__heading text-4xl font-heading font-bold text-heading leading-tight tracking-tight">
           {!! wp_kses_post($heading) !!}
         </h2>
       @endif

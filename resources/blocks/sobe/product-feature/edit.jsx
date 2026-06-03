@@ -21,7 +21,9 @@ export default function Edit({ attributes, setAttributes }) {
     ctaType,
   } = attributes;
 
-  const blockProps = useBlockProps({ className: 'sobe-product-feature' });
+  const blockProps = useBlockProps({
+    className: 'product-feature product-feature--sobe',
+  });
 
   // FIXED: Fetch BOTH the list of products (for the dropdown)
   // and the single selected product (for the CTA fallback link).

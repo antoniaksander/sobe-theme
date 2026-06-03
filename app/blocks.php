@@ -30,8 +30,22 @@ add_action('init', function (): void {
 
         $blockArgs = [
             'editor_script' => "{$pfx}-{$blockHandle}",
-            'render_callback' => function ($attributes, $content = '') use ($viewName) {
-                return view($viewName, compact('attributes', 'content'))->render();
+            'render_callback' => function ($attributes, $content = '', $block = null) use ($viewName, $blockPath) {
+                [$blockNamespace, $blockSlug] = array_pad(explode('/', $blockPath, 2), 2, '');
+                $blockName = $blockNamespace && $blockSlug ? "{$blockNamespace}/{$blockSlug}" : $blockPath;
+                $blockBaseClass = $blockSlug ?: str_replace('/', '-', $blockPath);
+                $blockNamespaceClass = $blockNamespace ? "{$blockBaseClass}--{$blockNamespace}" : '';
+
+                return view($viewName, compact(
+                    'attributes',
+                    'content',
+                    'block',
+                    'blockName',
+                    'blockNamespace',
+                    'blockSlug',
+                    'blockBaseClass',
+                    'blockNamespaceClass'
+                ))->render();
             },
         ];
 
