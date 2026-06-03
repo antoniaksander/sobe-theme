@@ -7,6 +7,7 @@ Template for displaying product content in the loop.
 --}}
 
 @php
+  if (!class_exists('WooCommerce')) return;
   global $product;
   $currentView = 'woocommerce.content-product';
   $productCardView = $product instanceof \WC_Product

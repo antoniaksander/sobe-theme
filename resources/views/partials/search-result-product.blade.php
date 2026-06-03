@@ -1,4 +1,5 @@
 @php
+  if (!class_exists('WooCommerce')) return;
   global $product;
   $product = wc_get_product(get_the_ID());
 @endphp
