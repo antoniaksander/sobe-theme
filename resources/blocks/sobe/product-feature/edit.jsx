@@ -1,8 +1,21 @@
 const { useBlockProps, InspectorControls, RichText } = wp.blockEditor;
-const { PanelBody, PanelRow, SelectControl, TextControl, ToggleControl } =
-  wp.components;
+const {
+  ComboboxControl,
+  PanelBody,
+  PanelRow,
+  SelectControl,
+  TextControl,
+  ToggleControl,
+} = wp.components;
+const { useState } = wp.element;
 const { useSelect } = wp.data;
-const { __ } = wp.i18n; // <-- ADDED: Needed for translation strings
+const { __ } = wp.i18n;
+
+const decodeTitle = (value = '') => {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = value;
+  return textarea.value;
+};
 
 export default function Edit({ attributes, setAttributes }) {
   const {
@@ -24,15 +37,15 @@ export default function Edit({ attributes, setAttributes }) {
   const blockProps = useBlockProps({
     className: 'product-feature product-feature--sobe',
   });
+  const [productSearchTerm, setProductSearchTerm] = useState('');
 
-  // FIXED: Fetch BOTH the list of products (for the dropdown)
-  // and the single selected product (for the CTA fallback link).
   const { products, product } = useSelect(
     (select) => {
       const { getEntityRecords, getEntityRecord } = select('core');
       return {
         products: getEntityRecords('postType', 'product', {
-          per_page: 100,
+          per_page: 20,
+          search: productSearchTerm,
           status: 'publish',
         }),
         product: productId
@@ -40,22 +53,26 @@ export default function Edit({ attributes, setAttributes }) {
           : null,
       };
     },
-    [productId],
+    [productId, productSearchTerm],
   );
 
   const previewCtaUrl = ctaUrl || product?.link;
-  const selectedProduct = (products ?? []).find((p) => p.id === productId);
-
-  const productOptions = [
-    {
-      label: products === null ? __('Loading products…', 'sobe') : __('— Select a product —', 'sobe'),
-      value: '',
-    },
-    ...(products ?? []).map((p) => ({
-      label: p.title.rendered,
-      value: String(p.id),
-    })),
-  ];
+  const productOptions = (products ?? []).map((p) => ({
+    label: decodeTitle(p.title?.rendered) || `#${p.id}`,
+    value: String(p.id),
+  }));
+  const selectedProductOption = productId && product
+    ? {
+        label: decodeTitle(product.title?.rendered) || `#${productId}`,
+        value: String(productId),
+      }
+    : null;
+  const comboboxOptions =
+    selectedProductOption &&
+    !productOptions.some((entry) => entry.value === selectedProductOption.value)
+      ? [selectedProductOption, ...productOptions]
+      : productOptions;
+  const selectedProductTitle = decodeTitle(product?.title?.rendered || '');
 
   const isReversed = layout === 'product-right';
 
@@ -124,14 +141,15 @@ export default function Edit({ attributes, setAttributes }) {
         {/* ── Product ─────────────────────────────────────────────── */}
         <PanelBody title={__('Product', 'sobe')} initialOpen={true}>
           <PanelRow>
-            <SelectControl
+            <ComboboxControl
               label={__('Product', 'sobe')}
               value={productId ? String(productId) : ''}
-              options={productOptions}
+              options={comboboxOptions}
+              help={__('Search products by typing. Only matching products are loaded.', 'sobe')}
               onChange={(val) =>
                 setAttributes({ productId: parseInt(val, 10) || 0 })
               }
-              __next40pxDefaultSize
+              onFilterValueChange={(val) => setProductSearchTerm(val)}
               __nextHasNoMarginBottom
             />
           </PanelRow>
@@ -287,9 +305,9 @@ export default function Edit({ attributes, setAttributes }) {
                     fontSize: '1rem',
                   }}
                 >
-                  {products === null
+                  {products == null
                     ? 'Loading…'
-                    : selectedProduct?.title.rendered ?? `ID: ${productId}`}
+                    : selectedProductTitle || `ID: ${productId}`}
                 </p>
                 <p
                   style={{
