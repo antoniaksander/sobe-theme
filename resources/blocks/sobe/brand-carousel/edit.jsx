@@ -19,7 +19,7 @@ export default function Edit({ attributes, setAttributes }) {
       .catch(() => {}); // WooCommerce not active — degrade silently
   }, [useManualEntry]);
 
-  const blockProps = useBlockProps({ className: 'sobe-brand-carousel' });
+  const blockProps = useBlockProps({ className: 'brand-carousel brand-carousel--sobe' });
 
   function addBrandFromTerm(term) {
     if (brands.some((b) => b.wcTermId === term.id)) return; // already added

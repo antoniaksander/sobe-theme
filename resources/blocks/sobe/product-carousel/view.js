@@ -17,7 +17,7 @@ function init(root = document) {
   getBlocks(root).forEach((el) => {
     if (instances.has(el)) return;
 
-    const wrap = el.closest('.sobe-product-carousel');
+    const wrap = el.closest('.product-carousel--sobe');
     if (!wrap) return;
 
     const swiper = new Swiper(el, {

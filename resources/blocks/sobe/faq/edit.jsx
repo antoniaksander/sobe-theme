@@ -9,7 +9,7 @@ export default function Edit({ attributes, setAttributes }) {
   const { faqs } = attributes;
   const [openIndex, setOpenIndex] = useState(null);
 
-  const blockProps = useBlockProps({ className: 'sobe-faq' });
+  const blockProps = useBlockProps({ className: 'faq faq--sobe' });
 
   function updateFaq(index, patch) {
     setAttributes({ faqs: faqs.map((f, i) => (i === index ? { ...f, ...patch } : f)) });

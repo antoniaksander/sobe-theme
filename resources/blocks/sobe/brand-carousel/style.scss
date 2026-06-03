@@ -11,7 +11,7 @@
   }
 }
 
-.sobe-brand-carousel {
+.brand-carousel--sobe {
   overflow: hidden;
 }
 
@@ -30,7 +30,7 @@
 }
 
 // Pause animation when hovering the viewport (CSS-only, no JS required).
-.sobe-brand-carousel[data-pause-on-hover='true']
+.brand-carousel--sobe[data-pause-on-hover='true']
   .brand-carousel__viewport:hover
   .brand-carousel__track {
   animation-play-state: paused;

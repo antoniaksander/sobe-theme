@@ -1,5 +1,5 @@
 // ul.products must not fight Swiper's flex layout.
-.sobe-product-carousel.woocommerce ul.products {
+.product-carousel--sobe.woocommerce ul.products {
   display: flex;
   flex-wrap: nowrap;
   margin: 0;

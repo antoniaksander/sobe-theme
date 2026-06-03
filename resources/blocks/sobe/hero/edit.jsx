@@ -55,7 +55,7 @@ export default function Edit({ attributes, setAttributes }) {
   } = attributes;
 
   const blockProps = useBlockProps({
-    className: 'sobe-hero',
+    className: 'hero hero--sobe',
     style: {
       minHeight: height ?? '80vh',
       backgroundImage: backgroundImageUrl

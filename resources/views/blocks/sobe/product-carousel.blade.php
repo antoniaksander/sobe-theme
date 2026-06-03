@@ -96,7 +96,7 @@
 
   $products_query = new \WP_Query($args);
 
-  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'sobe-product-carousel woocommerce my-12']);
+  $wrapperAttrs = get_block_wrapper_attributes(['class' => 'product-carousel product-carousel--sobe woocommerce my-12']);
 
   $hasHeader = $heading || $paragraph || ($linkText && $linkUrl);
 @endphp

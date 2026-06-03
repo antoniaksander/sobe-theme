@@ -90,7 +90,7 @@
     : '';
 
   $wrapperAttrs = get_block_wrapper_attributes([
-    'class' => "sobe-hero {$alignmentClass} {$heightClass} relative overflow-hidden flex",
+    'class' => "hero hero--sobe {$alignmentClass} {$heightClass} relative overflow-hidden flex",
   ]);
 @endphp
 

@@ -53,7 +53,7 @@
   }
 
   $wrapperAttrs = get_block_wrapper_attributes([
-    'class' => 'sobe-brand-carousel',
+    'class' => 'brand-carousel brand-carousel--sobe',
     'style' => "--carousel-speed:{$speed}",
   ]);
   $items = apply_filters('sobe/brand_carousel/items', $items, $attributes);

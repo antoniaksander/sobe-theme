@@ -1,4 +1,4 @@
-.sobe-faq {
+.faq--sobe {
   --faq-spacing: 0.75rem;
   --faq-chevron-size: 1.5rem;
 
@@ -114,7 +114,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sobe-faq {
+  .faq--sobe {
     .faq__question-wrapper:hover .faq__question-text,
     .faq__question-text {
       transition: none;
