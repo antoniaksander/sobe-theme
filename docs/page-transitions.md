@@ -48,6 +48,14 @@ The system has three layers:
 On `visit:start`, the engine dispatches `sobe:shell-reset` and calls
 `destroyPage()`. On `page:view`, it calls `initPage(container)`, where
 `container` is the configured page-transition container, usually `#main`.
+If a visit is aborted or fetching the next page fails, the engine re-initializes
+the current container so modules destroyed at `visit:start` are restored.
+
+When transitions are enabled, the PHP wiring also enqueues registered block
+`view.js` module handles up front. WordPress normally emits those footer scripts
+only for blocks rendered in the current request; preloading the registered view
+modules prevents destination-page blocks from arriving after a Swup swap without
+their runtime code.
 
 Modules register with:
 
@@ -240,6 +248,10 @@ The engine excludes these URL patterns by default:
 - `/wp-json/`
 - `add-to-cart=`
 
+Path exclusions match exact paths and child path segments. For example, `/cart`
+matches `/cart` and `/cart/shipping`, but not `/cartridges`. Query exclusions
+with `=` match query parameters by key, and by value when a value is supplied.
+
 Customize the list with:
 
 ```php
@@ -247,6 +259,14 @@ add_filter('sobe/page_transitions/excluded_urls', function (array $patterns): ar
     $patterns[] = '/members-only/';
     return $patterns;
 });
+```
+
+Logged-in users are excluded by default because WordPress admin-bar contextual
+links can become stale when only `#main` is replaced. Forks may opt in after
+validating their admin-bar behavior:
+
+```php
+add_filter('sobe/page_transitions/allow_logged_in', '__return_true');
 ```
 
 Product detail pages are excluded by default. Enabling product detail
@@ -264,6 +284,8 @@ WooCommerce scripts globally or through an equivalent fork-owned strategy.
 | `sobe/page_transitions/excluded_urls` | filter | `array $patterns` | `array` | URL pattern strings listed in [Excluded Routes](#excluded-routes). |
 | `sobe/page_transitions/container_selector` | filter | `string $selector` | `string` | `#main` |
 | `sobe/page_transitions/preserve_body_classes` | filter | `array $classes` | `array` | `['admin-bar', 'logged-in']` |
+| `sobe/page_transitions/allow_logged_in` | filter | `bool $allow` | `bool` | `false`. Logged-in users are excluded unless a fork opts in. |
+| `sobe/page_transitions/enqueue_block_view_scripts` | filter | `bool $enqueue` | `bool` | `true`. Enqueues all registered block `view.js` handles while transitions are active. |
 
 Example:
 
@@ -318,6 +340,7 @@ Common symptoms:
 | Symptom | Likely cause |
 |---------|--------------|
 | Animations do not fire after transition. | The animation module is not registered with `registerReinit`, or old `data-animated` marks are blocking re-fire. Lifecycle-safe animation code should reset marks before re-initializing. |
+| Module stops working after a failed navigation. | The engine should re-run `initPage()` on `fetch:error`, `fetch:timeout`, and `visit:abort`. Check the console for module init errors. |
 | Module state leaks across pages. | `destroy()` is not cleaning up all state. Check `AbortController` usage, observers, timers, third-party instances, and moved DOM. |
 | Console warning about stale context. | Strategy C `contextUrl` does not match the current page. The module skips re-init rather than running with stale data. Check where PHP emits the params and make sure it uses `App\sobe_current_request_url()`. |
 

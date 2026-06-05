@@ -15,6 +15,10 @@ add_action('wp_enqueue_scripts', function (): void {
         return;
     }
 
+    if (is_user_logged_in() && ! (bool) apply_filters('sobe/page_transitions/allow_logged_in', false)) {
+        return;
+    }
+
     $excludedUrls = apply_filters('sobe/page_transitions/excluded_urls', [
         '/cart',
         '/checkout',
@@ -68,4 +72,22 @@ add_action('wp_enqueue_scripts', function (): void {
         'window.sobePageTransitionsConfig = '.wp_json_encode($scriptConfig, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT).';',
         'before'
     );
+
+    if (! (bool) apply_filters('sobe/page_transitions/enqueue_block_view_scripts', true)) {
+        return;
+    }
+
+    $manifestPath = resource_path('blocks/blocks-manifest.json');
+    $manifest = is_readable($manifestPath)
+        ? json_decode((string) file_get_contents($manifestPath), true)
+        : [];
+
+    foreach (array_keys(is_array($manifest) ? $manifest : []) as $blockPath) {
+        $blockHandle = str_replace('/', '-', (string) $blockPath);
+        $viewHandle = config('theme.prefix')."-{$blockHandle}-view";
+
+        if (wp_script_is($viewHandle, 'registered')) {
+            wp_enqueue_script($viewHandle);
+        }
+    }
 }, 30);

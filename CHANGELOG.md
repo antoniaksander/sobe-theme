@@ -11,6 +11,9 @@
   filtered URLs. `pushState` calls now preserve Swup's history state structure
   (`source: 'swup'`) when `window.sobeSwup` is defined, so back-navigation over
   filter URLs triggers a Swup visit instead of being ignored.
+- Page transitions now preload block view scripts, re-initialize the current
+  page after failed or aborted visits, skip logged-in users by default to avoid
+  stale admin-bar links, and match excluded routes by path/query boundaries.
 
 ## v2.4.0 - 2026-06-02
 

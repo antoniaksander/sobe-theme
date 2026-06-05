@@ -9,6 +9,7 @@ import SwupHeadPlugin from '@swup/head-plugin';
 import SwupScriptsPlugin from '@swup/scripts-plugin';
 import { destroyPage, initPage, markPageMounted } from './sobe-reinit.js';
 import { mergeBodyClasses } from './body-class-merge.js';
+import { shouldIgnoreTransitionVisit } from './page-transition-url.js';
 
 const config = window.sobePageTransitionsConfig;
 
@@ -31,11 +32,13 @@ if (config?.enabled) {
       'X-Requested-With': 'swup',
       Accept: 'text/html, application/xhtml+xml',
     },
-    ignoreVisit: (url) => {
-      const excluded = config.excludedUrls || [];
-      return excluded.some((pattern) => url.includes(pattern));
-    },
+    ignoreVisit: (url) => shouldIgnoreTransitionVisit(url, config.excludedUrls || []),
   });
+
+  const remountCurrentPage = () => {
+    const container = document.querySelector(config.containerSelector || '#main');
+    initPage(container || document);
+  };
 
   swup.hooks.on('visit:start', () => {
     document.dispatchEvent(new CustomEvent('sobe:shell-reset'));
@@ -72,6 +75,10 @@ if (config?.enabled) {
   swup.hooks.on('visit:end', () => {
     markPageMounted();
   });
+
+  swup.hooks.on('fetch:error', remountCurrentPage);
+  swup.hooks.on('fetch:timeout', remountCurrentPage);
+  swup.hooks.on('visit:abort', remountCurrentPage);
 
   if (typeof window !== 'undefined') {
     window.sobeSwup = swup;
