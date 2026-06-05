@@ -103,7 +103,7 @@
 
 - Native WooCommerce block styling is not included in v2.3.0. Client styling
   for native WooCommerce blocks belongs in the client repo.
-- Tested with WordPress 7.0.
+- Tested with WordPress 6.8.
 
 ## v2.2.1 - 2026-05-18
 
