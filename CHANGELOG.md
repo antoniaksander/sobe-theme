@@ -18,6 +18,8 @@
   guarded so customised pages are never clobbered, and it reuses WooCommerce's own
   canonical block markup. Filter `sobe/cart_migration/block_markup`; action
   `sobe/cart_migration/migrated`.
+- Security policy (`SECURITY.md`), Dependabot config (`.github/dependabot.yml`
+  for composer / npm / GitHub Actions), and a `composer test:php` (Pest) step in CI.
 
 ## v2.5.0 - 2026-06-05
 

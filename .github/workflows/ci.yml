@@ -51,6 +51,9 @@ jobs:
       - name: PHPStan
         run: composer analyse
 
+      - name: Pest (PHP unit tests)
+        run: composer test:php
+
       - name: Jest
         run: npm test
 
