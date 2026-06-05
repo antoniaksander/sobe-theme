@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+### Security
+
+- Updated Composer dependencies to resolve 7 advisories in transitive Symfony
+  components (`http-foundation`, `http-kernel`, `mime`, `polyfill-intl-idn`):
+  Symfony bumped to 8.1.0 and `polyfill-intl-idn` to 1.38.1. `composer audit`
+  reports no remaining advisories.
+
 ## v2.6.0 - 2026-06-05
 
 ### Added
