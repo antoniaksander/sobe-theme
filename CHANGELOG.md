@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+## v2.5.0 - 2026-06-05
+
+### Added
+
+- `make:block` scaffolder is now namespace-agnostic: it accepts any category
+  slug and emits neutral-root-class + namespace-modifier templates, so client
+  forks can scaffold blocks in their own namespace.
+
+### Changed
+
+- **Breaking (forks):** the catalog config key `theme.wc_columns.*` was renamed
+  to `theme.product_catalog.*` (and gained a `per_page` value) so Customizer
+  defaults and catalog readers share a single source of truth. **Forks must
+  rename this key in their own `config/theme.php` when syncing** — otherwise
+  catalog column/per-page defaults silently fall back to hard-coded values.
+- `sobe/example` is no longer registered by default; registration is gated
+  behind `config('theme.blocks.register_example')` (default `false`). The
+  manifest entry is retained on purpose — forks should keep it rather than
+  deleting it to hide the block.
+
 ### Fixed
 
 - Reveal animations gated by `ScrollTrigger` not firing on browser
