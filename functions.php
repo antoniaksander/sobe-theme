@@ -65,6 +65,7 @@ collect([
     'woocommerce-pdp',
     'woocommerce-filters',
     'security',
+    'seo',
     'setup-patterns',
     'setup-customizer',
     'setup-demo-layout',

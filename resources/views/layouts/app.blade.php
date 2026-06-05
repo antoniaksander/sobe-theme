@@ -56,6 +56,11 @@
         @endphp
         <script type="application/ld+json">{!! wp_json_encode($sobe_schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
       @endif
+      {{-- Non-WooCommerce structured data (Article / BreadcrumbList for posts and pages).
+           WooCommerce core already emits Product + BreadcrumbList on shop pages. --}}
+      @foreach (\App\sobe_seo_extra_schema_nodes() as $sobe_node)
+        <script type="application/ld+json">{!! wp_json_encode($sobe_node, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
+      @endforeach
     @endif
     @php wp_head(); @endphp
     @vite(['resources/css/app.css', 'resources/js/app.js'])
