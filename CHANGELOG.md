@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v2.6.0 - 2026-06-05
+
 ### Added
 
 - Baseline `Article` and `BreadcrumbList` structured data (JSON-LD) for regular
