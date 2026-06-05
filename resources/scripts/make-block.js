@@ -2,9 +2,9 @@
  * Block scaffold — creates all required files for a new custom block.
  *
  * Usage:  npm run make:block -- my-block-slug [--category=sobe-general]
- *         npm run make:block -- namespace/my-block-slug [--category=sobe-general]
+ *         npm run make:block -- namespace/my-block-slug [--category=namespace]
  *
- * Categories: sobe-general (default) | sobe-content | sobe-woocommerce | sobe-layout
+ * Default category: sobe-general for shorthand Sobe blocks, otherwise namespace.
  *
  * Creates:
  *   resources/blocks/{namespace}/{slug}/block.json
@@ -42,12 +42,12 @@ if (extra.length || !/^[a-z][a-z0-9_-]*$/.test(namespace) || !/^[a-z][a-z0-9-]*$
   process.exit(1);
 }
 
-const VALID_CATEGORIES = ['sobe-general', 'sobe-content', 'sobe-woocommerce', 'sobe-layout'];
 const categoryArg = process.argv.find((a) => a.startsWith('--category='));
-const category = categoryArg ? categoryArg.split('=')[1] : 'sobe-general';
+const defaultCategory = namespace === 'sobe' ? 'sobe-general' : namespace;
+const category = categoryArg ? categoryArg.split('=')[1] : defaultCategory;
 
-if (!VALID_CATEGORIES.includes(category)) {
-  console.error(`Error: unknown category "${category}".\nValid options: ${VALID_CATEGORIES.join(', ')}`);
+if (!/^[a-z][a-z0-9_-]*$/.test(category)) {
+  console.error('Error: category must be a lowercase block category slug.');
   process.exit(1);
 }
 
@@ -148,6 +148,14 @@ writeFileSync(`${BLOCK_DIR}/style.scss`,
 `// Frontend styles for the ${slug} block.
 // Prefer Tailwind utilities in the Blade template.
 // Only add CSS here for things Tailwind cannot express.
+
+.${slug} {
+  // Block base styles.
+}
+
+.${slug}--${namespace} {
+  // Namespace-specific overrides.
+}
 `);
 
 writeFileSync(`${BLOCK_DIR}/editor.scss`,
@@ -157,7 +165,12 @@ writeFileSync(`${BLOCK_DIR}/editor.scss`,
 writeFileSync(BLADE_PATH,
 `@php
   /** @var array \$attributes */
-  \$wrapperAttrs = get_block_wrapper_attributes();
+  \$componentClass = \$blockBaseClass ?? '${slug}';
+  \$namespaceClass = \$blockNamespaceClass ?? "{\$componentClass}--${namespace}";
+
+  \$wrapperAttrs = get_block_wrapper_attributes([
+    'class' => trim("{\$componentClass} {\$namespaceClass}"),
+  ]);
 @endphp
 
 <section {!! \$wrapperAttrs !!}>
