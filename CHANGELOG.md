@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+### Added
+
+- Baseline `Article` and `BreadcrumbList` structured data (JSON-LD) for regular
+  posts and pages (`app/seo.php`). WooCommerce already provides Product and
+  BreadcrumbList schema on shop pages, so this covers only non-WooCommerce
+  content to avoid duplicate markup. Skipped when a dedicated SEO plugin is
+  active; extend via the `sobe/seo/extra_schema` filter.
+
 ## v2.5.0 - 2026-06-05
 
 ### Added
