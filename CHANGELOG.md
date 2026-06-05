@@ -13,6 +13,11 @@
   for the catalog AJAX filter query builders (`App\WooCommerce\FilterHandler` —
   tax/meta query construction and result-count output). Run with
   `composer test:php`.
+- WP-CLI command `wp sobe migrate:cart-page` (supports `--dry-run`) that converts
+  a legacy `[woocommerce_cart]` shortcode cart page to the Cart block. Exact-match
+  guarded so customised pages are never clobbered, and it reuses WooCommerce's own
+  canonical block markup. Filter `sobe/cart_migration/block_markup`; action
+  `sobe/cart_migration/migrated`.
 
 ## v2.5.0 - 2026-06-05
 

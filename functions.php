@@ -66,6 +66,7 @@ collect([
     'woocommerce-filters',
     'security',
     'seo',
+    'cart-migration',
     'setup-patterns',
     'setup-customizer',
     'setup-demo-layout',

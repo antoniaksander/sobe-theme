@@ -12,6 +12,7 @@ parameters:
   scanFiles:
     - vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
     - vendor/php-stubs/woocommerce-stubs/woocommerce-packages-stubs.php
+    - vendor/php-stubs/wp-cli-stubs/wp-cli-stubs.php
 
   ignoreErrors:
     # Acorn/Laravel path helpers (resource_path, public_path, config) are runtime

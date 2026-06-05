@@ -21,6 +21,7 @@
     "laravel/pint": "^1.20",
     "pestphp/pest": "^4.7",
     "php-stubs/woocommerce-stubs": "^10.7",
+    "php-stubs/wp-cli-stubs": "^2.12",
     "phpstan/phpstan": "^2.1",
     "szepeviktor/phpstan-wordpress": "^2.0"
   },
