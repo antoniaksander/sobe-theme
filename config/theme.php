@@ -30,10 +30,11 @@ return [
         'container_selector' => '#main',
     ],
 
-    'wc_columns' => [
-        'mobile' => 1,
-        'tablet' => 3,
-        'desktop' => 3,
+    'product_catalog' => [
+        'mobile_columns' => 1,
+        'tablet_columns' => 3,
+        'desktop_columns' => 3,
+        'per_page' => 12,
     ],
 
     // Aspect ratio for the single-product Swiper gallery container.

@@ -147,9 +147,9 @@ add_filter('body_class', function (array $classes): array {
         $mobileColumns = (string) config('theme.product_catalog.mobile_columns', 1);
     }
 
-    $tabletColumns = get_theme_mod("{$pfx}_product_catalog_tablet_columns", '3');
+    $tabletColumns = get_theme_mod("{$pfx}_product_catalog_tablet_columns", (string) config('theme.product_catalog.tablet_columns', 3));
     if (! in_array($tabletColumns, ['1', '2', '3'], true)) {
-        $tabletColumns = '3';
+        $tabletColumns = (string) config('theme.product_catalog.tablet_columns', 3);
     }
 
     $desktopColumns = get_theme_mod("{$pfx}_product_catalog_desktop_columns", (string) config('theme.product_catalog.desktop_columns', 3));
@@ -251,7 +251,7 @@ $load_more_handler = function (): void {
     ob_start();
     if ($query->have_posts()) {
         wc_setup_loop([
-            'columns' => (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", 4),
+            'columns' => (int) get_theme_mod("{$pfx}_product_catalog_desktop_columns", config('theme.product_catalog.desktop_columns', 3)),
         ]);
         while ($query->have_posts()) {
             $query->the_post();

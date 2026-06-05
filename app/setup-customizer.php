@@ -152,9 +152,11 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
     ]);
 
     $wp_customize->add_setting("{$pfx}_product_catalog_mobile_columns", [
-        'default' => (string) config('theme.wc_columns.mobile', 1),
+        'default' => (string) config('theme.product_catalog.mobile_columns', 1),
         'sanitize_callback' => function ($value) {
-            return in_array($value, ['1', '2'], true) ? $value : '2';
+            $fallback = (string) config('theme.product_catalog.mobile_columns', 1);
+
+            return in_array($value, ['1', '2'], true) ? $value : $fallback;
         },
         'transport' => 'refresh',
     ]);
@@ -165,15 +167,17 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'section' => 'woocommerce_product_catalog',
         'type' => 'select',
         'choices' => [
-            '1' => __('1 item per row', 'sobe'),
-            '2' => __('2 items per row (Default)', 'sobe'),
+            '1' => __('1 item per row (Default)', 'sobe'),
+            '2' => __('2 items per row', 'sobe'),
         ],
     ]);
 
     $wp_customize->add_setting("{$pfx}_product_catalog_tablet_columns", [
-        'default' => (string) config('theme.wc_columns.tablet', 3),
+        'default' => (string) config('theme.product_catalog.tablet_columns', 3),
         'sanitize_callback' => function ($value) {
-            return in_array($value, ['1', '2', '3'], true) ? $value : '3';
+            $fallback = (string) config('theme.product_catalog.tablet_columns', 3);
+
+            return in_array($value, ['1', '2', '3'], true) ? $value : $fallback;
         },
         'transport' => 'refresh',
     ]);
@@ -191,9 +195,11 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
     ]);
 
     $wp_customize->add_setting("{$pfx}_product_catalog_desktop_columns", [
-        'default' => (string) config('theme.wc_columns.desktop', 3),
+        'default' => (string) config('theme.product_catalog.desktop_columns', 3),
         'sanitize_callback' => function ($value) {
-            return in_array($value, ['1', '2', '3', '4', '5', '6'], true) ? $value : '4';
+            $fallback = (string) config('theme.product_catalog.desktop_columns', 3);
+
+            return in_array($value, ['1', '2', '3', '4', '5', '6'], true) ? $value : $fallback;
         },
         'transport' => 'refresh',
     ]);
@@ -214,11 +220,12 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
     ]);
 
     $wp_customize->add_setting("{$pfx}_products_per_page", [
-        'default' => 12,
+        'default' => (int) config('theme.product_catalog.per_page', 12),
         'sanitize_callback' => function ($value) {
             $v = (int) $value;
+            $fallback = (int) config('theme.product_catalog.per_page', 12);
 
-            return ($v >= 4 && $v <= 48) ? $v : 12;
+            return ($v >= 4 && $v <= 48) ? $v : $fallback;
         },
         'transport' => 'refresh',
     ]);
