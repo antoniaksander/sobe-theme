@@ -17,7 +17,9 @@
     "roots/acorn": "^6.0"
   },
   "require-dev": {
+    "brain/monkey": "^2.7",
     "laravel/pint": "^1.20",
+    "pestphp/pest": "^4.7",
     "php-stubs/woocommerce-stubs": "^10.7",
     "phpstan/phpstan": "^2.1",
     "szepeviktor/phpstan-wordpress": "^2.0"
@@ -28,7 +30,10 @@
   "config": {
     "optimize-autoloader": true,
     "preferred-install": "dist",
-    "sort-packages": true
+    "sort-packages": true,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
   },
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -36,6 +41,7 @@
     "post-autoload-dump": [
       "Roots\\Acorn\\ComposerScripts::postAutoloadDump"
     ],
-    "analyse": "phpstan analyse --memory-limit=2G"
+    "analyse": "phpstan analyse --memory-limit=2G",
+    "test:php": "pest"
   }
 }

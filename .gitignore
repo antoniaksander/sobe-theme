@@ -11,3 +11,4 @@ CLAUDE.MD
 docs/v2-platform-plan.md
 .DS_Store
 docs/_internal/
+/.phpunit.cache

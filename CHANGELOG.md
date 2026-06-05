@@ -9,6 +9,10 @@
   BreadcrumbList schema on shop pages, so this covers only non-WooCommerce
   content to avoid duplicate markup. Skipped when a dedicated SEO plugin is
   active; extend via the `sobe/seo/extra_schema` filter.
+- PHP unit test harness (Pest + Brain Monkey) under `tests/php`, with coverage
+  for the catalog AJAX filter query builders (`App\WooCommerce\FilterHandler` —
+  tax/meta query construction and result-count output). Run with
+  `composer test:php`.
 
 ## v2.5.0 - 2026-06-05
 
