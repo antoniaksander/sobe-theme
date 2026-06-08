@@ -640,7 +640,15 @@ Alpine.plugin(focus);
 window.Alpine = Alpine;
 Alpine.start();
 
-gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
+const scheduleIdle = (fn) =>
+  'requestIdleCallback' in window
+    ? requestIdleCallback(fn, { timeout: 2000 })
+    : setTimeout(fn, 100);
+
+// Smooth scroll is a progressive enhancement: defer Lenis (and its per-frame
+// gsap.ticker callback) to idle so it never competes with first paint. All
+// window.lenis consumers are null-safe, so a late init degrades gracefully.
+scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
   const smoothScrollMobile = document.body.dataset.smoothScrollMobile;
   const isDesktopViewport = window.matchMedia('(min-width: 48rem)').matches;
   // (hover: hover) AND (pointer: fine) is only true for mouse/trackpad-primary
@@ -661,12 +669,7 @@ gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
     lenis.raf(time * 1000);
   });
   gsap.ticker.lagSmoothing(0);
-});
-
-const scheduleIdle = (fn) =>
-  'requestIdleCallback' in window
-    ? requestIdleCallback(fn, { timeout: 2000 })
-    : setTimeout(fn, 100);
+}));
 
 // Expose animation utilities for cross-bundle use (e.g. catalog-filters/view.js
 // managing gsap.context() across AJAX grid replacements).

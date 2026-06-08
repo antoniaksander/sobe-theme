@@ -19,6 +19,8 @@
   $ctaType   = in_array($ctaType, $allowedCtaTypes, true) ? $ctaType : 'btn-dark';
 
   $showImage  = $attributes['showProductImage'] ?? true;
+  $productImageId = $showImage ? (int) $product->get_image_id() : 0;
+  $productImageDims = $productImageId ? wp_get_attachment_image_src($productImageId, 'large') : null;
   $showTitle  = $attributes['showProductTitle'] ?? true;
   $showPrice  = $attributes['showProductPrice'] ?? true;
   $showBrand  = $attributes['showProductBrand'] ?? true;
@@ -57,6 +59,7 @@
             src="{{ esc_url($productImage) }}"
             alt="{{ esc_attr($productImageAlt) }}"
             class="w-full {{ $aspectClass }}"
+            @if($productImageDims) width="{{ (int) $productImageDims[1] }}" height="{{ (int) $productImageDims[2] }}" @endif
             loading="lazy"
             decoding="async"
           />

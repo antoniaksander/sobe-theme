@@ -1,105 +1,190 @@
 import Swiper from 'swiper';
-import { Navigation, Pagination, Thumbs, FreeMode } from 'swiper/modules';
+import { Navigation, Pagination, Thumbs, FreeMode, Manipulation } from 'swiper/modules';
+import { registerReinit } from './sobe-reinit.js';
 // CSS imported via woocommerce.css (which is enqueued by WP) — not here,
 // because Vite extracts JS-imported CSS into a separate file that wp_enqueue_script
 // does not automatically load.
 
-document.addEventListener('DOMContentLoaded', () => {
-  const isSafeHttpUrl = (value) => {
-    if (typeof value !== 'string' || value.length === 0) return false;
+const galleryInstances = new WeakMap();
 
-    try {
-      const url = new URL(value, window.location.origin);
-      return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-      return false;
-    }
-  };
+const isSafeHttpUrl = (value) => {
+  if (typeof value !== 'string' || value.length === 0) return false;
 
-  const createVariationSlide = ({ src, srcset, alt, full }) => {
-    const slide = document.createElement('div');
-    slide.className = 'swiper-slide';
-    slide.dataset.full = full;
+  try {
+    const url = new URL(value, window.location.origin);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+};
 
-    const img = document.createElement('img');
-    img.src = src;
-    if (srcset) {
-      img.srcset = srcset;
-    }
-    img.alt = alt;
-    img.loading = 'lazy';
+const createVariationSlide = ({ src, srcset, alt, full }) => {
+  const slide = document.createElement('div');
+  slide.className = 'swiper-slide';
+  slide.dataset.full = full;
 
-    slide.appendChild(img);
+  const img = document.createElement('img');
+  img.src = src;
+  if (srcset) {
+    img.srcset = srcset;
+  }
+  img.alt = alt;
+  img.loading = 'lazy';
 
-    return slide;
-  };
+  slide.appendChild(img);
 
-  // ── Quantity +/− buttons ──────────────────────────────────────────────────
-  const qtyWrapper = document.querySelector('form.cart .quantity');
-  if (qtyWrapper) {
-    const input = qtyWrapper.querySelector('input.qty');
-    if (input) {
-      const makeBtn = (label, sign) => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `qty-btn qty-${sign === '+' ? 'plus' : 'minus'}`;
-        btn.setAttribute('aria-label', label);
-        btn.textContent = sign;
-        return btn;
-      };
+  return slide;
+};
 
-      const minus = makeBtn('Decrease quantity', '−');
-      const plus = makeBtn('Increase quantity', '+');
+function getGalleryRoots(root = document) {
+  const roots = [];
 
-      minus.addEventListener('click', () => {
-        const min = parseFloat(input.min) || 1;
-        const step = parseFloat(input.step) || 1;
-        const val = parseFloat(input.value) || min;
-        if (val - step >= min) {
-          input.value = val - step;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
-
-      plus.addEventListener('click', () => {
-        const max = parseFloat(input.max) || Infinity;
-        const step = parseFloat(input.step) || 1;
-        const val = parseFloat(input.value) || 1;
-        if (!isFinite(max) || val + step <= max) {
-          input.value = val + step;
-          input.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-      });
-
-      qtyWrapper.insertBefore(minus, input);
-      qtyWrapper.appendChild(plus);
-    }
+  if (root?.matches?.('.pdp-gallery')) {
+    roots.push(root);
   }
 
-  const mainEl = document.getElementById('pdp-swiper-main');
-  const thumbEl = document.getElementById('pdp-swiper-thumbs');
-  if (!mainEl || !thumbEl) return;
+  root?.querySelectorAll?.('.pdp-gallery').forEach((gallery) => {
+    roots.push(gallery);
+  });
 
-  if (!mainEl.querySelectorAll('.swiper-slide').length) return;
+  return roots;
+}
 
-  const initSwiperGallery = () => {
-    // ── Swiper: Thumbs (must init first for sync) ───────────────────────────
-    const thumbsSwiper = new Swiper(thumbEl, {
-      modules: [FreeMode],
+function hasWooVariationFormInstance($, $form) {
+  if ($form.data('wc_variation_form')) {
+    return true;
+  }
+
+  const events = $._data?.($form[0], 'events') ?? {};
+  const hasHandler = Object.values(events).some((handlers) =>
+    handlers?.some?.((handler) => handler.namespace?.includes('wc-variation-form'))
+  );
+
+  if (hasHandler) {
+    $form.data('wc_variation_form', true);
+  }
+
+  return hasHandler;
+}
+
+function ensureVariationForm($, form) {
+  if (!form) {
+    return;
+  }
+
+  if (!$.fn.wc_variation_form) {
+    console.warn('[sobe product-gallery] $.fn.wc_variation_form is unavailable; reloading for a full WooCommerce PDP bootstrap.');
+    window.location.reload();
+    return;
+  }
+
+  const $form = $(form);
+
+  $form.on('wc_variation_form.sobePdpSwup', (_event, variationForm) => {
+    $form.data('wc_variation_form', variationForm || true);
+  });
+
+  if (!hasWooVariationFormInstance($, $form)) {
+    $form.wc_variation_form();
+    $form.data('wc_variation_form', true);
+  }
+
+  $form.trigger('check_variations');
+}
+
+function initQuantityButtons(form, state) {
+  const qtyWrapper = form?.querySelector('.quantity');
+  if (!qtyWrapper || qtyWrapper.querySelector('.qty-btn')) {
+    return;
+  }
+
+  const input = qtyWrapper.querySelector('input.qty');
+  if (!input) {
+    return;
+  }
+
+  const makeBtn = (label, sign) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `qty-btn qty-${sign === '+' ? 'plus' : 'minus'}`;
+    btn.setAttribute('aria-label', label);
+    btn.textContent = sign;
+    return btn;
+  };
+
+  const minus = makeBtn('Decrease quantity', '−');
+  const plus = makeBtn('Increase quantity', '+');
+  const { signal } = state.abortController;
+
+  minus.addEventListener('click', () => {
+    const min = parseFloat(input.min) || 1;
+    const step = parseFloat(input.step) || 1;
+    const val = parseFloat(input.value) || min;
+    if (val - step >= min) {
+      input.value = val - step;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }, { signal });
+
+  plus.addEventListener('click', () => {
+    const max = parseFloat(input.max) || Infinity;
+    const step = parseFloat(input.step) || 1;
+    const val = parseFloat(input.value) || 1;
+    if (!isFinite(max) || val + step <= max) {
+      input.value = val + step;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }, { signal });
+
+  qtyWrapper.insertBefore(minus, input);
+  qtyWrapper.appendChild(plus);
+  state.quantityButtons.push(minus, plus);
+}
+
+function initProductGallery(root = document) {
+  getGalleryRoots(root).forEach((galleryRoot) => {
+    if (galleryInstances.has(galleryRoot)) {
+      return;
+    }
+
+    const mainEl = galleryRoot.querySelector('#pdp-swiper-main');
+    const thumbEl = galleryRoot.querySelector('#pdp-swiper-thumbs');
+    const productRoot = galleryRoot.closest('.product');
+    const form = productRoot?.querySelector('form.cart') ?? document.querySelector('.single-product form.cart');
+
+    if (!mainEl || !thumbEl || !mainEl.querySelectorAll('.swiper-slide').length) {
+      return;
+    }
+
+    const state = {
+      galleryRoot,
+      mainEl,
+      thumbEl,
+      form,
+      abortController: new AbortController(),
+      mainSwiper: null,
+      thumbsSwiper: null,
+      variationSlideIndex: null,
+      originalPriceHTML: null,
+      quantityButtons: [],
+    };
+
+    initQuantityButtons(form, state);
+
+    state.thumbsSwiper = new Swiper(thumbEl, {
+      modules: [FreeMode, Manipulation],
       spaceBetween: 8,
       slidesPerView: 'auto',
       freeMode: true,
       watchSlidesProgress: true,
     });
 
-    // ── Swiper: Main slider ─────────────────────────────────────────────────
-    const mainSwiper = new Swiper(mainEl, {
-      modules: [Navigation, Pagination, Thumbs],
+    state.mainSwiper = new Swiper(mainEl, {
+      modules: [Navigation, Pagination, Thumbs, Manipulation],
       slidesPerView: 1.5,
       spaceBetween: 6,
       slidesPerGroupSkip: 1,
       slidesOffsetBefore: 16,
-      // centeredSlides: true,
       grabCursor: true,
       touchReleaseOnEdges: true,
       rewind: true,
@@ -114,29 +199,29 @@ document.addEventListener('DOMContentLoaded', () => {
         type: 'fraction',
       },
       thumbs: {
-        swiper: thumbsSwiper,
+        swiper: state.thumbsSwiper,
       },
     });
 
-    // ── PhotoSwipe bridge ───────────────────────────────────────────────────
     mainEl.style.cursor = 'zoom-in';
 
-    mainEl.addEventListener('click', (e) => {
-      const slide = e.target.closest('.swiper-slide');
+    mainEl.addEventListener('click', (event) => {
+      const slide = event.target.closest('.swiper-slide');
       if (!slide) return;
       if (
         typeof PhotoSwipe === 'undefined' ||
         typeof PhotoSwipeUI_Default === 'undefined'
-      )
+      ) {
         return;
+      }
 
       const slides = [
         ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
       ];
-      const items = slides.map((s) => {
-        const img = s.querySelector('img');
+      const items = slides.map((itemSlide) => {
+        const img = itemSlide.querySelector('img');
         return {
-          src: s.dataset.full,
+          src: itemSlide.dataset.full,
           w: img?.naturalWidth || 1800,
           h: img?.naturalHeight || 1800,
         };
@@ -146,31 +231,41 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!pswpEl) return;
 
       new PhotoSwipe(pswpEl, PhotoSwipeUI_Default, items, {
-        index: mainSwiper.realIndex,
+        index: state.mainSwiper.realIndex,
         bgOpacity: 0.9,
         shareEl: false,
       }).init();
-    });
+    }, { signal: state.abortController.signal });
 
-    // ── jQuery required for WC variation events ─────────────────────────────
-    const $ = window.jQuery;
-    if (!$) return;
+    bindVariationHandlers(state);
 
-    let variationSlideIndex = null;
+    galleryInstances.set(galleryRoot, state);
 
-    // Static price element — updated in-place on variation select so the price always
-    // appears in the correct position (after title/reviews, before swatches).
-    // The variation price inside .single_variation is hidden via CSS.
-    const staticPriceEl = document.querySelector(
-      '.pdp-summary p.price, .pdp-summary span.price',
-    );
-    let originalPriceHTML = null;
+    if (Object.hasOwn(window, '__sobeDebugPdpGalleryInstance')) {
+      window.__sobeDebugPdpGalleryInstance = state;
+    }
+  });
+}
 
-    $(document).off('found_variation.sobe').on('found_variation.sobe', '.variations_form', (_e, variation) => {
-      // Update static price with variation-specific price HTML
+function bindVariationHandlers(state) {
+  const $ = window.jQuery;
+  if (!$ || !state.form) return;
+
+  const { form } = state;
+  const $form = $(form);
+  const staticPriceEl = document.querySelector(
+    '.pdp-summary p.price, .pdp-summary span.price',
+  );
+
+  $form.off('.sobePdpSwup');
+  ensureVariationForm($, form);
+
+  $form
+    .on('found_variation.sobePdpSwup', (_event, variation) => {
       if (staticPriceEl && variation.price_html) {
-        if (originalPriceHTML === null)
-          originalPriceHTML = staticPriceEl.innerHTML;
+        if (state.originalPriceHTML === null) {
+          state.originalPriceHTML = staticPriceEl.innerHTML;
+        }
         staticPriceEl.innerHTML = variation.price_html;
       }
 
@@ -181,56 +276,85 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (!isSafeHttpUrl(src) || !isSafeHttpUrl(full)) return;
 
-      // Remove previously injected variation slide first
-      if (variationSlideIndex !== null) {
-        mainSwiper.removeSlide(variationSlideIndex);
-        thumbsSwiper.removeSlide(variationSlideIndex);
-        variationSlideIndex = null;
+      if (state.variationSlideIndex !== null) {
+        state.mainSwiper.removeSlide(state.variationSlideIndex);
+        state.thumbsSwiper.removeSlide(state.variationSlideIndex);
+        state.variationSlideIndex = null;
       }
 
-      // Reuse existing slide if image already in the gallery
       const slides = [
-        ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
+        ...state.mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
       ];
-      const existingIdx = slides.findIndex((s) => s.dataset.full === full);
+      const existingIdx = slides.findIndex((slide) => slide.dataset.full === full);
       if (existingIdx !== -1) {
-        mainSwiper.slideTo(existingIdx);
+        state.mainSwiper.slideTo(existingIdx);
         return;
       }
 
-      // Inject a temporary variation slide
       const srcset = variation.image.srcset || '';
       const alt = variation.image.alt || '';
-      const newIdx = mainSwiper.slides.length;
+      const newIdx = state.mainSwiper.slides.length;
 
-      mainSwiper.addSlide(
+      state.mainSwiper.addSlide(
         newIdx,
         createVariationSlide({ src, srcset, alt, full }),
       );
-      thumbsSwiper.addSlide(
+      state.thumbsSwiper.addSlide(
         newIdx,
         createVariationSlide({ src, srcset: '', alt, full: src }),
       );
 
-      variationSlideIndex = newIdx;
-      mainSwiper.slideTo(newIdx);
+      state.variationSlideIndex = newIdx;
+      state.mainSwiper.slideTo(newIdx);
     });
 
-    $(document).off('reset_data.sobe').on('reset_data.sobe', '.variations_form', () => {
-      // Restore original range price
-      if (staticPriceEl && originalPriceHTML !== null) {
-        staticPriceEl.innerHTML = originalPriceHTML;
-        originalPriceHTML = null;
+  $form
+    .on('reset_data.sobePdpSwup', () => {
+      if (staticPriceEl && state.originalPriceHTML !== null) {
+        staticPriceEl.innerHTML = state.originalPriceHTML;
+        state.originalPriceHTML = null;
       }
 
-      if (variationSlideIndex !== null) {
-        mainSwiper.removeSlide(variationSlideIndex);
-        thumbsSwiper.removeSlide(variationSlideIndex);
-        variationSlideIndex = null;
+      if (state.variationSlideIndex !== null) {
+        state.mainSwiper.removeSlide(state.variationSlideIndex);
+        state.thumbsSwiper.removeSlide(state.variationSlideIndex);
+        state.variationSlideIndex = null;
       }
-      mainSwiper.slideTo(0);
+      state.mainSwiper.slideTo(0);
     });
-  };
+}
 
-  initSwiperGallery();
+function destroyProductGallery() {
+  document.querySelectorAll('.pdp-gallery').forEach((galleryRoot) => {
+    const state = galleryInstances.get(galleryRoot);
+    if (!state) {
+      return;
+    }
+
+    state.abortController.abort();
+    window.jQuery?.(state.form).off('.sobePdpSwup');
+    state.mainSwiper?.destroy(true, true);
+    state.thumbsSwiper?.destroy(true, true);
+    state.quantityButtons.forEach((button) => button.remove());
+
+    if (
+      Object.hasOwn(window, '__sobeDebugPdpGalleryInstance') &&
+      window.__sobeDebugPdpGalleryInstance === state
+    ) {
+      window.__sobeDebugPdpGalleryInstance = null;
+    }
+
+    galleryInstances.delete(galleryRoot);
+  });
+}
+
+registerReinit('product-gallery', {
+  init: initProductGallery,
+  destroy: destroyProductGallery,
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  initProductGallery(document);
+});
+
+export { destroyProductGallery, initProductGallery };
