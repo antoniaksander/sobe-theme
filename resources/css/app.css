@@ -1,7 +1,13 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @import './client-tokens.css';
-@import 'swiper/css/bundle';
+/* Swiper: import only the modules used theme-wide (Navigation, Pagination,
+   Thumbs, FreeMode) instead of the full bundle, to cut global CSS weight. */
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+@import 'swiper/css/free-mode';
+@import 'swiper/css/thumbs';
 
 @source "../../app/**/*.php";
 @source "../**/*.blade.php";

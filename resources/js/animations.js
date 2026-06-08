@@ -55,6 +55,12 @@ function initPageAnimations(root = document) {
     if (type) el.dataset.animate = type;
   });
 
+  // Skip all animation setup (gsap.matchMedia + ScrollTrigger work + forced
+  // reflows) on roots with nothing to animate (cart, checkout, account, etc.).
+  if (!getScopedElements(root, '[data-animate]:not([data-animated])').length) {
+    return;
+  }
+
   gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
     const elements = getScopedElements(
       root,

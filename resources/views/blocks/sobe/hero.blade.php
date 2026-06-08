@@ -113,6 +113,7 @@
         alt="{{ esc_attr($imageAlt) }}"
         class="w-full h-full object-cover"
         loading="eager"
+        fetchpriority="high"
         decoding="async"
       />
       @if($darkOverlay)

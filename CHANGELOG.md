@@ -2,6 +2,29 @@
 
 ## Unreleased
 
+## v2.7.0 - 2026-06-08
+
+### Performance
+
+- Hero block (`sobe/hero`): the eager background image now sets `fetchpriority="high"`
+  so the browser prioritizes the LCP element.
+- Product feature block (`sobe/product-feature`): emit the product image's real
+  `width`/`height` from attachment metadata to reserve layout space and prevent CLS.
+- Trimmed the global Swiper CSS from the full bundle to only the modules used
+  theme-wide (core, navigation, pagination, free-mode, thumbs) — less CSS on every page.
+- Deferred Lenis smooth-scroll init (and its per-frame `gsap.ticker` callback) to
+  `requestIdleCallback` so it no longer competes with first paint; all `window.lenis`
+  consumers are null-safe.
+- `initPageAnimations` now early-returns on roots with no `[data-animate]` elements,
+  skipping the `gsap.matchMedia` + ScrollTrigger setup (and its forced reflows) on
+  pages like cart/checkout/account.
+
+### Fixed
+
+- `product-gallery.js` (PDP) is now reinit-aware (`registerReinit` with full teardown:
+  AbortController, Swiper destroy, jQuery `.off`), so the product gallery re-initializes
+  after Swup page navigations instead of only on a full page load.
+
 ## v2.6.1 - 2026-06-06
 
 ### Security
