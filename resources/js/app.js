@@ -662,6 +662,11 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
   lenis = new Lenis({
     duration: 1.2,
     easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    // Let any element with real overflow scroll (drawers, modals, side cart,
+    // catalog filter panels, etc.) scroll natively instead of Lenis hijacking
+    // the wheel. Lenis runs this check before its stop()-lock, so inner regions
+    // still scroll while an overlay has locked page scroll.
+    allowNestedScroll: true,
   });
   window.lenis = lenis;
 
