@@ -670,6 +670,12 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
   });
   window.lenis = lenis;
 
+  // Drive ScrollTrigger from Lenis's scroll so scroll-triggered reveals fire at
+  // the correct position under smooth scroll. Without this, ScrollTrigger relies
+  // only on native scroll events, which fire inconsistently while Lenis smooths
+  // the scroll — causing scroll-in reveals to intermittently not trigger.
+  lenis.on('scroll', ScrollTrigger.update);
+
   gsap.ticker.add((time) => {
     lenis.raf(time * 1000);
   });
