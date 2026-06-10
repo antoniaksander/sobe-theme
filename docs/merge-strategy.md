@@ -42,6 +42,7 @@ These changes can break client forks and need migration notes:
 - Create a sync branch from client `main`, merge `upstream/main` into that branch, and open a PR back to client `main`.
 - Expect merge conflicts. Resolve them by preserving upstream contracts and re-applying client-specific changes narrowly.
 - For `.gitignore`, keep the union of platform and client rules unless a rule is clearly obsolete.
+- For `package-lock.json`, do not trust a Git auto-merge: a merged lockfile can be textually valid but out of sync with `package.json` (e.g. a transitive dependency resolution dropped on one side), which fails `npm ci` in CI. Regenerate it with `npm install` and confirm `npm ci` succeeds before committing.
 - Run automated validation.
 - Browser-check Local before merging the sync PR to client `main`.
 
