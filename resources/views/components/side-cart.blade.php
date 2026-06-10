@@ -68,7 +68,7 @@
     <div
       class="flex-1 min-h-0 flex flex-col"
       x-data="sideCartRefresh"
-      data-fallback-ajax-url="{{ esc_url(admin_url('admin-ajax.php')) }}"
+      data-fallback-ajax-url="{!! esc_url(admin_url('admin-ajax.php')) !!}"
       @cart-updated.window="scheduleRefresh()"
     >
       @include('partials.side-cart-content')

@@ -34,7 +34,7 @@
             @foreach (\App\sobe_footer_fallback_links() as $link)
               @if (! empty($link['url']) && ! empty($link['label']))
                 <li>
-                  <a class="text-text-muted hover:text-text no-underline transition-colors duration-150" href="{{ esc_url($link['url']) }}">
+                  <a class="text-text-muted hover:text-text no-underline transition-colors duration-150" href="{!! esc_url($link['url']) !!}">
                     {{ $link['label'] }}
                   </a>
                 </li>

@@ -28,27 +28,27 @@
       }
     @endphp
     @if (! $sobe_seo_active)
-      <link rel="canonical" href="{{ esc_url($sobe_url) }}">
-      <meta name="description" content="{{ esc_attr($sobe_desc) }}">
-      <meta property="og:title" content="{{ esc_attr($sobe_title) }}">
-      <meta property="og:description" content="{{ esc_attr($sobe_desc) }}">
-      <meta property="og:url" content="{{ esc_url($sobe_url) }}">
+      <link rel="canonical" href="{!! esc_url($sobe_url) !!}">
+      <meta name="description" content="{!! esc_attr($sobe_desc) !!}">
+      <meta property="og:title" content="{!! esc_attr($sobe_title) !!}">
+      <meta property="og:description" content="{!! esc_attr($sobe_desc) !!}">
+      <meta property="og:url" content="{!! esc_url($sobe_url) !!}">
       <meta property="og:type" content="{{ $sobe_type }}">
-      <meta property="og:site_name" content="{{ esc_attr($sobe_site_name) }}">
+      <meta property="og:site_name" content="{!! esc_attr($sobe_site_name) !!}">
       @if ($sobe_image)
-        <meta property="og:image" content="{{ esc_url($sobe_image) }}">
-        <meta name="twitter:image" content="{{ esc_url($sobe_image) }}">
+        <meta property="og:image" content="{!! esc_url($sobe_image) !!}">
+        <meta name="twitter:image" content="{!! esc_url($sobe_image) !!}">
       @endif
       @if ($sobe_type === 'article')
         <meta property="article:published_time" content="{{ get_the_date('c') }}">
         <meta property="article:modified_time" content="{{ get_the_modified_date('c') }}">
         @if (get_the_author())
-          <meta property="article:author" content="{{ esc_attr(get_the_author()) }}">
+          <meta property="article:author" content="{!! esc_attr(get_the_author()) !!}">
         @endif
       @endif
       <meta name="twitter:card" content="summary_large_image">
-      <meta name="twitter:title" content="{{ esc_attr($sobe_title) }}">
-      <meta name="twitter:description" content="{{ esc_attr($sobe_desc) }}">
+      <meta name="twitter:title" content="{!! esc_attr($sobe_title) !!}">
+      <meta name="twitter:description" content="{!! esc_attr($sobe_desc) !!}">
       @if (is_front_page())
         @php
           $sobe_schema = ['@context' => 'https://schema.org', '@type' => 'Organization', 'name' => $sobe_site_name, 'url' => home_url('/')];

@@ -77,18 +77,18 @@
         @php $hasLink = !empty($item['link']); @endphp
         <div class="brand-carousel__item" role="listitem">
           @if($hasLink)
-            <a href="{{ esc_url($item['link']) }}" class="brand-carousel__link" rel="noopener">
+            <a href="{!! esc_url($item['link']) !!}" class="brand-carousel__link" rel="noopener">
           @endif
 
           @if($showImages && !empty($item['imageUrl']))
 <img
-  src="{{ esc_url($item['imageUrl']) }}"
-  alt="{{ esc_attr($item['imageAlt']) }}"
+  src="{!! esc_url($item['imageUrl']) !!}"
+  alt="{!! esc_attr($item['imageAlt']) !!}"
   class="brand-carousel__logo"
   loading="eager"
 />
           @else
-            <span class="brand-carousel__name">{{ esc_html($item['name']) }}</span>
+            <span class="brand-carousel__name">{!! esc_html($item['name']) !!}</span>
           @endif
 
           @if($hasLink)</a>@endif
@@ -100,18 +100,18 @@
         @php $hasLink = !empty($item['link']); @endphp
         <div class="brand-carousel__item" aria-hidden="true">
           @if($hasLink)
-            <a href="{{ esc_url($item['link']) }}" class="brand-carousel__link" rel="noopener" tabindex="-1">
+            <a href="{!! esc_url($item['link']) !!}" class="brand-carousel__link" rel="noopener" tabindex="-1">
           @endif
 
           @if($showImages && !empty($item['imageUrl']))
 <img
-  src="{{ esc_url($item['imageUrl']) }}"
-  alt="{{ esc_attr($item['imageAlt']) }}"
+  src="{!! esc_url($item['imageUrl']) !!}"
+  alt="{!! esc_attr($item['imageAlt']) !!}"
   class="brand-carousel__logo"
   loading="eager"
 />
           @else
-            <span class="brand-carousel__name">{{ esc_html($item['name']) }}</span>
+            <span class="brand-carousel__name">{!! esc_html($item['name']) !!}</span>
           @endif
 
           @if($hasLink)</a>@endif

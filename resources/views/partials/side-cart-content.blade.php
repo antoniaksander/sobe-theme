@@ -53,7 +53,7 @@
               <button
                 @click.prevent.stop="removeFromCart('{{ $cart_item_key }}')"
                 class="text-xs text-text-subtle hover:text-accent transition-colors duration-200 mt-auto w-fit remove_from_cart_button"
-                aria-label="{{ sprintf(__('Remove %s from cart', 'sobe'), esc_attr($product->get_name())) }}"
+                aria-label="{{ sprintf(__('Remove %s from cart', 'sobe'), $product->get_name()) }}"
               >
                 {{ __('Remove', 'sobe') }}
               </button>

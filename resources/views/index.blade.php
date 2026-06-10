@@ -37,7 +37,7 @@
             @endif
             <div class="sobe-post-row__body">
               @if(!empty($cats))
-                <span class="sobe-post-row__category">{{ esc_html($cats[0]->name) }}</span>
+                <span class="sobe-post-row__category">{!! esc_html($cats[0]->name) !!}</span>
               @endif
               <h2 class="sobe-post-row__title">
                 <a href="{{ get_permalink() }}">{!! get_the_title() !!}</a>

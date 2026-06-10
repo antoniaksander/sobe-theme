@@ -48,12 +48,12 @@
     <header class="sobe-product-categories-grid__header mb-8 px-4 md:px-0">
       @if ($heading !== '')
         <h2 class="text-2xl md:text-3xl font-bold text-heading m-0 leading-tight">
-          {{ esc_html($heading) }}
+          {!! esc_html($heading) !!}
         </h2>
       @endif
       @if ($paragraph !== '')
         <p class="text-text-muted mt-2 mb-0 max-w-prose">
-          {{ esc_html($paragraph) }}
+          {!! esc_html($paragraph) !!}
         </p>
       @endif
     </header>
@@ -64,22 +64,22 @@
       <button
         type="button"
         class="sobe-pc-grid-nav sobe-pc-grid-nav--prev"
-        aria-controls="{{ esc_attr($gridId) }}"
-        aria-label="{{ esc_attr(__('Previous category', 'sobe')) }}"
+        aria-controls="{!! esc_attr($gridId) !!}"
+        aria-label="{!! esc_attr(__('Previous category', 'sobe')) !!}"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
       <button
         type="button"
         class="sobe-pc-grid-nav sobe-pc-grid-nav--next"
-        aria-controls="{{ esc_attr($gridId) }}"
-        aria-label="{{ esc_attr(__('Next category', 'sobe')) }}"
+        aria-controls="{!! esc_attr($gridId) !!}"
+        aria-label="{!! esc_attr(__('Next category', 'sobe')) !!}"
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
       </button>
 
       <div class="swiper sobe-pc-grid-swiper">
-        <ul id="{{ esc_attr($gridId) }}" class="swiper-wrapper sobe-product-categories-grid__list">
+        <ul id="{!! esc_attr($gridId) !!}" class="swiper-wrapper sobe-product-categories-grid__list">
           @foreach ($categories as $cat)
             @php
               $hasImage = $cat['imageUrl'] !== '';
@@ -87,14 +87,14 @@
             @endphp
             <li class="swiper-slide sobe-pc-card {{ $hoverClass }}">
               <a
-                href="{{ esc_url($cat['link']) }}"
+                href="{!! esc_url($cat['link']) !!}"
                 class="sobe-pc-card__link focus-visible:outline-none"
               >
                 <span class="sobe-pc-card__media">
                   @if ($hasImage)
                     <img
-                      src="{{ esc_url($cat['imageUrl']) }}"
-                      alt="{{ esc_attr($cat['imageAlt']) }}"
+                      src="{!! esc_url($cat['imageUrl']) !!}"
+                      alt="{!! esc_attr($cat['imageAlt']) !!}"
                       class="sobe-pc-card__img"
                       loading="lazy"
                       decoding="async"
@@ -115,7 +115,7 @@
                       number_format_i18n($cat['count'])
                     ) }}
                   </span>
-                  <span class="sobe-pc-card__name">{{ esc_html($cat['name']) }}</span>
+                  <span class="sobe-pc-card__name">{!! esc_html($cat['name']) !!}</span>
                 </span>
               </a>
             </li>

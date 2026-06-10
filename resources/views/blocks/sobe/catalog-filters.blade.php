@@ -21,7 +21,7 @@
 
 <div
   class="sobe-catalog-filters-block"
-  data-catalog-filters-instance="{{ esc_attr($instanceId) }}"
+  data-catalog-filters-instance="{!! esc_attr($instanceId) !!}"
 >
   @if ($catalogFilterParams)
     <script type="application/json" data-sobe-params="catalog-filters">{!! wp_json_encode($catalogFilterParams, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
@@ -32,7 +32,7 @@
     data-catalog-filters-open
     type="button"
     aria-expanded="false"
-    aria-controls="{{ esc_attr($drawerId) }}"
+    aria-controls="{!! esc_attr($drawerId) !!}"
     hidden
   >
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-4" aria-hidden="true">
@@ -56,7 +56,7 @@
         <button
           class="sobe-filter-chip"
           data-remove-filter="product_cat"
-          data-remove-value="{{ esc_attr($activeCatSlug) }}"
+          data-remove-value="{!! esc_attr($activeCatSlug) !!}"
           aria-label="{{ __('Remove', 'sobe') }} {{ $catTerm->name }}"
         >
           {{ $catTerm->name }}
@@ -72,11 +72,11 @@
       @foreach ((array) $filterVal as $slug)
         <button
           class="sobe-filter-chip"
-          data-remove-filter="{{ esc_attr($filterKey) }}"
-          data-remove-value="{{ esc_attr($slug) }}"
-          aria-label="{{ __('Remove', 'sobe') }} {{ esc_html($slug) }}"
+          data-remove-filter="{!! esc_attr($filterKey) !!}"
+          data-remove-value="{!! esc_attr($slug) !!}"
+          aria-label="{{ __('Remove', 'sobe') }} {!! esc_html($slug) !!}"
         >
-          {{ esc_html($slug) }}
+          {!! esc_html($slug) !!}
           <span class="sobe-filter-chip__remove" aria-hidden="true">×</span>
         </button>
       @endforeach
@@ -141,11 +141,11 @@
               <input
                 type="radio"
                 name="product_cat"
-                value="{{ esc_attr($cat->slug) }}"
+                value="{!! esc_attr($cat->slug) !!}"
                 class="sobe-radio__input"
                 @if ($activeCatSlug === $cat->slug) checked @endif
               >
-              <span class="sobe-radio__label">{{ esc_html($cat->name) }}</span>
+              <span class="sobe-radio__label">{!! esc_html($cat->name) !!}</span>
               <span class="sobe-filter-count">({{ $cat->count }})</span>
             </label>
           </li>
@@ -178,12 +178,12 @@
             <label class="sobe-checkbox">
               <input
                 type="checkbox"
-                name="{{ esc_attr($brandsTaxonomy) }}[]"
-                value="{{ esc_attr($brand->slug) }}"
+                name="{!! esc_attr($brandsTaxonomy) !!}[]"
+                value="{!! esc_attr($brand->slug) !!}"
                 class="sobe-checkbox__input"
                 @if (in_array($brand->slug, $activeBrands, true)) checked @endif
               >
-              <span class="sobe-checkbox__label">{{ esc_html($brand->name) }}</span>
+              <span class="sobe-checkbox__label">{!! esc_html($brand->name) !!}</span>
               <span class="sobe-filter-count">({{ $brand->count }})</span>
             </label>
           </li>
@@ -201,23 +201,23 @@
       $activeVals = (array) ($activeFilters[$group->attribute_name] ?? []);
     @endphp
     <details class="sobe-accordion" @if (!$collapseByDefault) open @endif>
-      <summary class="sobe-accordion__trigger">{{ esc_html($group->attribute_label) }}</summary>
+      <summary class="sobe-accordion__trigger">{!! esc_html($group->attribute_label) !!}</summary>
       <div class="sobe-accordion__panel">
         @if ($group->attribute_type === 'color')
-          <div class="sobe-swatches" role="group" aria-label="{{ esc_attr($group->attribute_label) }}">
+          <div class="sobe-swatches" role="group" aria-label="{!! esc_attr($group->attribute_label) !!}">
             @foreach ($group->terms as $term)
               @php $hex = \App\sobe_get_swatch_value($term, $group->attribute_name); @endphp
               @if ($hex)
                 <label
                   class="sobe-swatch sobe-swatch--color {{ in_array($term->slug, $activeVals, true) ? 'is-active' : '' }}"
-                  style="--swatch-color: {{ esc_attr($hex) }}"
-                  title="{{ esc_attr($term->name) }}"
+                  style="--swatch-color: {!! esc_attr($hex) !!}"
+                  title="{!! esc_attr($term->name) !!}"
                 >
                   <input
                     type="checkbox"
                     class="sr-only"
-                    name="filter_{{ esc_attr($group->attribute_name) }}[]"
-                    value="{{ esc_attr($term->slug) }}"
+                    name="filter_{!! esc_attr($group->attribute_name) !!}[]"
+                    value="{!! esc_attr($term->slug) !!}"
                     @if (in_array($term->slug, $activeVals, true)) checked @endif
                   >
                 </label>
@@ -225,12 +225,12 @@
                 <label class="sobe-checkbox">
                   <input
                     type="checkbox"
-                    name="filter_{{ esc_attr($group->attribute_name) }}[]"
-                    value="{{ esc_attr($term->slug) }}"
+                    name="filter_{!! esc_attr($group->attribute_name) !!}[]"
+                    value="{!! esc_attr($term->slug) !!}"
                     class="sobe-checkbox__input"
                     @if (in_array($term->slug, $activeVals, true)) checked @endif
                   >
-                  <span class="sobe-checkbox__label">{{ esc_html($term->name) }}</span>
+                  <span class="sobe-checkbox__label">{!! esc_html($term->name) !!}</span>
                 </label>
               @endif
             @endforeach
@@ -242,23 +242,23 @@
                 type="search"
                 class="sobe-filter-search__input"
                 placeholder="{{ __('Search…', 'sobe') }}"
-                data-filter-search="{{ esc_attr($attrKey) }}"
-                aria-label="{{ __('Search', 'sobe') }} {{ esc_attr($group->attribute_label) }}"
+                data-filter-search="{!! esc_attr($attrKey) !!}"
+                aria-label="{{ __('Search', 'sobe') }} {!! esc_attr($group->attribute_label) !!}"
               >
             </div>
           @endif
-          <ul class="sobe-filter-list" data-filter-list="{{ esc_attr($attrKey) }}" role="group" aria-label="{{ esc_attr($group->attribute_label) }}">
+          <ul class="sobe-filter-list" data-filter-list="{!! esc_attr($attrKey) !!}" role="group" aria-label="{!! esc_attr($group->attribute_label) !!}">
             @foreach ($group->terms as $term)
               <li class="sobe-filter-list__item">
                 <label class="sobe-checkbox">
                   <input
                     type="checkbox"
-                    name="filter_{{ esc_attr($group->attribute_name) }}[]"
-                    value="{{ esc_attr($term->slug) }}"
+                    name="filter_{!! esc_attr($group->attribute_name) !!}[]"
+                    value="{!! esc_attr($term->slug) !!}"
                     class="sobe-checkbox__input"
                     @if (in_array($term->slug, $activeVals, true)) checked @endif
                   >
-                  <span class="sobe-checkbox__label">{{ esc_html($term->name) }}</span>
+                  <span class="sobe-checkbox__label">{!! esc_html($term->name) !!}</span>
                   <span class="sobe-filter-count">({{ $term->count }})</span>
                 </label>
               </li>
@@ -312,16 +312,16 @@
   </div>
 
   <div
-    id="{{ esc_attr($drawerId) }}"
+    id="{!! esc_attr($drawerId) !!}"
     class="sobe-filter-drawer"
     data-catalog-filters-drawer
     role="dialog"
     aria-modal="true"
-    aria-labelledby="{{ esc_attr($drawerTitleId) }}"
+    aria-labelledby="{!! esc_attr($drawerTitleId) !!}"
     hidden
   >
     <div class="sobe-filter-drawer__header">
-      <span id="{{ esc_attr($drawerTitleId) }}">{{ __('Filter products', 'sobe') }}</span>
+      <span id="{!! esc_attr($drawerTitleId) !!}">{{ __('Filter products', 'sobe') }}</span>
       <button
         class="sobe-filter-drawer__close"
         data-catalog-filters-close
