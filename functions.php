@@ -67,6 +67,7 @@ collect([
     'security',
     'seo',
     'cart-migration',
+    'checkout-migration',
     'setup-patterns',
     'setup-customizer',
     'setup-demo-layout',
