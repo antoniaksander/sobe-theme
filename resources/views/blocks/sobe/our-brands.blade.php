@@ -66,27 +66,27 @@
        aria-label="{{ __('Brand alphabet navigation', 'sobe') }}">
     @foreach($letters as $letter)
       <a class="brands-alpha-nav__letter text-sm tracking-wider text-text-muted no-underline pb-1 border-b-2 border-transparent transition-colors duration-200 hover:text-text [&.is-active]:text-text [&.is-active]:border-accent"
-         href="#brands-section-{{ esc_attr($letter) }}"
-         data-letter="{{ esc_attr($letter) }}">
-        {{ esc_html($letter) }}
+         href="#brands-section-{!! esc_attr($letter) !!}"
+         data-letter="{!! esc_attr($letter) !!}">
+        {!! esc_html($letter) !!}
       </a>
     @endforeach
   </nav>
 
   @foreach($grouped as $letter => $brands)
-    <div id="brands-section-{{ esc_attr($letter) }}"
+    <div id="brands-section-{!! esc_attr($letter) !!}"
          class="brands-section [scroll-margin-top:8rem] px-6 lg:px-8"
-         data-section="{{ esc_attr($letter) }}">
+         data-section="{!! esc_attr($letter) !!}">
 
       <h2 class="text-7xl font-bold text-heading leading-none mt-10 lg:mt-14 mb-6 lg:mb-8" aria-hidden="true">
-        {{ esc_html($letter) }}
+        {!! esc_html($letter) !!}
       </h2>
 
       <ul class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-x-xl gap-y-md list-none p-0 mb-3xl" role="list">
         @foreach($brands as $brand)
           <li>
             @if(!empty($brand['link']))
-              <a href="{{ esc_url($brand['link']) }}"
+              <a href="{!! esc_url($brand['link']) !!}"
                  class="flex flex-col gap-xs text-text no-underline text-sm transition-colors duration-200 hover:text-accent">
             @else
               <span class="flex flex-col gap-xs text-text text-sm">
@@ -94,13 +94,13 @@
 
             @if($showLogos && !empty($brand['logoUrl']))
               <img
-                src="{{ esc_url($brand['logoUrl']) }}"
-                alt="{{ esc_attr($brand['logoAlt']) }}"
+                src="{!! esc_url($brand['logoUrl']) !!}"
+                alt="{!! esc_attr($brand['logoAlt']) !!}"
                 class="h-8 w-auto max-w-24 object-contain object-left"
                 loading="lazy"
               />
             @endif
-            <span>{{ esc_html($brand['name']) }}</span>
+            <span>{!! esc_html($brand['name']) !!}</span>
 
             @if(!empty($brand['link']))
               </a>

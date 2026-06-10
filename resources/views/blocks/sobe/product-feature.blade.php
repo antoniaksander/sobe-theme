@@ -54,10 +54,10 @@
     <div class="{{ $reversed ? 'md:order-2' : '' }}">
 
       @if ($showImage && $productImage)
-        <a href="{{ esc_url($productUrl) }}" class="block overflow-hidden rounded-lg" tabindex="-1" aria-hidden="true">
+        <a href="{!! esc_url($productUrl) !!}" class="block overflow-hidden rounded-lg" tabindex="-1" aria-hidden="true">
           <img
-            src="{{ esc_url($productImage) }}"
-            alt="{{ esc_attr($productImageAlt) }}"
+            src="{!! esc_url($productImage) !!}"
+            alt="{!! esc_attr($productImageAlt) !!}"
             class="w-full {{ $aspectClass }}"
             @if($productImageDims) width="{{ (int) $productImageDims[1] }}" height="{{ (int) $productImageDims[2] }}" @endif
             loading="lazy"
@@ -70,14 +70,14 @@
 
         @if ($showBrand && $displayBrand)
           <p class="text-sm text-text-muted font-medium tracking-wide uppercase mb-xs">
-            {{ esc_html($displayBrand) }}
+            {!! esc_html($displayBrand) !!}
           </p>
         @endif
 
         @if ($showTitle && $productName)
           <h3 class="text-xl font-semibold text-heading mb-xs">
-            <a href="{{ esc_url($productUrl) }}" class="hover:text-accent transition-colors duration-200">
-              {{ esc_html($productName) }}
+            <a href="{!! esc_url($productUrl) !!}" class="hover:text-accent transition-colors duration-200">
+              {!! esc_html($productName) !!}
             </a>
           </h3>
         @endif

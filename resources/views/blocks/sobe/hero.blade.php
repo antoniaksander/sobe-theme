@@ -99,7 +99,7 @@
 @else
 <section
   {!! $wrapperAttrs !!}
-  aria-label="{{ esc_attr(wp_strip_all_tags($heading)) }}"
+  aria-label="{!! esc_attr(wp_strip_all_tags($heading)) !!}"
   data-animate="fade-up"
 >
 
@@ -109,8 +109,8 @@
   @elseif($imageUrl)
     <figure class="hero__bg-media absolute inset-0 m-0 pointer-events-none" aria-hidden="true">
       <img
-        src="{{ esc_url($imageUrl) }}"
-        alt="{{ esc_attr($imageAlt) }}"
+        src="{!! esc_url($imageUrl) !!}"
+        alt="{!! esc_attr($imageAlt) !!}"
         class="w-full h-full object-cover"
         loading="eager"
         fetchpriority="high"

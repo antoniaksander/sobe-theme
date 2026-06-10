@@ -6,7 +6,7 @@
 @endphp
 <div
   class="sobe-page-hero"
-  style="--_hero-bg: url('{{ esc_url($heroImage) }}')"
+  style="--_hero-bg: url('{!! esc_url($heroImage) !!}')"
   role="banner"
 >
   <div class="sobe-page-hero__overlay" aria-hidden="true"></div>

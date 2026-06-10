@@ -111,12 +111,12 @@
           <div class="product-carousel__header-text">
             @if($heading)
               <h2 class="product-carousel__heading text-2xl md:text-3xl font-bold text-heading m-0 leading-tight">
-                {{ esc_html($heading) }}
+                {!! esc_html($heading) !!}
               </h2>
             @endif
             @if($paragraph)
               <p class="product-carousel__paragraph text-text-muted mt-2 mb-0 max-w-prose">
-                {{ esc_html($paragraph) }}
+                {!! esc_html($paragraph) !!}
               </p>
             @endif
           </div>

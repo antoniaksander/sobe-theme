@@ -32,12 +32,12 @@
             </p>
             <div class="mt-8 flex flex-wrap gap-3">
               @if ($shopUrl)
-                <a class="btn btn-primary" href="{{ esc_url($shopUrl) }}">{{ __('Browse shop', 'sobe') }}</a>
+                <a class="btn btn-primary" href="{!! esc_url($shopUrl) !!}">{{ __('Browse shop', 'sobe') }}</a>
               @endif
               @if ($blogUrl)
-                <a class="btn btn-outline" href="{{ esc_url($blogUrl) }}">{{ __('Read updates', 'sobe') }}</a>
+                <a class="btn btn-outline" href="{!! esc_url($blogUrl) !!}">{{ __('Read updates', 'sobe') }}</a>
               @else
-                <a class="btn btn-outline" href="{{ esc_url(home_url('/?s=')) }}">{{ __('Search site', 'sobe') }}</a>
+                <a class="btn btn-outline" href="{!! esc_url(home_url('/?s=')) !!}">{{ __('Search site', 'sobe') }}</a>
               @endif
             </div>
           </div>

@@ -19,7 +19,7 @@
 @endphp
 
 @if($enabled && $provider)
-  <a href="{{ esc_url($data['url'] ?? $url) }}"
+  <a href="{!! esc_url($data['url'] ?? $url) !!}"
      aria-label="{{ __('Wishlist', 'sobe') }}"
      class="flex items-center justify-center w-10 h-10 rounded-lg text-text hover:bg-surface-2 transition-colors duration-200">
     <svg xmlns="http://www.w3.org/2000/svg" class="size-5" fill="none" viewBox="0 0 24 24"

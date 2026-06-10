@@ -96,14 +96,14 @@
 
   {{-- ── Section header ──────────────────────────────────────────────────── --}}
   @if($heading || $paragraph)
-    <div class="reviews-slider__header reviews-slider__header--{{ esc_attr($headerAlignment) }} mb-8">
+    <div class="reviews-slider__header reviews-slider__header--{!! esc_attr($headerAlignment) !!} mb-8">
       @if($heading)
         <h2 class="text-2xl md:text-3xl font-bold text-heading m-0 leading-tight">
-          {{ esc_html($heading) }}
+          {!! esc_html($heading) !!}
         </h2>
       @endif
       @if($paragraph)
-        <p class="text-text-muted mt-2 mb-0">{{ esc_html($paragraph) }}</p>
+        <p class="text-text-muted mt-2 mb-0">{!! esc_html($paragraph) !!}</p>
       @endif
     </div>
   @endif
@@ -130,9 +130,9 @@
             </div>
 
             <blockquote class="reviews-slider__quote">
-              {{ esc_html($slide['text']) }}
+              {!! esc_html($slide['text']) !!}
             </blockquote>
-            <p class="reviews-slider__author">— {{ esc_html($slide['author']) }}</p>
+            <p class="reviews-slider__author">— {!! esc_html($slide['author']) !!}</p>
             @if(count($slides) > 1)
               <div class="reviews-slider__nav">
                 <button type="button" class="reviews-slider__btn reviews-slider__btn--prev" aria-label="{{ __('Previous review', 'sobe') }}">
@@ -167,7 +167,7 @@
           >
         @endif
           @if($slide['imageUrl'])
-            <img src="{{ $slide['imageUrl'] }}" alt="{{ esc_attr($slide['imageAlt'] ?: $slide['productTitle']) }}" loading="lazy" />
+            <img src="{{ $slide['imageUrl'] }}" alt="{!! esc_attr($slide['imageAlt'] ?: $slide['productTitle']) !!}" loading="lazy" />
           @else
             <div class="reviews-slider__image-placeholder">
               <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" aria-hidden="true">
@@ -179,7 +179,7 @@
           @if($slide['productTitle'] || $slide['productUrl'])
             <div class="reviews-slider__product-info">
               @if($slide['productTitle'])
-                <p class="reviews-slider__product-name">{{ esc_html($slide['productTitle']) }}</p>
+                <p class="reviews-slider__product-name">{!! esc_html($slide['productTitle']) !!}</p>
               @endif
               @if($slide['productUrl'])
                 <span class="reviews-slider__shop-link">
