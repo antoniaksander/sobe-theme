@@ -34,5 +34,14 @@
       "defaultFontSizes": false,
       "customFontSize": false
     }
+  },
+  "styles": {
+    "elements": {
+      "link": {
+        "typography": {
+          "textDecoration": "none"
+        }
+      }
+    }
   }
 }
