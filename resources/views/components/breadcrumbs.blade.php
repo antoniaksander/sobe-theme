@@ -40,7 +40,7 @@
                     </svg>
                 </li>
                 <li class="breadcrumbs__item breadcrumbs__item--current">
-                    <span aria-current="page">{{ get_the_title() }}</span>
+                    <span aria-current="page">{!! get_the_title() !!}</span>
                 </li>
             @elseif (is_archive())
                 <li class="breadcrumbs__separator" aria-hidden="true">
@@ -79,7 +79,7 @@
                         </svg>
                     </li>
                     <li class="breadcrumbs__item breadcrumbs__item--current">
-                        <span aria-current="page">{{ get_the_title() }}</span>
+                        <span aria-current="page">{!! get_the_title() !!}</span>
                     </li>
                 @else
                     <li class="breadcrumbs__separator" aria-hidden="true">
@@ -88,7 +88,7 @@
                         </svg>
                     </li>
                     <li class="breadcrumbs__item breadcrumbs__item--current">
-                        <span aria-current="page">{{ get_the_title() }}</span>
+                        <span aria-current="page">{!! get_the_title() !!}</span>
                     </li>
                 @endif
             @endif

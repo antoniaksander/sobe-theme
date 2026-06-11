@@ -12,7 +12,7 @@
   <div class="sobe-page-hero__overlay" aria-hidden="true"></div>
   @if($showTitle)
     <div class="sobe-page-hero__inner">
-      <h1 class="sobe-page-hero__title">{{ $heroTitle }}</h1>
+      <h1 class="sobe-page-hero__title">{!! $heroTitle !!}</h1>
     </div>
   @endif
 </div>
