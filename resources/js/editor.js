@@ -1,7 +1,7 @@
 import domReady from '@wordpress/dom-ready';
 import { registerPlugin } from '@wordpress/plugins';
 import { PluginDocumentSettingPanel } from '@wordpress/editor';
-import { ToggleControl, TextControl } from '@wordpress/components';
+import { ToggleControl, TextControl, TextareaControl } from '@wordpress/components';
 import { useEntityProp } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
 import { __ } from '@wordpress/i18n';
@@ -20,6 +20,12 @@ function PageDisplaySettings() {
       help: __('Displays the featured image as a full-width banner behind the page title.', 'sobe'),
       checked: !!meta?._sobe_page_hero,
       onChange: (value) => setMeta({ ...meta, _sobe_page_hero: value }),
+    }),
+    createElement(TextareaControl, {
+      label: __('Hero paragraph', 'sobe'),
+      help: __('Optional plain text displayed under the page title when the hero is enabled.', 'sobe'),
+      value: meta?._sobe_page_hero_text ?? '',
+      onChange: (value) => setMeta({ ...meta, _sobe_page_hero_text: value }),
     }),
     createElement(ToggleControl, {
       label: __('Hide page title', 'sobe'),

@@ -1369,6 +1369,15 @@ body.single-post {
   text-shadow: 0 1px 4px rgba(0 0 0 / 0.4);
 }
 
+.sobe-page-hero__subtitle {
+  max-width: min(44rem, 100%);
+  margin: var(--space-sm) 0 0;
+  color: var(--c-surface-invert-fg);
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  text-shadow: 0 1px 4px rgba(0 0 0 / 0.4);
+}
+
 /* ── Blog post list ─────────────────────────────────────────────────────────── */
 .sobe-post-list {
   display: flex;

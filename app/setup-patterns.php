@@ -65,6 +65,15 @@ add_action('init', function () {
             'auth_callback' => fn () => current_user_can('edit_posts'),
         ]);
     }
+
+    register_post_meta('page', '_sobe_page_hero_text', [
+        'show_in_rest' => true,
+        'single' => true,
+        'type' => 'string',
+        'default' => '',
+        'sanitize_callback' => 'sanitize_textarea_field',
+        'auth_callback' => fn () => current_user_can('edit_posts'),
+    ]);
 });
 
 /**
