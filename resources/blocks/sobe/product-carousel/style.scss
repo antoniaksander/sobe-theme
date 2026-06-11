@@ -6,3 +6,13 @@
   gap: 0;
   grid-template-columns: unset;
 }
+
+// Each card (<li>) sits inside a Swiper slide. WooCommerce's default grid rule
+// (`li.product { width: 22.05% }`) otherwise shrinks every card to a quarter of
+// the slide, squashing the product image. Fill the slide instead; Swiper owns
+// inter-slide spacing, so reset WooCommerce's float/margin.
+.product-carousel--sobe.woocommerce ul.products li.product {
+  width: 100%;
+  margin: 0;
+  float: none;
+}
