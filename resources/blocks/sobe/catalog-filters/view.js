@@ -96,6 +96,9 @@ function ensurePaginationListener() {
   document.addEventListener('click', (e) => {
     const link = e.target.closest('[data-pagination] a');
     if (!link) return;
+    // Navigation-mode contexts paginate via the link itself (the host block
+    // renders correct per-page results server-side); don't hijack with AJAX.
+    if (link.closest('[data-catalog-filters-navigate]')) return;
     e.preventDefault();
 
     const href = new URL(link.href);
@@ -134,6 +137,10 @@ function initCatalogFilters(instance, params) {
   const state = {
     active: false,
     archiveKey,
+    // Navigation mode: the host context (e.g. a product block with its own
+    // custom query) can't be served by the shop AJAX handler, so filter and
+    // pagination changes load the canonical filter URL instead of AJAX-swapping.
+    navigate: !!instance.closest('[data-catalog-filters-navigate]'),
     desktopContainer,
     drawer,
     drawerBody,
@@ -328,6 +335,10 @@ function initCatalogFilters(instance, params) {
   }
 
   async function applyFilters(filterState) {
+    if (state.navigate) {
+      window.location.assign(buildUrl(filterState));
+      return;
+    }
     setActive();
     const mySeq = ++state.fetchSeq;
 
