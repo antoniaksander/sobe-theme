@@ -65,6 +65,21 @@ export function buildFilterUrl(state, pageBase, archiveKey = null, archiveTerm =
 }
 
 /**
+ * Split a filter value read from a URL back into taxonomy slugs.
+ *
+ * Filter URLs use + between selected slugs. URLSearchParams preserves encoded
+ * plus signs as literal +, while some older URLs may decode them to spaces.
+ *
+ * @param {string|null|undefined} value
+ * @returns {string[]}
+ */
+export function splitFilterValue(value) {
+  return String(value ?? '')
+    .split(/[+\s]+/)
+    .filter(Boolean);
+}
+
+/**
  * Returns true when the filter state contains meaningful user-applied filters.
  * Excludes paged / orderby / s — those are not "filters" from the user's POV.
  *

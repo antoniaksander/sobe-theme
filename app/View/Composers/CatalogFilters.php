@@ -159,7 +159,11 @@ class CatalogFilters extends Composer
             }
             $name = substr($key, 7);
             $slugs = explode('+', urldecode(sanitize_text_field($value)));
-            $active[$name] = array_filter($slugs);
+            $slugs = array_values(array_filter($slugs));
+            // product_cat/product_tag are single-select; everything else is multi.
+            $active[$name] = in_array($name, ['product_cat', 'product_tag'], true)
+                ? ($slugs[0] ?? '')
+                : $slugs;
         }
 
         $minPrice = sanitize_text_field($_GET['min_price'] ?? '');

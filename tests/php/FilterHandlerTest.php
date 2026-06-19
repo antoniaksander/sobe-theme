@@ -13,6 +13,7 @@ use Brain\Monkey\Functions;
 
 beforeEach(function () {
     Functions\when('sanitize_text_field')->returnArg();
+    Functions\when('sanitize_title')->returnArg();
     Functions\when('sanitize_key')->alias(fn ($value) => strtolower((string) $value));
     Functions\when('apply_filters')->alias(fn ($hook, $value = null) => $value);
     Functions\when('taxonomy_exists')->justReturn(true);
@@ -34,10 +35,22 @@ it('builds tax-query clauses for category, tag, attribute and brand filters', fu
     ]]);
 
     expect($clauses)->toHaveCount(4);
-    expectClause($clauses, ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => 'shoes']);
-    expectClause($clauses, ['taxonomy' => 'product_tag', 'field' => 'slug', 'terms' => 'summer']);
+    expectClause($clauses, ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => ['shoes'], 'operator' => 'IN']);
+    expectClause($clauses, ['taxonomy' => 'product_tag', 'field' => 'slug', 'terms' => ['summer'], 'operator' => 'IN']);
     expectClause($clauses, ['taxonomy' => 'pa_color', 'field' => 'slug', 'terms' => ['red', 'blue'], 'operator' => 'IN']);
     expectClause($clauses, ['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['nike'], 'operator' => 'IN']);
+});
+
+it('parses +-delimited filter values into multiple term slugs', function () {
+    $clauses = invokeMethod(new FilterHandler('sobe'), 'buildTaxQuery', [[
+        'filter_product_cat' => 'shoes+boots',
+        'filter_color' => 'red+blue',
+        'filter_product_brand' => 'nike+adidas',
+    ]]);
+
+    expectClause($clauses, ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => ['shoes', 'boots'], 'operator' => 'IN']);
+    expectClause($clauses, ['taxonomy' => 'pa_color', 'field' => 'slug', 'terms' => ['red', 'blue'], 'operator' => 'IN']);
+    expectClause($clauses, ['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['nike', 'adidas'], 'operator' => 'IN']);
 });
 
 it('returns no tax-query clauses for an empty filter state', function () {

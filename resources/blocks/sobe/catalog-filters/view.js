@@ -1,5 +1,5 @@
 import noUiSlider from 'nouislider';
-import { buildFilterUrl } from '../../js/filter-utils.js';
+import { buildFilterUrl, splitFilterValue } from '../../js/filter-utils.js';
 import { commit as commitFilterStore, reset as resetFilterStore } from '../../js/filter-store.js';
 import { readParams, isCurrentContext } from '../../js/dom-params.js';
 import { registerReinit } from '../../js/sobe-reinit.js';
@@ -691,7 +691,7 @@ function initCatalogFilters(instance, params) {
         return;
       }
 
-      const slugs = val.split(' ').filter(Boolean);
+      const slugs = splitFilterValue(val);
       const inputName = key.endsWith('[]') ? key : key + '[]';
 
       slugs.forEach((slug) => {
