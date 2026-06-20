@@ -144,19 +144,26 @@ class FilterHandler
     {
         $clauses = [];
 
-        if (! empty($state['product_cat'])) {
+        $brandTaxonomy = apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
+        $brandFilterKeys = $this->brandFilterKeys(is_string($brandTaxonomy) ? $brandTaxonomy : 'product_brand');
+
+        $categorySlugs = $this->slugList($state['product_cat'] ?? $state['filter_product_cat'] ?? []);
+        if (! empty($categorySlugs)) {
             $clauses[] = [
                 'taxonomy' => 'product_cat',
                 'field' => 'slug',
-                'terms' => sanitize_text_field($state['product_cat']),
+                'terms' => $categorySlugs,
+                'operator' => 'IN',
             ];
         }
 
-        if (! empty($state['product_tag'])) {
+        $tagSlugs = $this->slugList($state['product_tag'] ?? $state['filter_product_tag'] ?? []);
+        if (! empty($tagSlugs)) {
             $clauses[] = [
                 'taxonomy' => 'product_tag',
                 'field' => 'slug',
-                'terms' => sanitize_text_field($state['product_tag']),
+                'terms' => $tagSlugs,
+                'operator' => 'IN',
             ];
         }
 
@@ -165,8 +172,13 @@ class FilterHandler
                 continue;
             }
             $attrName = substr($key, 7);
+            // Category/tag/brand arrive as filter_* keys too; they are handled
+            // explicitly above/below, so don't also treat them as pa_* attributes.
+            if (in_array($attrName, array_merge(['product_cat', 'product_tag'], $brandFilterKeys), true)) {
+                continue;
+            }
             $taxonomy = 'pa_'.sanitize_key($attrName);
-            $slugs = array_map('sanitize_text_field', (array) $val);
+            $slugs = $this->slugList($val);
             if (! empty($slugs)) {
                 $clauses[] = [
                     'taxonomy' => $taxonomy,
@@ -178,11 +190,12 @@ class FilterHandler
         }
 
         $brandKey = $this->prefix.'_brands';
-        $brandTaxonomy = apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
-        $brandSlugs = array_map(
-            'sanitize_text_field',
-            (array) ($state[$brandKey] ?? $state['product_brand'] ?? [])
-        );
+        $brandSlugs = [];
+        foreach (array_merge([$brandKey], $brandFilterKeys) as $key) {
+            $brandSlugs = array_merge($brandSlugs, $this->slugList($state[$key] ?? []));
+            $brandSlugs = array_merge($brandSlugs, $this->slugList($state["filter_{$key}"] ?? []));
+        }
+        $brandSlugs = array_values(array_unique($brandSlugs));
         if (! empty($brandSlugs) && is_string($brandTaxonomy) && taxonomy_exists($brandTaxonomy)) {
             $clauses[] = [
                 'taxonomy' => $brandTaxonomy,
@@ -193,6 +206,36 @@ class FilterHandler
         }
 
         return $clauses;
+    }
+
+    /**
+     * Request keys that should be treated as the brand taxonomy.
+     */
+    private function brandFilterKeys(string $brandTaxonomy): array
+    {
+        return array_values(array_unique(array_filter([
+            'brand',
+            'product_brand',
+            sanitize_key($brandTaxonomy),
+        ])));
+    }
+
+    /**
+     * Normalise a filter value (array, or a +/space-delimited string) into a
+     * de-duplicated list of term slugs.
+     */
+    private function slugList(mixed $value): array
+    {
+        $items = is_array($value) ? $value : preg_split('/[+\s]+/', (string) $value);
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn ($item): string => sanitize_title((string) $item),
+            $items
+        ))));
     }
 
     private function buildMetaQuery(array $state): array

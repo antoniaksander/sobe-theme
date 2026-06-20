@@ -24,6 +24,135 @@ if (! class_exists('WooCommerce')) {
 
 
 
+// ── Same-taxonomy archive intersection ───────────────────────────────────────
+//
+// On a product taxonomy archive, a filter for that SAME taxonomy (e.g.
+// /product-category/shoes/?filter_product_cat=boots) must intersect with the
+// archive term, not replace it. Append both the selected term(s) and the
+// archive term to the main product query so the result is shoes AND boots.
+
+if (! function_exists('App\sobe_catalog_filter_slug_list')) {
+    function sobe_catalog_filter_slug_list(mixed $value): array
+    {
+        $items = is_array($value) ? $value : preg_split('/[+\s]+/', (string) $value);
+
+        if (! is_array($items)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map(
+            static fn ($item): string => sanitize_title((string) $item),
+            $items
+        ))));
+    }
+}
+
+if (! function_exists('App\sobe_catalog_filter_keys_for_taxonomy')) {
+    function sobe_catalog_filter_keys_for_taxonomy(string $taxonomy): array
+    {
+        $taxonomy = sanitize_key($taxonomy);
+        $keys = [$taxonomy, "filter_{$taxonomy}"];
+
+        if ($taxonomy === 'product_cat') {
+            $keys[] = 'product_cat';
+            $keys[] = 'filter_product_cat';
+        } elseif ($taxonomy === 'product_tag') {
+            $keys[] = 'product_tag';
+            $keys[] = 'filter_product_tag';
+        } elseif (str_starts_with($taxonomy, 'pa_')) {
+            $attribute = substr($taxonomy, 3);
+            $keys[] = "filter_{$attribute}";
+        }
+
+        $brandTaxonomy = function_exists('App\sobe_product_brand_taxonomy')
+            ? sobe_product_brand_taxonomy()
+            : (string) apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
+        if ($taxonomy === sanitize_key($brandTaxonomy)) {
+            array_push($keys, 'brand', 'filter_brand', 'product_brand', 'filter_product_brand');
+        }
+
+        return array_values(array_unique(array_filter($keys)));
+    }
+}
+
+if (! function_exists('App\sobe_catalog_filter_request_slugs_for_taxonomy')) {
+    function sobe_catalog_filter_request_slugs_for_taxonomy(string $taxonomy, array $source): array
+    {
+        $slugs = [];
+
+        foreach (sobe_catalog_filter_keys_for_taxonomy($taxonomy) as $key) {
+            if (! array_key_exists($key, $source)) {
+                continue;
+            }
+
+            $slugs = array_merge($slugs, sobe_catalog_filter_slug_list($source[$key]));
+        }
+
+        return array_values(array_unique($slugs));
+    }
+}
+
+if (! function_exists('App\sobe_append_catalog_tax_query_clause')) {
+    function sobe_append_catalog_tax_query_clause(array $taxQuery, array $clause): array
+    {
+        $clauses = [];
+        foreach ($taxQuery as $key => $item) {
+            if ($key === 'relation' || ! is_array($item)) {
+                continue;
+            }
+
+            $clauses[] = $item;
+        }
+
+        $clauses[] = $clause;
+
+        return count($clauses) > 1
+            ? array_merge(['relation' => 'AND'], $clauses)
+            : $clauses;
+    }
+}
+
+add_action('woocommerce_product_query', function (\WP_Query $query): void {
+    if (! is_product_taxonomy()) {
+        return;
+    }
+
+    $term = get_queried_object();
+    if (! $term instanceof \WP_Term || empty($term->taxonomy) || empty($term->slug)) {
+        return;
+    }
+
+    $taxonomy = sanitize_key((string) $term->taxonomy);
+    if (! taxonomy_exists($taxonomy)) {
+        return;
+    }
+
+    $archiveTerm = sanitize_title((string) $term->slug);
+    $selectedTerms = array_values(array_diff(
+        sobe_catalog_filter_request_slugs_for_taxonomy($taxonomy, $_GET),
+        [$archiveTerm]
+    ));
+
+    if ($selectedTerms === []) {
+        return;
+    }
+
+    $taxQuery = $query->get('tax_query');
+    $taxQuery = is_array($taxQuery) ? $taxQuery : [];
+    $taxQuery = sobe_append_catalog_tax_query_clause($taxQuery, [
+        'taxonomy' => $taxonomy,
+        'field' => 'slug',
+        'terms' => $selectedTerms,
+        'operator' => 'IN',
+    ]);
+    $query->set('tax_query', sobe_append_catalog_tax_query_clause($taxQuery, [
+        'taxonomy' => $taxonomy,
+        'field' => 'slug',
+        'terms' => [$archiveTerm],
+        'operator' => 'IN',
+    ]));
+}, 20);
+
 // ── Catalog filter helpers ────────────────────────────────────────────────────
 
 /**

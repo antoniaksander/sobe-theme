@@ -19,16 +19,27 @@
 
   // Build a reliable base URL that works in both AJAX and normal page context.
   // get_previous/next_posts_page_link() generate admin-ajax.php URLs in AJAX context.
-  if (wp_doing_ajax()) {
-      $referer = wp_get_referer();
-      $base = $referer
-          ? remove_query_arg($pageArg, $referer)
-          : get_permalink(wc_get_page_id('shop'));
+  //
+  // Normal shop/archive pagination uses get_pagenum_link() so links are pretty
+  // permalinks (e.g. /shop/page/3/?orderby=popularity) instead of ?paged=3 query
+  // URLs that WordPress then 301-redirects to the pretty form. Shortcode/custom
+  // (product-page) pagination and AJAX keep the query-arg base.
+  if (! $isShortcodePagination && ! wp_doing_ajax()) {
+      $pageUrl = fn (int $page): string => get_pagenum_link($page);
   } else {
-      $base = remove_query_arg($pageArg);
+      if (wp_doing_ajax()) {
+          $referer = wp_get_referer();
+          $base = $referer
+              ? remove_query_arg($pageArg, $referer)
+              : get_permalink(wc_get_page_id('shop'));
+      } else {
+          $base = remove_query_arg($pageArg);
+      }
+      $pageUrl = fn (int $page): string => add_query_arg($pageArg, $page, $base);
   }
-  $prevUrl = ($current > 1)      ? add_query_arg($pageArg, $current - 1, $base) : null;
-  $nextUrl = ($current < $total) ? add_query_arg($pageArg, $current + 1, $base) : null;
+
+  $prevUrl = ($current > 1)      ? $pageUrl($current - 1) : null;
+  $nextUrl = ($current < $total) ? $pageUrl($current + 1) : null;
 @endphp
 
 @if ($total > 1)
