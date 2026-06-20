@@ -57,6 +57,27 @@ it('returns no tax-query clauses for an empty filter state', function () {
     expect(invokeMethod(new FilterHandler('sobe'), 'buildTaxQuery', [[]]))->toBe([]);
 });
 
+it('intersects a same-taxonomy filter with the archive term on a taxonomy archive', function () {
+    $clauses = invokeMethod(new FilterHandler('sobe'), 'buildTaxQuery', [
+        ['product_cat' => 'boots'],
+        ['contextType' => 'taxonomy', 'archiveTaxonomy' => 'product_cat', 'archiveTerm' => 'shoes'],
+    ]);
+
+    // Selected term and archive term become two separate IN clauses, AND-ed in buildQueryArgs.
+    expectClause($clauses, ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => ['boots'], 'operator' => 'IN']);
+    expectClause($clauses, ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => ['shoes'], 'operator' => 'IN']);
+});
+
+it('leaves clauses untouched when there is no taxonomy archive context', function () {
+    $clauses = invokeMethod(new FilterHandler('sobe'), 'buildTaxQuery', [
+        ['product_cat' => 'boots'],
+        ['contextType' => 'shop'],
+    ]);
+
+    expect($clauses)->toHaveCount(1);
+    expectClause($clauses, ['taxonomy' => 'product_cat', 'field' => 'slug', 'terms' => ['boots'], 'operator' => 'IN']);
+});
+
 it('builds a BETWEEN price clause plus on-sale meta', function () {
     $clauses = invokeMethod(new FilterHandler('sobe'), 'buildMetaQuery', [[
         'min_price' => '10',
