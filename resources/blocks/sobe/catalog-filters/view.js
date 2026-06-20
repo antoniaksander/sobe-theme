@@ -78,6 +78,11 @@ async function fetchFiltered(state, filterState) {
   body.append('action', state.params.action);
   body.append('nonce', state.params.nonce);
   body.append('filter_state', JSON.stringify(filterState));
+  body.append('filter_context', JSON.stringify({
+    contextType: state.params.contextType ?? '',
+    archiveTaxonomy: state.params.archiveTaxonomy ?? '',
+    archiveTerm: state.params.archiveTerm ?? '',
+  }));
 
   const res = await fetch(state.params.ajaxUrl, {
     method: 'POST',

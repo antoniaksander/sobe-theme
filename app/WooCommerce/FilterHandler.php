@@ -29,7 +29,9 @@ class FilterHandler
             check_ajax_referer("{$this->prefix}_nonce", 'nonce');
             $raw = sanitize_text_field(wp_unslash($_POST['filter_state'] ?? '{}'));
             $state = json_decode($raw, true) ?: [];
-            wp_send_json($this->process($state));
+            $contextRaw = sanitize_text_field(wp_unslash($_POST['filter_context'] ?? '{}'));
+            $context = json_decode($contextRaw, true) ?: [];
+            wp_send_json($this->process($state, $context));
         } catch (\Throwable $e) {
             error_log('[sobe FilterHandler] '.$e->getMessage().' in '.$e->getFile().':'.$e->getLine());
             wp_send_json_error(
@@ -43,7 +45,7 @@ class FilterHandler
      * Core logic — no HTTP coupling. Pass any filter_state array; returns response data.
      * Safe to call from tests with WordPress loaded but without a real HTTP request.
      */
-    public function process(array $state): array
+    public function process(array $state, array $context = []): array
     {
         $state = (array) apply_filters('sobe/catalog_filters/state', $state, $state);
         $perPage = (int) apply_filters('sobe/shop_loop/per_page', (int) get_theme_mod("{$this->prefix}_products_per_page", config('theme.product_catalog.per_page', 12)), [
@@ -51,7 +53,7 @@ class FilterHandler
         ]);
         $paged = max(1, (int) ($state['paged'] ?? 1));
 
-        $queryArgs = $this->buildQueryArgs($state, $perPage, $paged);
+        $queryArgs = $this->buildQueryArgs($state, $perPage, $paged, $context);
         $queryArgs = (array) apply_filters('sobe/catalog_filters/query_args', $queryArgs, $state);
         $queryArgs = (array) apply_filters('sobe/shop_loop/query_args', $queryArgs, [
             'context' => 'catalog_filters',
@@ -100,7 +102,7 @@ class FilterHandler
 
     // ── Query builders ────────────────────────────────────────────────────────
 
-    private function buildQueryArgs(array $state, int $perPage, int $paged): array
+    private function buildQueryArgs(array $state, int $perPage, int $paged, array $context = []): array
     {
         $args = [
             'post_type' => 'product',
@@ -109,7 +111,7 @@ class FilterHandler
             'paged' => $paged,
         ];
 
-        $taxQuery = $this->buildTaxQuery($state);
+        $taxQuery = $this->buildTaxQuery($state, $context);
         if (! empty($taxQuery)) {
             $args['tax_query'] = count($taxQuery) > 1
                 ? array_merge(['relation' => 'AND'], $taxQuery)
@@ -142,7 +144,7 @@ class FilterHandler
         return $args;
     }
 
-    private function buildTaxQuery(array $state): array
+    private function buildTaxQuery(array $state, array $context = []): array
     {
         $clauses = [];
 
@@ -207,7 +209,56 @@ class FilterHandler
             ];
         }
 
-        return $clauses;
+        return $this->applyArchiveIntersection($clauses, $context);
+    }
+
+    /**
+     * On a product taxonomy archive, intersect a filter for that SAME taxonomy
+     * with the archive term instead of replacing it (e.g. on a category archive,
+     * selecting another category narrows to the overlap, not the whole other
+     * category). The archive context is supplied by the catalog-filters params
+     * (contextType / archiveTaxonomy / archiveTerm).
+     */
+    private function applyArchiveIntersection(array $clauses, array $context): array
+    {
+        if (($context['contextType'] ?? '') !== 'taxonomy') {
+            return $clauses;
+        }
+
+        $taxonomy = sanitize_key((string) ($context['archiveTaxonomy'] ?? ''));
+        $term = sanitize_title((string) ($context['archiveTerm'] ?? ''));
+
+        if ($taxonomy === '' || $term === '' || ! taxonomy_exists($taxonomy)) {
+            return $clauses;
+        }
+
+        $intersected = [];
+        foreach ($clauses as $clause) {
+            if (! is_array($clause) || ($clause['taxonomy'] ?? '') !== $taxonomy) {
+                $intersected[] = $clause;
+                continue;
+            }
+
+            // Drop the archive term from the selection clause, then add it back
+            // as its own AND clause so the two are intersected, not unioned.
+            $terms = array_values(array_diff($this->slugList($clause['terms'] ?? []), [$term]));
+            if ($terms === []) {
+                continue;
+            }
+
+            $clause['terms'] = $terms;
+            $clause['operator'] = 'IN';
+            $intersected[] = $clause;
+        }
+
+        $intersected[] = [
+            'taxonomy' => $taxonomy,
+            'field' => 'slug',
+            'terms' => [$term],
+            'operator' => 'IN',
+        ];
+
+        return $intersected;
     }
 
     /**
