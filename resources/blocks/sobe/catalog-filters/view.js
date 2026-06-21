@@ -294,13 +294,13 @@ function initCatalogFilters(instance, params) {
 
     patchGroup(
       categories,
-      (slug) => root.querySelector(`input[name="product_cat"][value="${slug}"]`),
+      (slug) => root.querySelector(`input[name="product_cat"][value="${CSS.escape(slug)}"]`),
       '[data-filter-list="categories"]'
     );
 
     patchGroup(
       brands,
-      (slug) => root.querySelector(`[data-filter-list="brands"] input[value="${slug}"]`),
+      (slug) => root.querySelector(`[data-filter-list="brands"] input[value="${CSS.escape(slug)}"]`),
       '[data-filter-list="brands"]'
     );
 
@@ -308,8 +308,8 @@ function initCatalogFilters(instance, params) {
       for (const [attrName, terms] of Object.entries(attributes)) {
         patchGroup(
           terms,
-          (slug) => root.querySelector(`input[name="filter_${attrName}[]"][value="${slug}"]`),
-          `[data-filter-list="pa_${attrName}"]`
+          (slug) => root.querySelector(`input[name="filter_${CSS.escape(attrName)}[]"][value="${CSS.escape(slug)}"]`),
+          `[data-filter-list="pa_${CSS.escape(attrName)}"]`
         );
       }
     }
@@ -484,10 +484,10 @@ function initCatalogFilters(instance, params) {
     const key = btn.dataset.removeFilter;
     const val = btn.dataset.removeValue;
 
-    const radio = root.querySelector(`input[type="radio"][name="${key}"][value="${val}"]`);
+    const radio = root.querySelector(`input[type="radio"][name="${CSS.escape(key)}"][value="${CSS.escape(val)}"]`);
     if (radio) radio.checked = false;
 
-    const checkbox = root.querySelector(`input[type="checkbox"][value="${val}"]`);
+    const checkbox = root.querySelector(`input[type="checkbox"][value="${CSS.escape(val)}"]`);
     if (checkbox) checkbox.checked = false;
 
     debouncedCheckbox();
@@ -516,7 +516,7 @@ function initCatalogFilters(instance, params) {
 
   root.querySelectorAll('[data-filter-search]').forEach((input) => {
     const listId = input.dataset.filterSearch;
-    const list = root.querySelector(`[data-filter-list="${listId}"]`);
+    const list = root.querySelector(`[data-filter-list="${CSS.escape(listId)}"]`);
     if (!list) return;
     const items = [...list.querySelectorAll('li')];
 
