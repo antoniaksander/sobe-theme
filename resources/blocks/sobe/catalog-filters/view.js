@@ -734,15 +734,27 @@ function initCatalogFilters(instance, params) {
       }
 
       const slugs = splitFilterValue(val);
-      const inputName = key.endsWith('[]') ? key : key + '[]';
+      // A URL key may arrive prefixed (filter_product_cat) or bare
+      // (product_cat); inputs may be named either way, so try both.
+      const rawKey = key.startsWith('filter_') ? key.slice(7) : key;
+      const inputNames = [
+        key.endsWith('[]') ? key : key + '[]',
+        rawKey.endsWith('[]') ? rawKey : rawKey + '[]',
+      ];
 
       slugs.forEach((slug) => {
         const escaped = CSS.escape(slug);
-        const cb = root.querySelector(`input[type="checkbox"][name="${inputName}"][value="${escaped}"]`);
+        const cb = inputNames
+          .map((inputName) => root.querySelector(`input[type="checkbox"][name="${CSS.escape(inputName)}"][value="${escaped}"]`))
+          .find(Boolean);
         if (cb) { cb.checked = true; return; }
-        const rb = root.querySelector(`input[type="radio"][name="${key}"][value="${escaped}"]`);
+        const rb = [key, rawKey]
+          .map((inputName) => root.querySelector(`input[type="radio"][name="${CSS.escape(inputName)}"][value="${escaped}"]`))
+          .find(Boolean);
         if (rb) { rb.checked = true; return; }
-        const sel = root.querySelector(`[data-filter-select="${CSS.escape(key)}"]`);
+        const sel = [key, rawKey]
+          .map((inputName) => root.querySelector(`[data-filter-select="${CSS.escape(inputName)}"]`))
+          .find(Boolean);
         if (sel) sel.value = slug;
       });
     });
