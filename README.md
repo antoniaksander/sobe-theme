@@ -2,7 +2,7 @@
 
 ![Sobe Theme](screenshot.png)
 
-> Proprietary software of Sobe Agency — confidential, not for distribution.
+> Source-available under the [PolyForm Noncommercial License 1.0.0](LICENSE.md) — free for non-commercial use with attribution; commercial use requires permission from Sobe Agency.
 
 Sobe Agency's WordPress + WooCommerce theme platform — a Sage-based theme on Roots
 Acorn 6. It's the shared upstream that Sobe's WordPress client builds fork from: a
@@ -114,4 +114,9 @@ composer analyse          # PHPStan static analysis
 
 ## License
 
-Copyright © Sobe Agency. All rights reserved. See [LICENSE.md](LICENSE.md).
+Licensed under the [PolyForm Noncommercial License 1.0.0](LICENSE.md) — free to use,
+modify, and share for **non-commercial** purposes with attribution; **commercial use
+requires written permission** from Sobe Agency. Bundled open-source dependencies
+retain their own licenses.
+
+Copyright © Sobe Agency.
