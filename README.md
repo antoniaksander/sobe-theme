@@ -1,50 +1,117 @@
-# WP-boilerplate
+# Sobe Theme
 
-Production-ready WordPress theme platform for Sobe agency client builds.
+![Sobe Theme](screenshot.png)
 
-This repo is shared infrastructure, not a client theme. Client repositories fork from `main`, inherit the platform, and customize through tokens, Customizer settings, hooks, and client-namespace blocks.
+> Proprietary software of Sobe Agency — confidential, not for distribution.
 
-## Included
+Sobe Agency's WordPress + WooCommerce theme platform — a Sage-based theme on Roots
+Acorn 6. It's the shared upstream that Sobe's WordPress client builds fork from: a
+client inherits the platform and customises through design tokens, hooks, and
+namespaced blocks.
 
-- Design token system with neutral defaults, dark mode inversion, layout widths, spacing, type, shadows, transitions, z-index, and WooCommerce aliases
-- Alpine app shell for dark mode, mobile navigation, search overlay, side-cart, toasts, smooth scroll, and animation hooks
-- Public block library: hero, FAQ, product-carousel, product-feature, product-categories-grid, brand-carousel, our-brands, reviews-slider, catalog-filters
-- Layout examples: `sobe/site-header` and `sobe/site-footer` rendered through hidden layout patterns
-- WooCommerce platform layer: catalog, PDP gallery/tabs, side-cart, catalog filters, mini-cart fragments, wishlist surface, load-more pagination
-- Search endpoint and modal UI
-- Baseline SEO metadata with plugin bypass
-- Manifest-driven block registration
-- Vite + Tailwind CSS asset pipeline
-- Jest, pattern checks, PHPStan, and build validation
+## What this is
 
-## Client Forks
+`sobe-theme` is the internal platform, not a single-site theme. `main` stays
+generic and production-hardened; brand, content, and proprietary client UI live in
+separate private client repositories that track this upstream.
 
-1. Fork from latest `main`.
-2. Update client identity in `style.css`, `config/theme.php`, `composer.json`, `package.json`, `README.md`, and `vite.config.js`.
-3. Change `prefix` in `config/theme.php` for client-owned settings and CSS classes, but keep `textdomain` as `sobe`.
-4. Override brand values in `resources/css/client-tokens.css`; do not edit the
-   platform-owned `resources/css/tokens.css`.
-5. Keep universal blocks under `sobe/*`; create client-specific blocks in a client namespace such as `roxder/*`.
-6. Configure the active WordPress site: navigation, header layout, logo, footer widgets, homepage, and dark mode.
-7. Extend WooCommerce, search, wishlist, hero, and block behavior through hooks before overriding Blade partials.
-8. Add client logos, fonts, navigation, content, and private blocks in the client repo.
+- **Platform (`main`, this repo):** design system, WooCommerce surfaces, universal
+  `sobe/*` blocks, build pipeline, docs.
+- **Client repo (private fork):** identity, tokens, navigation, content, and
+  client-namespace blocks (e.g. `roxder/*`).
 
-Do not rename universal `sobe/*` blocks in place. The default header and footer shell blocks stay `sobe/site-header` and `sobe/site-footer` even after changing the client prefix. If a client deliberately needs a custom shell, register a replacement block and point the layout router at it with the `sobe/layout/block_name` filter.
+## Stack
+
+- **Framework:** Roots Acorn 6 (Sage architecture, Blade templates)
+- **Build:** Vite
+- **Styles:** Tailwind CSS v4 + CSS custom-property design tokens
+- **JS:** Alpine.js, GSAP + ScrollTrigger, Lenis, Swiper, noUiSlider
+- **Navigation:** Swup full-page transitions
+- **Commerce:** WooCommerce
+
+## Features
+
+- **Design tokens** — neutral defaults, dark-mode inversion, layout widths, spacing,
+  type, shadows, transitions, z-index, WooCommerce aliases. Brand overrides via
+  `resources/css/client-tokens.css` (never edit platform `tokens.css`).
+- **App shell (Alpine)** — dark mode, mobile nav, search overlay, side-cart, toasts,
+  smooth scroll, animation hooks.
+- **Block library (`sobe/*`)** — hero, FAQ, product carousel, product feature,
+  product-categories grid, brand carousel, our-brands, reviews slider, catalog
+  filters. Manifest-driven registration.
+- **WooCommerce layer** — catalog, PDP gallery/tabs, AJAX catalog filters (price
+  slider, category/brand facets, result-scoped counts, clean URLs), side-cart and
+  mini-cart fragments, wishlist surface, load-more pagination.
+- **Layout shells** — `sobe/site-header` / `sobe/site-footer` via a pluggable layout
+  router.
+- **Search** — REST endpoint + modal UI.
+- **SEO** — baseline metadata with plugin bypass.
+
+## Requirements
+
+- PHP **8.4+**
+- Node **22.12+**
+- WordPress **6.6+** (tested to **6.9.4**)
+- WooCommerce (for commerce features)
+- Composer
+
+## Getting started
+
+```bash
+git clone git@github.com:antoniaksander/sobe-theme.git
+cd sobe-theme
+
+composer install   # PHP dependencies (Acorn, etc.)
+npm install        # JS/CSS toolchain
+
+npm run dev        # Vite dev server with HMR
+npm run build      # production assets — run before committing JS/CSS changes
+```
+
+Activate the theme and set the header/footer layout in the Customizer.
+
+## Starting a client build
+
+Forked per client, not edited in place:
+
+1. Fork from latest `main` into a private client repo.
+2. Update identity: `style.css`, `config/theme.php` (`prefix`), `composer.json`,
+   `package.json`, `vite.config.js`. Keep `textdomain` as `sobe`.
+3. Override brand values in `resources/css/client-tokens.css`.
+4. Keep universal blocks under `sobe/*`; add client blocks in a client namespace.
+5. Extend behaviour through hooks before overriding Blade partials.
+6. Pull platform updates from upstream; keeping shared files identical to upstream
+   keeps merges clean.
+
+Full walkthrough: [docs/client-fork-guide.md](docs/client-fork-guide.md).
+
+## Deploying
+
+Per-client, but two platform rules must travel with any deploy of the built theme:
+
+- **Protect hashed build assets** from deletion (`rsync --filter='protect /public/build/***'`).
+- **Clear Acorn's compiled cache before purging the page cache** (`wp acorn optimize:clear`).
+
+## Validation & testing
+
+```bash
+npm test                  # Jest unit tests
+npm run check:patterns    # block pattern checks
+npm run check:upstream    # verify a client fork tracks the platform upstream
+npm run build             # asset build validation
+composer test:php         # Pest — PHP unit tests
+composer analyse          # PHPStan static analysis
+```
 
 ## Documentation
 
-- [Contributing](CONTRIBUTING.md)
+- [Contributing](CONTRIBUTING.md) — architecture rules and coding standards
 - [Client Fork Guide](docs/client-fork-guide.md)
-- [Hooks Reference](docs/hooks-reference.md)
-- [Client Boundary](docs/client-boundary.md)
-- [Merge Strategy](docs/merge-strategy.md)
-- [Library Version Policy](docs/library-version-policy.md)
+- [Block Authoring](docs/block-authoring.md) · [Hooks Reference](docs/hooks-reference.md) · [Token Reference](docs/token-reference.md)
+- [Page Transitions](docs/page-transitions.md)
+- [Client Boundary](docs/client-boundary.md) · [Merge Strategy](docs/merge-strategy.md) · [Upstream Sync Notes](docs/upstream-sync-notes.md)
+- [Plugin Compatibility](docs/plugin-compatibility.md) · [Library Version Policy](docs/library-version-policy.md)
 
-## Validation
+## License
 
-```bash
-npm test
-npm run check:patterns
-npm run build
-composer analyse
-```
+Copyright © Sobe Agency. All rights reserved. See [LICENSE.md](LICENSE.md).
