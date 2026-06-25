@@ -469,7 +469,16 @@ function initCatalogFilters(instance, params) {
         parseFloat(sliderEl.dataset.max),
       ]);
     }
-    applyFilters(collectState());
+    // The slider's data-min/data-max are re-scoped to the filtered set while a
+    // filter is active, so the price inputs still read those scoped bounds at
+    // this point. collectState() would therefore carry them into the cleared
+    // state and the response handler restores the full defaults before the URL
+    // is built — leaking min_price/max_price into a "cleared" URL. Drop price
+    // from the cleared state explicitly so Clear all really clears it.
+    const cleared = collectState();
+    delete cleared.min_price;
+    delete cleared.max_price;
+    applyFilters(cleared);
   }
 
   const debouncedCheckbox = debounce(state, () => applyFilters(collectState()), DEBOUNCE_CHECKBOX);
