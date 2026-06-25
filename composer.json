@@ -1,7 +1,7 @@
 {
   "name": "sobe/wp-theme",
   "type": "wordpress-theme",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "description": "Sobe Agency WordPress theme boilerplate",
   "keywords": [
     "wordpress"
