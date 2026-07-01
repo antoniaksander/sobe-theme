@@ -44,7 +44,8 @@ add_action('rest_api_init', function (): void {
 
             $query = new \WP_Query($queryArgs);
 
-            $results = [];
+            $results = sobe_search_brand_results($q);
+
             foreach ($query->posts as $post) {
                 $price_html = '';
                 $thumbnail = get_the_post_thumbnail_url($post->ID, 'thumbnail') ?: '';
@@ -85,15 +86,100 @@ add_action('rest_api_init', function (): void {
     ]);
 });
 
-// Index product_brand terms in Relevanssi Free (v4.26.1+).
-// After deploy: WP Admin → Relevanssi → Indexing → enable taxonomy indexing → check product_brand → Re-index.
-add_filter('relevanssi_taxonomies_to_index', function (array $taxonomies): array {
-    if (! in_array('product_brand', $taxonomies, true)) {
-        $taxonomies[] = 'product_brand';
+// Guarantee Relevanssi always indexes products and the brand taxonomy, even if
+// the Indexing tab checkboxes get reset (e.g. after a plugin update or on a
+// fresh environment). get_option() fires an `option_{name}` filter for every
+// call, including Relevanssi's own internal get_option() calls, so this is
+// enforced regardless of what's saved in wp_options.
+//
+// Replaces a prior `relevanssi_taxonomies_to_index` filter, which Relevanssi
+// never actually calls with apply_filters() and was therefore a no-op.
+add_filter('option_relevanssi_index_post_types', function ($types) {
+    $types = is_array($types) ? $types : [];
+
+    if (post_type_exists('product') && ! in_array('product', $types, true)) {
+        $types[] = 'product';
+    }
+
+    return $types;
+});
+
+add_filter('option_relevanssi_index_taxonomies_list', function ($taxonomies) {
+    $taxonomies = is_array($taxonomies) ? $taxonomies : [];
+
+    $brandTaxonomy = apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
+
+    if (is_string($brandTaxonomy) && taxonomy_exists($brandTaxonomy) && ! in_array($brandTaxonomy, $taxonomies, true)) {
+        $taxonomies[] = $brandTaxonomy;
     }
 
     return $taxonomies;
 });
+
+/**
+ * Brand terms matching the query, shaped like the post-based search results
+ * so the drawer can render them with the same template.
+ */
+function sobe_search_brand_results(string $q): array
+{
+    $taxonomy = apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
+
+    if (! is_string($taxonomy) || ! taxonomy_exists($taxonomy)) {
+        return [];
+    }
+
+    $terms = get_terms([
+        'taxonomy' => $taxonomy,
+        'name__like' => $q,
+        'hide_empty' => true,
+        'number' => 3,
+    ]);
+
+    if (is_wp_error($terms) || ! is_array($terms)) {
+        return [];
+    }
+
+    $results = [];
+
+    foreach ($terms as $term) {
+        if (! $term instanceof \WP_Term) {
+            continue;
+        }
+
+        $link = get_term_link($term);
+
+        if (is_wp_error($link)) {
+            continue;
+        }
+
+        $imageId = (int) get_term_meta($term->term_id, 'thumbnail_id', true);
+        $thumbnail = $imageId > 0 ? (wp_get_attachment_image_url($imageId, 'thumbnail') ?: '') : '';
+
+        // $term->count is unreliable here (WooCommerce filters it differently
+        // depending on the WP_Term_Query shape), so count published products directly.
+        $productCount = (new \WP_Query([
+            'post_type' => 'product',
+            'post_status' => 'publish',
+            'tax_query' => [['taxonomy' => $taxonomy, 'field' => 'term_id', 'terms' => $term->term_id]],
+            'fields' => 'ids',
+            'posts_per_page' => 1,
+            'no_found_rows' => false,
+        ]))->found_posts;
+
+        $results[] = [
+            'id' => 'brand-'.$term->term_id,
+            'title' => $term->name,
+            'url' => (string) $link,
+            'price_html' => '',
+            'thumbnail' => $thumbnail,
+            'post_type' => 'brand',
+            'type_label' => __('Brand', 'sobe'),
+            'excerpt' => sprintf(_n('%d product', '%d products', $productCount, 'sobe'), $productCount),
+        ];
+    }
+
+    return $results;
+}
 
 add_action('wp_head', function (): void {
     $pfx = config('theme.prefix');
