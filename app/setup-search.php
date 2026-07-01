@@ -58,7 +58,7 @@ add_action('rest_api_init', function (): void {
 
                 $result = [
                     'id' => $post->ID,
-                    'title' => wp_specialchars_decode(get_the_title($post->ID), ENT_QUOTES),
+                    'title' => html_entity_decode(get_the_title($post->ID), ENT_QUOTES, 'UTF-8'),
                     'url' => get_permalink($post->ID),
                     'price_html' => $price_html,
                     'thumbnail' => $thumbnail,
@@ -168,7 +168,7 @@ function sobe_search_brand_results(string $q): array
 
         $results[] = [
             'id' => 'brand-'.$term->term_id,
-            'title' => wp_specialchars_decode($term->name, ENT_QUOTES),
+            'title' => html_entity_decode($term->name, ENT_QUOTES, 'UTF-8'),
             'url' => (string) $link,
             'price_html' => '',
             'thumbnail' => $thumbnail,
