@@ -676,6 +676,13 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
   // the scroll — causing scroll-in reveals to intermittently not trigger.
   lenis.on('scroll', ScrollTrigger.update);
 
+  // ScrollTrigger.refresh() fires for reasons that can change the document's
+  // real scroll height (viewport resize, dynamic content injection, a pinned
+  // ScrollTrigger inserting its pin-spacer) — Lenis's own scroll-limit cache
+  // never hears about that on its own, and can desync from the real document.
+  // Keep it in sync globally rather than requiring every block to know this.
+  ScrollTrigger.addEventListener('refresh', () => lenis.resize());
+
   gsap.ticker.add((time) => {
     lenis.raf(time * 1000);
   });

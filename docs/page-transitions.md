@@ -211,6 +211,35 @@ it survives transitions.
 elements to the existing page context instead of tearing down the whole
 animation layer. Explicit `destroy` is the lifecycle teardown path.
 
+### Lenis / ScrollTrigger Sync
+
+Lenis runs in native `scrollTop` mode (not a transform-wrapper) and drives
+ScrollTrigger via `lenis.on('scroll', ScrollTrigger.update)`. A global listener
+in `resources/js/app.js` also calls `lenis.resize()` whenever
+`ScrollTrigger.refresh()` fires:
+
+```js
+ScrollTrigger.addEventListener('refresh', () => lenis.resize());
+```
+
+`ScrollTrigger.refresh()` already runs for reasons unrelated to any specific
+block — the debounced window-resize handler in `resources/js/animations.js`,
+or any block that calls it manually after dynamic content changes (an
+AJAX-swapped grid, a lazy-loaded image reflow). Each of those can change the
+document's real scrollable height, and Lenis caches its own scroll-limit
+separately — without the resize hook, that cache goes stale and Lenis's
+virtual scroll can desync from the real document.
+
+This matters most for a GSAP `pin: true` ScrollTrigger, since pinning inserts
+a pin-spacer that changes document height at setup. Without the sync fix, a
+pinned section can appear to hijack scroll indefinitely instead of releasing
+at its intended distance. New blocks that pin don't need any Lenis-specific
+setup of their own — this one global hook covers it. When choosing a pin's
+`end` distance, derive it from something the animation itself never mutates
+(a fixed viewport multiple, or a measurement like `track.scrollWidth` that a
+`translateX` tween doesn't change) rather than a dimension the same animation
+resizes — otherwise a refresh can recompute a larger distance than intended.
+
 ## Body Class Handling
 
 On transition, the incoming page's body classes win. Runtime classes that must
