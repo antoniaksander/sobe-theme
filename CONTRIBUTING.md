@@ -99,3 +99,25 @@ composer analyse
 ```
 
 For browser-facing changes, verify the Local site and check the console. For WooCommerce changes, test shop archive, product detail, add-to-cart, side-cart, catalog filters, and checkout entry.
+
+### package-lock.json
+
+`@wordpress/scripts` pulls in three separate `cosmiconfig` majors through
+different sub-dependencies (`@wordpress/eslint-plugin`, `postcss-loader`,
+`@svgr/webpack`, `npm-package-json-lint`, `stylelint`), two of which need
+their own nested `yaml@1.10.3`. `npm install`'s resolution order for this
+tree is not deterministic run to run — it can silently omit one of those
+nested entries from the written lockfile, which `npm install` doesn't
+validate but `npm ci` does. CI pins the exact npm version from
+`.site-requirements.json` before installing, since a different npm version
+can also disagree about the resolution.
+
+Whenever `package-lock.json` changes (a dependency bump, `npm install`,
+`npm audit fix`), verify it with a real clean install before committing:
+
+```bash
+npm run verify:lockfile
+```
+
+If that fails, run `npm install` again and re-verify — do not commit a
+lockfile that only `npm install` has seen.
