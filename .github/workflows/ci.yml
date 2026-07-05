@@ -27,6 +27,9 @@ jobs:
           node-version: '22'
           cache: npm
 
+      - name: Pin npm to the version package-lock.json was generated with
+        run: npm install -g npm@$(jq -r '.npm' .site-requirements.json)
+
       - name: Install PHP dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
 
@@ -37,12 +40,15 @@ jobs:
         run: |
           REQ_PHP=$(jq -r '.php' .site-requirements.json)
           REQ_NODE=$(jq -r '.node' .site-requirements.json)
+          REQ_NPM=$(jq -r '.npm' .site-requirements.json)
           ACTUAL_PHP=$(php -r "echo PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION;")
           ACTUAL_NODE=$(node -e "process.stdout.write(process.versions.node.split('.')[0])")
-          echo "Required: PHP=$REQ_PHP Node=$REQ_NODE"
-          echo "Actual:   PHP=$ACTUAL_PHP Node=$ACTUAL_NODE"
+          ACTUAL_NPM=$(npm -v)
+          echo "Required: PHP=$REQ_PHP Node=$REQ_NODE npm=$REQ_NPM"
+          echo "Actual:   PHP=$ACTUAL_PHP Node=$ACTUAL_NODE npm=$ACTUAL_NPM"
           [ "$ACTUAL_PHP" = "$REQ_PHP" ] || { echo "::error::PHP mismatch (need $REQ_PHP, got $ACTUAL_PHP)"; exit 1; }
           [ "$ACTUAL_NODE" = "$REQ_NODE" ] || { echo "::error::Node mismatch (need $REQ_NODE, got $ACTUAL_NODE)"; exit 1; }
+          [ "$ACTUAL_NPM" = "$REQ_NPM" ] || { echo "::error::npm mismatch (need $REQ_NPM, got $ACTUAL_NPM)"; exit 1; }
           echo "✓ Environment matches .site-requirements.json"
 
       - name: Build (bundle size check runs inside Vite)
