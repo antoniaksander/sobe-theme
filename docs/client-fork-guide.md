@@ -39,7 +39,7 @@ Update these files before the first client build:
 | `README.md` | Replace the platform README with a client-specific README. | Keep a short note that the client repo tracks the Sobe platform upstream if that helps future maintainers. |
 | `LICENSE.md` | Replace with a license appropriate for the client project. | The platform ships under PolyForm Noncommercial, which fits the public boilerplate but not a client's own commercial site. Use Roxder's `LICENSE.md` (a permissive, client-owned license) as a reference — this is not legal advice, confirm the right terms for each client relationship. |
 | `CONTRIBUTING.md` | Replace or delete. | The platform's copy describes "the Sobe platform contract," which doesn't apply to a client repo. Leaving it in place unedited is a real, easy-to-miss leftover — Roxder currently still has the unedited platform version sitting in its repo. |
-| `CHANGELOG.md` | Start a fresh client changelog from the fork point rather than keeping platform history. | Roxder does this already in practice (its own `v2.x` numbering, unrelated to the platform's version history) but it was never written down as the expected convention. |
+| `CHANGELOG.md` | Start a fresh client changelog from the fork point rather than keeping platform history. | Reset it to an empty `## Unreleased` section. Studio Mezza follows this convention; Roxder predates it and still carries the inherited platform history in its changelog — treat Roxder as the exception, not the pattern. |
 
 `vite.config.js`'s `base` path is self-configuring as of the vite base path fix — it derives
 the theme folder name from the actual working directory at build time, so no manual edit is
