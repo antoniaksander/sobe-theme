@@ -12,6 +12,7 @@
     "dev": "vite",
     "build": "vite build",
     "make:block": "node resources/scripts/make-block.js",
+    "client:identify": "node resources/scripts/client-identify.js",
     "test": "jest --config jest.config.cjs",
     "check:patterns": "node resources/scripts/check-patterns.js",
     "check:upstream": "node resources/scripts/check-upstream.js",
