@@ -34,10 +34,16 @@ Update these files before the first client build:
 | --- | --- | --- |
 | `style.css` | Change the theme header block: `Theme Name`, `Theme URI`, `Description`, `Author`, and `Author URI`. | Use client-owned public URLs when they exist. If the final URLs are not ready, use obvious placeholders that the client can replace before launch. Keep `Text Domain: sobe` unless a later translation migration explicitly changes it. |
 | `config/theme.php` | Change `prefix` from `sobe` to the client prefix, for example `roxder`. | This controls client-owned Customizer setting keys, image size names, and generated handles. It does not rename the platform layout shell blocks. Keep `textdomain` as `sobe`. |
-| `composer.json` | Change `name` and `description`. | Use a package name that belongs to the client or project, for example `roxder/wp-theme`. |
+| `composer.json` | Change `name` and `description`. | Use a package name that belongs to the client or project, for example `roxder/wp-theme`. After changing `name`, run `composer update` — `composer.lock` embeds the root package name too, and leaving it stale produces a lockfile-out-of-date warning on every future `composer` command. |
 | `package.json` | Change `name`. | `package-lock.json` will update its `name` fields the next time `npm install` writes the lockfile. |
 | `README.md` | Replace the platform README with a client-specific README. | Keep a short note that the client repo tracks the Sobe platform upstream if that helps future maintainers. |
-| `vite.config.js` | Change `base` to the real theme folder path, for example `/wp-content/themes/roxder/public/build/`. | If this path does not match the actual theme folder, built CSS, JS, and block asset URLs will break. |
+| `LICENSE.md` | Replace with a license appropriate for the client project. | The platform ships under PolyForm Noncommercial, which fits the public boilerplate but not a client's own commercial site. Use Roxder's `LICENSE.md` (a permissive, client-owned license) as a reference — this is not legal advice, confirm the right terms for each client relationship. |
+| `CONTRIBUTING.md` | Replace or delete. | The platform's copy describes "the Sobe platform contract," which doesn't apply to a client repo. Leaving it in place unedited is a real, easy-to-miss leftover — Roxder currently still has the unedited platform version sitting in its repo. |
+| `CHANGELOG.md` | Start a fresh client changelog from the fork point rather than keeping platform history. | Roxder does this already in practice (its own `v2.x` numbering, unrelated to the platform's version history) but it was never written down as the expected convention. |
+
+`vite.config.js`'s `base` path is self-configuring as of the vite base path fix — it derives
+the theme folder name from the actual working directory at build time, so no manual edit is
+needed here regardless of what the client folder is named.
 
 Change `config/theme.php` `prefix` before using the Customizer. Customizer
 settings are stored in the database under keys that include the prefix, so
