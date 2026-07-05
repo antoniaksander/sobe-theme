@@ -28,6 +28,14 @@ composer analyse
 
 ### Identity Checklist
 
+Run `npm run client:identify` to apply the mechanical edits below
+interactively (`style.css`, `config/theme.php` prefix, `composer.json`,
+`package.json`). It prompts for theme name, prefix, and other identity
+fields, then prints the remaining manual steps. Review the diff before
+committing. It does not touch `README.md`, `LICENSE.md`, `CONTRIBUTING.md`, or
+`CHANGELOG.md` — those are judgment calls and stay manual (see the table
+below).
+
 Update these files before the first client build:
 
 | File | Change | Notes |
