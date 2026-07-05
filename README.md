@@ -76,7 +76,9 @@ Forked per client, not edited in place:
 
 1. Fork from latest `main` into a private client repo.
 2. Update identity: `style.css`, `config/theme.php` (`prefix`), `composer.json`,
-   `package.json`, `vite.config.js`. Keep `textdomain` as `sobe`.
+   `package.json`. Keep `textdomain` as `sobe`. Run `npm run client:identify` to
+   apply these mechanically instead of editing by hand. `vite.config.js` needs no
+   edit — its `base` path derives from the actual folder name at build time.
 3. Override brand values in `resources/css/client-tokens.css`.
 4. Keep universal blocks under `sobe/*`; add client blocks in a client namespace.
 5. Extend behaviour through hooks before overriding Blade partials.

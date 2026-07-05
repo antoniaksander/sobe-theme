@@ -6,11 +6,11 @@ Public dependencies are the union of libraries used by public platform features 
 
 | Library | Version Policy | Load Bearing | Used By |
 |---------|----------------|--------------|---------|
-| `alpinejs` | Caret pinned within v3, currently `^3.15.11` | High | App shell, dark mode, nav, search, side-cart, toasts |
-| `@alpinejs/focus` | Match Alpine minor, currently `^3.15.11` | High | Focus traps for search, nav, side-cart |
-| `swiper` | Caret pinned within v12, currently `^12.1.3` | High | Product carousel, PDP gallery, product categories grid |
+| `alpinejs` | Caret pinned within v3, currently `^3.15.12` | High | App shell, dark mode, nav, search, side-cart, toasts |
+| `@alpinejs/focus` | Match Alpine minor, currently `^3.15.12` | High | Focus traps for search, nav, side-cart |
+| `swiper` | Caret pinned within v12, currently `^12.2.0` | High | Product carousel, PDP gallery, product categories grid |
 | `gsap` | Caret pinned within v3, currently `^3.15.0` | Medium-high | Animation bus, sticky header, AJAX refresh hooks |
-| `lenis` | Caret pinned within v1, currently `^1.3.23` | Medium | Smooth scroll, scroll locking coordination |
+| `lenis` | Caret pinned within v1, currently `^1.3.25` | Medium | Smooth scroll, scroll locking coordination |
 | `nouislider` | Caret pinned within v15, currently `^15.8.1` | Medium | Catalog filter price range |
 
 Load-bearing means replacing the library would affect shared markup, events, behavior, or multiple client repos. Swappable means the replacement can be contained inside one block or feature.
