@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
 import tailwindcss from '@tailwindcss/vite';
@@ -11,6 +12,14 @@ if (!process.env.APP_URL) {
   process.env.APP_URL = 'http://example.test';
 }
 
+// WordPress serves built assets from the theme's actual folder name on disk,
+// which varies per fork/clone (e.g. a GitHub zip download lands in
+// "sobe-theme-main", a client fork gets renamed to "roxder", etc). Deriving
+// the base path from the real working directory name — rather than
+// hardcoding it — means the build always matches wherever the theme actually
+// lives, with no manual step to remember or get wrong per fork.
+const themeFolderName = path.basename(process.cwd());
+
 const BUNDLE_LIMITS = {
   css: 150 * 1024, // 150 kB
   js: 250 * 1024, // 250 kB
@@ -20,7 +29,7 @@ const BUNDLE_LIMITS = {
 let delayedSizeReport = '';
 
 export default defineConfig({
-  base: '/wp-content/themes/sobe/public/build/',
+  base: `/wp-content/themes/${themeFolderName}/public/build/`,
   plugins: [
     tailwindcss(),
     laravel({
