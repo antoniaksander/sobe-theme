@@ -203,40 +203,6 @@ function initProductGallery(root = document) {
       },
     });
 
-    mainEl.style.cursor = 'zoom-in';
-
-    mainEl.addEventListener('click', (event) => {
-      const slide = event.target.closest('.swiper-slide');
-      if (!slide) return;
-      if (
-        typeof PhotoSwipe === 'undefined' ||
-        typeof PhotoSwipeUI_Default === 'undefined'
-      ) {
-        return;
-      }
-
-      const slides = [
-        ...mainEl.querySelectorAll('.swiper-slide:not(.swiper-slide-duplicate)'),
-      ];
-      const items = slides.map((itemSlide) => {
-        const img = itemSlide.querySelector('img');
-        return {
-          src: itemSlide.dataset.full,
-          w: img?.naturalWidth || 1800,
-          h: img?.naturalHeight || 1800,
-        };
-      });
-
-      const pswpEl = document.querySelector('.pswp');
-      if (!pswpEl) return;
-
-      new PhotoSwipe(pswpEl, PhotoSwipeUI_Default, items, {
-        index: state.mainSwiper.realIndex,
-        bgOpacity: 0.9,
-        shareEl: false,
-      }).init();
-    }, { signal: state.abortController.signal });
-
     bindVariationHandlers(state);
 
     galleryInstances.set(galleryRoot, state);

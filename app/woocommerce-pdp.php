@@ -22,9 +22,9 @@ if (! class_exists('WooCommerce')) {
 
 add_action('after_setup_theme', function () {
     add_theme_support('woocommerce');
-    // wc-product-gallery-zoom intentionally omitted: Splide owns the gallery DOM;
-    // zoom-on-hover JS expects .woocommerce-product-gallery__image which Splide removes.
-    // Click-to-PhotoSwipe in product-gallery.js provides lightbox UX instead.
+    // wc-product-gallery-zoom intentionally omitted: Swiper (product-gallery.js)
+    // owns the gallery DOM; zoom-on-hover JS expects .woocommerce-product-gallery__image
+    // which Swiper replaces.
     add_theme_support('wc-product-gallery-lightbox');
     add_theme_support('wc-product-gallery-slider');
     remove_action('woocommerce_after_single_product_summary', 'woocommerce_output_product_data_tabs', 10);
