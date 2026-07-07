@@ -40,6 +40,18 @@ if (config?.enabled) {
     initPage(container || document);
   };
 
+  // Swup's page:view hook never fires for the page that was already loaded
+  // when this script runs -- only for subsequent Swup-managed navigations
+  // (per Swup's own docs). Without this, every reinit module never runs on
+  // the very first page of a session, on a hard refresh, or on any URL in
+  // excludedUrls (e.g. the classic add-to-cart= redirect) -- exactly the
+  // pages a full-page cache is most likely to serve a stale snapshot of.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', remountCurrentPage);
+  } else {
+    remountCurrentPage();
+  }
+
   swup.hooks.on('visit:start', () => {
     document.dispatchEvent(new CustomEvent('sobe:shell-reset'));
     destroyPage();
