@@ -59,7 +59,7 @@
     },
     "speed": {
       "type": "string",
-      "enum": ["15s", "20s", "30s", "40s", "60s"],
+      "enum": ["15s", "20s", "30s", "40s", "60s", "90s", "120s"],
       "default": "30s"
     },
     "pauseOnHover": {
