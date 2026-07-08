@@ -187,7 +187,9 @@ export default function Edit({ attributes, setAttributes }) {
                 { label: '20 s',          value: '20s' },
                 { label: '30 s — Default',value: '30s' },
                 { label: '40 s',          value: '40s' },
-                { label: '60 s — Slow',   value: '60s' },
+                { label: '60 s',          value: '60s' },
+                { label: '90 s',          value: '90s' },
+                { label: '120 s — Slow',  value: '120s' },
               ]}
               onChange={(val) => setAttributes({ speed: val })}
               __nextHasNoMarginBottom

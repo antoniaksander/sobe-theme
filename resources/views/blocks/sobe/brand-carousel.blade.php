@@ -6,7 +6,7 @@
   $showImages     = $attributes['showImages']     ?? true;
 
   // Whitelist speed to prevent CSS-variable injection.
-  $allowedSpeeds = ['15s', '20s', '30s', '40s', '60s'];
+  $allowedSpeeds = ['15s', '20s', '30s', '40s', '60s', '90s', '120s'];
   $speed = in_array($speed, $allowedSpeeds, true) ? $speed : '30s';
 
   // ── Build $items array ────────────────────────────────────────────────────
