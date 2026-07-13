@@ -739,3 +739,14 @@ if (document.readyState === 'loading') {
 } else {
   resyncWishlistCount();
 }
+
+// YITH's legacy jQuery widget (jquery.yith-wcwl.min.js — still loaded
+// alongside the newer block-based add-to-wishlist button, e.g. for the
+// wishlist page's own remove links) handles add/remove entirely over AJAX,
+// with no page navigation for the resync above to catch. It does trigger
+// jQuery events on document.body once the request completes, though — hook
+// those directly so the badge updates immediately instead of needing a
+// manual refresh.
+if (window.jQuery) {
+  window.jQuery(document.body).on('added_to_wishlist removed_from_wishlist', resyncWishlistCount);
+}
