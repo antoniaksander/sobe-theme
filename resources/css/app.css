@@ -790,40 +790,48 @@ body.single-post {
   }
 
   .btn-dark {
-    background-color: var(--c-btn-navy);
-    color: var(--c-btn-cream);
-    border-color: var(--c-btn-navy);
+    /* ctaType 'btn-dark'/'btn-light'/etc. is the editor's choice of which
+       button style reads best on a given piece of content (usually a
+       background image) -- not something that should re-decide itself
+       when the visitor's light/dark mode differs from what the editor
+       saw while choosing it. --c-btn-navy/--c-btn-cream flip with .dark
+       (they alias --c-primary/--c-background); the -fixed variants don't
+       (declared once in tokens.css, never overridden in .dark), so a
+       "dark" button stays the same dark button in both modes. */
+    background-color: var(--c-btn-navy-fixed);
+    color: var(--c-btn-cream-fixed);
+    border-color: var(--c-btn-navy-fixed);
   }
 
   .btn-dark:hover {
-    background-color: var(--c-btn-navy-hover);
-    border-color: var(--c-btn-navy-hover);
+    background-color: var(--c-btn-navy-fixed-hover);
+    border-color: var(--c-btn-navy-fixed-hover);
     transform: translateY(-2px);
   }
 
   .btn-light {
-    background-color: var(--c-btn-cream);
-    color: var(--c-btn-navy) !important;
-    border-color: var(--c-btn-cream);
+    background-color: var(--c-btn-cream-fixed);
+    color: var(--c-btn-navy-fixed) !important;
+    border-color: var(--c-btn-cream-fixed);
   }
 
   .btn-light:hover {
-    background-color: var(--c-btn-cream-hover);
-    border-color: var(--c-btn-cream-hover);
+    background-color: var(--c-btn-cream-fixed-hover);
+    border-color: var(--c-btn-cream-fixed-hover);
     transform: translateY(-2px);
   }
 
   .btn-outline-dark {
     background-color: transparent;
-    color: var(--c-btn-navy) !important;
-    border-color: var(--c-btn-navy);
+    color: var(--c-btn-navy-fixed) !important;
+    border-color: var(--c-btn-navy-fixed);
   }
 
   .btn-outline-dark::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-color: var(--c-btn-navy);
+    background-color: var(--c-btn-navy-fixed);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 300ms var(--ease-out-expo);
@@ -831,7 +839,7 @@ body.single-post {
   }
 
   .btn-outline-dark:hover {
-    color: var(--c-btn-cream) !important;
+    color: var(--c-btn-cream-fixed) !important;
     transform: translateY(-2px);
   }
 
@@ -841,15 +849,20 @@ body.single-post {
 
   .btn-outline-light {
     background-color: transparent;
-    color: var(--c-btn-cream);
-    border-color: var(--c-btn-cream);
+    /* ctaType 'btn-outline-light' is always placed on a background image
+       (hero secondary CTA, promo tiles, feature banners) -- the image
+       doesn't change with light/dark mode, so this can't use
+       --c-btn-cream (a button-fill-pair token meant to flip together with
+       a matching background, not stand alone against a static photo). */
+    color: var(--c-overlay-light-full);
+    border-color: var(--c-overlay-light-full);
   }
 
   .btn-outline-light::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-color: var(--c-btn-cream);
+    background-color: var(--c-overlay-light-full);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 300ms var(--ease-out-expo);
@@ -857,7 +870,10 @@ body.single-post {
   }
 
   .btn-outline-light:hover {
-    color: var(--c-btn-navy) !important;
+    /* On hover the ::before fill turns the button solid white (the same
+       fixed token above), so the text needs a fixed dark color to read
+       against that fill regardless of mode -- --c-btn-navy-fixed. */
+    color: var(--c-btn-navy-fixed) !important;
     transform: translateY(-2px);
   }
 
@@ -874,7 +890,7 @@ body.single-post {
     font-size: var(--font-size-sm);
     letter-spacing: var(--tracking-wide);
     text-decoration: none;
-    color: var(--c-btn-navy);
+    color: var(--c-btn-navy-fixed);
     padding: 0;
     line-height: inherit;
     position: relative;
@@ -914,7 +930,11 @@ body.single-post {
     font-size: var(--font-size-sm);
     letter-spacing: var(--tracking-wide);
     text-decoration: none;
-    color: var(--c-btn-cream);
+    /* Same reasoning as .btn-outline-light above -- ctaType 'link-light' is
+       always placed on a background image (promo tiles, feature banners),
+       which doesn't change with mode, so this needs a fixed token instead
+       of --c-btn-cream. */
+    color: var(--c-overlay-light-full);
     padding: 0;
     line-height: inherit;
     position: relative;
