@@ -700,3 +700,63 @@ initAnimationBus();
 scheduleIdle(() => {
   initStickyHeader();
 });
+
+// Header wishlist count badge (components/wishlist-icon.blade.php). The
+// initial count is server-rendered for a correct first paint on an
+// uncached request; this resyncs client-side on every page load so a
+// visitor served a full-page-cached snapshot from before their last
+// wishlist change still sees the right number — same reasoning as any
+// header cart-count resync a fork may add for its own cart badge.
+//
+// Fetches a plain admin-ajax endpoint (sobe_wishlist_count — register it
+// per-fork, e.g. in an app/wishlist.php) rather than YITH's own
+// /yith/wishlist/v1/lists/ REST route: that route returns full wishlist
+// objects (name, token, visibility...), not a plain count, and 401s for a
+// guest with no session yet — correct for YITH's own per-product buttons
+// (each already handles that) but not a clean fit for "just get me a
+// number" here. yith_wcwl_count_all_products() is YITH's own public
+// helper for exactly this and returns 0 for a guest with no wishlist
+// activity rather than an error.
+function resyncWishlistCount() {
+  if (!document.querySelector('.sobe-wishlist-count')) return;
+
+  fetch('/wp-admin/admin-ajax.php?action=sobe_wishlist_count', {
+    credentials: 'same-origin',
+  })
+    .then((resp) => (resp.ok ? resp.json() : { count: 0 }))
+    .then((data) => {
+      window.dispatchEvent(
+        new CustomEvent('wishlist-updated', {
+          detail: { count: Number(data?.count) || 0 },
+        }),
+      );
+    })
+    .catch(() => {});
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', resyncWishlistCount);
+} else {
+  resyncWishlistCount();
+}
+
+// YITH's legacy jQuery widget (jquery.yith-wcwl.min.js — still loaded
+// alongside the newer block-based add-to-wishlist button, e.g. for the
+// wishlist page's own remove links) handles add/remove entirely over AJAX,
+// with no page navigation for the resync above to catch. It does trigger
+// jQuery events on document.body once the request completes, though — hook
+// those directly so the badge updates immediately instead of needing a
+// manual refresh.
+if (window.jQuery) {
+  window.jQuery(document.body).on('added_to_wishlist removed_from_wishlist', resyncWishlistCount);
+
+  // The newer block-based add-to-wishlist button (the heart icon on
+  // product cards, using YITH's React components + REST API rather than
+  // the legacy widget above) doesn't fire added_to_wishlist/
+  // removed_from_wishlist at all — it triggers its own
+  // yith_wcwl_reload_fragments on document (not document.body, so it
+  // wouldn't bubble into the listener above even if the event names
+  // matched). This is what most visitors actually click, so without this
+  // the badge only ever updated via the wishlist page's own remove links.
+  window.jQuery(document).on('yith_wcwl_reload_fragments', resyncWishlistCount);
+}

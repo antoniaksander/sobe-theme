@@ -72,6 +72,7 @@ collect([
     'setup-customizer',
     'setup-demo-layout',
     'setup-search',
+    'wishlist',
     'Helpers/notice-helpers',
 ])
     ->each(function ($file) {
