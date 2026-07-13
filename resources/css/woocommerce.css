@@ -1416,3 +1416,44 @@
     --shop-cols: 2;
   }
 }
+
+/* ── WooCommerce Blocks checkout/cart form controls (dark mode) ──
+   These render via WooCommerce's own React components (Checkout/Cart
+   blocks), not theme templates, and ship with hardcoded light-only
+   colors (white fields, near-black text) that never adapt to the
+   theme's tokens. Re-skin them explicitly rather than relying on
+   inherited color, since the plugin's own CSS sets these directly. */
+
+/* !important: WooCommerce Blocks' own CSS targets these inputs with a
+   higher-specificity selector (.wc-block-components-form
+   .wc-block-components-text-input input[type="..."]) that would otherwise
+   win regardless of source order. */
+.dark .wc-block-components-text-input input,
+.dark .wc-block-components-textarea textarea,
+.dark .wc-blocks-components-select__container {
+  background-color: var(--c-surface-1) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+
+.dark .wc-block-components-text-input input:focus,
+.dark .wc-block-components-textarea textarea:focus,
+.dark .wc-blocks-components-select__select:focus-visible + .wc-blocks-components-select__container {
+  border-color: var(--c-ring) !important;
+}
+
+.dark .wc-block-components-text-input label,
+.dark .wc-blocks-components-select__label {
+  background-color: var(--c-surface-1) !important;
+  color: var(--c-text-muted) !important;
+}
+
+.dark .wc-blocks-components-select__select {
+  color: var(--c-text);
+}
+
+.dark .wc-block-components-checkbox__input,
+.dark .wc-block-components-radio-control__input {
+  background-color: var(--c-surface-1);
+  border-color: var(--c-border);
+}
