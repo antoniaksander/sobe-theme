@@ -1452,8 +1452,31 @@
   color: var(--c-text);
 }
 
+/* !important: WooCommerce Blocks' own CSS targets these with a
+   higher-specificity selector (.wc-block-components-checkbox
+   .wc-block-components-checkbox__input[type="checkbox"]) that would
+   otherwise win regardless of source order — same fight as the text
+   inputs above. */
 .dark .wc-block-components-checkbox__input,
 .dark .wc-block-components-radio-control__input {
-  background-color: var(--c-surface-1);
-  border-color: var(--c-border);
+  background-color: var(--c-surface-1) !important;
+  border-color: var(--c-border) !important;
+}
+
+/* The collapsed "review your address" summary card (shown once the
+   shipping step validates, or for a logged-in customer's saved address)
+   — the secondary line (street/postcode/city/country) is a separate
+   element from the primary line (name) and has its own hardcoded color,
+   not inherited from the card, so the primary-line fix above didn't
+   cover it. !important for the same reason as the fields above. */
+.dark .wc-block-components-address-card__address-section--secondary {
+  color: var(--c-text-muted) !important;
+}
+
+/* Checkout links (Terms and Conditions, Privacy Policy, per-section
+   "Edit") render with no underline at all in either mode — give them
+   one, matching the rest of the site's inline-link convention (e.g.
+   footer, post-hero meta). */
+.wc-block-checkout a {
+  text-decoration: underline;
 }
