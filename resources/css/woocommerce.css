@@ -1416,3 +1416,106 @@
     --shop-cols: 2;
   }
 }
+
+/* ── WooCommerce Blocks checkout/cart form controls (dark mode) ──
+   These render via WooCommerce's own React components (Checkout/Cart
+   blocks), not theme templates, and ship with hardcoded light-only
+   colors (white fields, near-black text) that never adapt to the
+   theme's tokens. Re-skin them explicitly rather than relying on
+   inherited color, since the plugin's own CSS sets these directly. */
+
+/* !important: WooCommerce Blocks' own CSS targets these inputs with a
+   higher-specificity selector (.wc-block-components-form
+   .wc-block-components-text-input input[type="..."]) that would otherwise
+   win regardless of source order.
+   Note .wc-block-components-textarea is the class on the <textarea>
+   itself (e.g. the "Add a note to your order" field), not a wrapper
+   around it like .wc-block-components-text-input is for text inputs --
+   an earlier version of this rule wrote it as a descendant selector
+   (".wc-block-components-textarea textarea") that never matched
+   anything as a result. */
+.dark .wc-block-components-text-input input,
+.dark .wc-block-components-textarea,
+.dark .wc-blocks-components-select__container {
+  background-color: var(--c-surface-1) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+
+.dark .wc-block-components-text-input input:focus,
+.dark .wc-block-components-textarea:focus,
+.dark .wc-blocks-components-select__select:focus-visible + .wc-blocks-components-select__container {
+  border-color: var(--c-ring) !important;
+}
+
+.dark .wc-block-components-text-input label,
+.dark .wc-blocks-components-select__label {
+  background-color: var(--c-surface-1) !important;
+  color: var(--c-text-muted) !important;
+}
+
+.dark .wc-blocks-components-select__select {
+  color: var(--c-text);
+}
+
+/* !important: WooCommerce Blocks' own CSS targets these with a
+   higher-specificity selector (.wc-block-components-checkbox
+   .wc-block-components-checkbox__input[type="checkbox"]) that would
+   otherwise win regardless of source order — same fight as the text
+   inputs above. */
+.dark .wc-block-components-checkbox__input,
+.dark .wc-block-components-radio-control__input {
+  background-color: var(--c-surface-1) !important;
+  border-color: var(--c-border) !important;
+}
+
+/* The checked-radio dot is a ::before pseudo-element hardcoded to pure
+   black, which all but disappears against the dark circle above (both
+   near-black). WooCommerce Blocks already ships a light-dot variant for
+   this exact case, gated behind .has-dark-controls -- a class WordPress
+   itself adds when it detects a dark palette from theme.json global
+   styles. A runtime .dark toggle instead of that mechanism never
+   engages it here. */
+.dark .wc-block-components-radio-control__input:checked::before {
+  background-color: var(--c-text) !important;
+}
+
+/* Same problem, different element: the checked-checkbox tick is an
+   inline <svg class="wc-block-components-checkbox__mark"> with a
+   hardcoded black fill, sitting on the same now-dark checkbox
+   background above -- nearly invisible for the same reason as the
+   radio dot. */
+.dark .wc-block-components-checkbox__mark {
+  fill: var(--c-text) !important;
+}
+
+/* Order summary line-item quantity badge ("1", "2"...) is designed as an
+   inverted badge -- background: currentColor (the ambient text color),
+   number color: var(--wp--preset--color--background) (a static
+   theme.json color preset). That preset never changes with .dark, so in
+   dark mode the badge's currentColor background correctly flips to the
+   light ambient text color, but the number stays pinned to the same
+   (light, light-mode-only) value -- light number on a light badge,
+   invisible. Point it at the theme's own reactive background token
+   instead, which does flip. */
+.dark .wc-block-components-order-summary-item__quantity span {
+  color: var(--c-background) !important;
+}
+
+/* The collapsed "review your address" summary card (shown once the
+   shipping step validates, or for a logged-in customer's saved address)
+   — the secondary line (street/postcode/city/country) is a separate
+   element from the primary line (name) and has its own hardcoded color,
+   not inherited from the card, so the primary-line fix above didn't
+   cover it. !important for the same reason as the fields above. */
+.dark .wc-block-components-address-card__address-section--secondary {
+  color: var(--c-text-muted) !important;
+}
+
+/* Checkout links (Terms and Conditions, Privacy Policy, per-section
+   "Edit") render with no underline at all in either mode — give them
+   one, matching the rest of the site's inline-link convention (e.g.
+   footer, post-hero meta). */
+.wc-block-checkout a {
+  text-decoration: underline;
+}
