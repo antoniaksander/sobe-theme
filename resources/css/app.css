@@ -1362,7 +1362,14 @@ body.single-post {
 }
 
 .sobe-page-hero__title {
-  color: var(--c-surface-invert-fg);
+  /* Always sits on the hero's background-image, which doesn't change with
+     light/dark mode -- --c-surface-invert-fg does change, and flips this to
+     a near-black color in dark mode, rendering it invisible against the
+     same unchanged photo. --c-overlay-light-full is one of the tokens
+     documented in tokens.css specifically as "fixed light overlay tokens
+     ... intentionally NOT overridden in .dark ... these sit on
+     images/dark surfaces". */
+  color: var(--c-overlay-light-full);
   font-size: clamp(2rem, 5vw, 4rem);
   line-height: 1.1;
   margin: 0;
@@ -1372,7 +1379,7 @@ body.single-post {
 .sobe-page-hero__subtitle {
   max-width: min(44rem, 100%);
   margin: var(--space-sm) 0 0;
-  color: var(--c-surface-invert-fg);
+  color: var(--c-overlay-light-strong);
   font-size: var(--text-lg);
   line-height: 1.45;
   text-shadow: 0 1px 4px rgba(0 0 0 / 0.4);
