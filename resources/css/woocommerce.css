@@ -1427,9 +1427,15 @@
 /* !important: WooCommerce Blocks' own CSS targets these inputs with a
    higher-specificity selector (.wc-block-components-form
    .wc-block-components-text-input input[type="..."]) that would otherwise
-   win regardless of source order. */
+   win regardless of source order.
+   Note .wc-block-components-textarea is the class on the <textarea>
+   itself (e.g. the "Add a note to your order" field), not a wrapper
+   around it like .wc-block-components-text-input is for text inputs --
+   an earlier version of this rule wrote it as a descendant selector
+   (".wc-block-components-textarea textarea") that never matched
+   anything as a result. */
 .dark .wc-block-components-text-input input,
-.dark .wc-block-components-textarea textarea,
+.dark .wc-block-components-textarea,
 .dark .wc-blocks-components-select__container {
   background-color: var(--c-surface-1) !important;
   color: var(--c-text) !important;
@@ -1437,7 +1443,7 @@
 }
 
 .dark .wc-block-components-text-input input:focus,
-.dark .wc-block-components-textarea textarea:focus,
+.dark .wc-block-components-textarea:focus,
 .dark .wc-blocks-components-select__select:focus-visible + .wc-blocks-components-select__container {
   border-color: var(--c-ring) !important;
 }
@@ -1472,6 +1478,15 @@
    engages it here. */
 .dark .wc-block-components-radio-control__input:checked::before {
   background-color: var(--c-text) !important;
+}
+
+/* Same problem, different element: the checked-checkbox tick is an
+   inline <svg class="wc-block-components-checkbox__mark"> with a
+   hardcoded black fill, sitting on the same now-dark checkbox
+   background above -- nearly invisible for the same reason as the
+   radio dot. */
+.dark .wc-block-components-checkbox__mark {
+  fill: var(--c-text) !important;
 }
 
 /* Order summary line-item quantity badge ("1", "2"...) is designed as an
