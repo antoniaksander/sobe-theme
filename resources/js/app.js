@@ -749,4 +749,14 @@ if (document.readyState === 'loading') {
 // manual refresh.
 if (window.jQuery) {
   window.jQuery(document.body).on('added_to_wishlist removed_from_wishlist', resyncWishlistCount);
+
+  // The newer block-based add-to-wishlist button (the heart icon on
+  // product cards, using YITH's React components + REST API rather than
+  // the legacy widget above) doesn't fire added_to_wishlist/
+  // removed_from_wishlist at all — it triggers its own
+  // yith_wcwl_reload_fragments on document (not document.body, so it
+  // wouldn't bubble into the listener above even if the event names
+  // matched). This is what most visitors actually click, so without this
+  // the badge only ever updated via the wishlist page's own remove links.
+  window.jQuery(document).on('yith_wcwl_reload_fragments', resyncWishlistCount);
 }
