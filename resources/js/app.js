@@ -8,25 +8,11 @@ import './announcement-bar.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const themeConfig = window.sobeThemeConfig ?? {};
-const allowedColorModes = ['light', 'dark', 'system'];
-const defaultColorMode = allowedColorModes.includes(themeConfig.defaultColorMode)
-  ? themeConfig.defaultColorMode
-  : 'light';
-const darkModeToggleEnabled = themeConfig.darkModeToggleEnabled === true;
-const storedTheme = darkModeToggleEnabled ? localStorage.getItem('theme') : null;
-const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-const defaultModePrefersDark =
-  defaultColorMode === 'dark' ||
-  (defaultColorMode === 'system' && prefersDark);
-
-if (
-  storedTheme === 'dark' ||
-  (!storedTheme && defaultModePrefersDark)
-) {
-  document.documentElement.classList.add('dark');
-}
-
+// The .dark class itself is applied earlier, synchronously, by the inline
+// <script> app/appearance.php emits in wp_head (before first paint) — this
+// bundle is an ES module and always executes deferred, well after that
+// already ran, so Alpine's own `dark:` initial value below just reads
+// whatever class is already there rather than deciding it itself.
 document.documentElement.classList.add('js');
 
 const getThemeCartParams = () => window.themeCartParams ?? {};
