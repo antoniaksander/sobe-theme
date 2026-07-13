@@ -71,6 +71,20 @@
   --c-btn-cream: var(--c-background);
   --c-btn-cream-hover: color-mix(in oklch, var(--c-btn-cream) 92%, black);
 
+  /* Fixed counterparts of the pair above — ctaType 'btn-dark'/'btn-light'
+     etc. is an editorial choice of which button style looks right on a
+     given piece of content (usually a background image), not a site-chrome
+     choice that should follow the visitor's light/dark mode. --c-btn-navy
+     aliases --c-primary and --c-btn-cream aliases --c-background, so both
+     flip with mode; these two don't (declared once, here, never overridden
+     in .dark) — same "fixed token" convention as the --c-overlay-light-*
+     scale above. Forks with their own brand tokens should override these
+     alongside --c-btn-navy/--c-btn-cream. */
+  --c-btn-navy-fixed: #111827;
+  --c-btn-navy-fixed-hover: color-mix(in oklch, #111827 82%, white);
+  --c-btn-cream-fixed: #ffffff;
+  --c-btn-cream-fixed-hover: color-mix(in oklch, #ffffff 92%, black);
+
   /* ── Global interaction tokens ── */
   --selection-bg: var(--c-text);
   --selection-fg: var(--color-background);
