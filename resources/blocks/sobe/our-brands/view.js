@@ -44,6 +44,14 @@ function init(root = document) {
 
         if (window.lenis) {
           window.lenis.scrollTo(target, { offset });
+          // app.js only runs Lenis's raf loop while the user is actively
+          // wheeling/touching (it self-stops 250ms after input goes idle,
+          // to save CPU) — a scrollTo() called while the ticker is idle
+          // (e.g. clicking a letter right after page load, before any
+          // scrolling) sets the animation target but nothing ever advances
+          // it. One manual raf() tick kicks it moving; app.js's own
+          // 'scroll' listener takes over driving the rest of the animation.
+          window.lenis.raf(performance.now());
         } else {
           const top = target.getBoundingClientRect().top + window.scrollY + offset;
           window.scrollTo({ top, behavior: 'smooth' });
