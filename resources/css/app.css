@@ -841,15 +841,20 @@ body.single-post {
 
   .btn-outline-light {
     background-color: transparent;
-    color: var(--c-btn-cream);
-    border-color: var(--c-btn-cream);
+    /* ctaType 'btn-outline-light' is always placed on a background image
+       (hero secondary CTA, promo tiles, feature banners) -- the image
+       doesn't change with light/dark mode, so this can't use
+       --c-btn-cream (a button-fill-pair token meant to flip together with
+       a matching background, not stand alone against a static photo). */
+    color: var(--c-overlay-light-full);
+    border-color: var(--c-overlay-light-full);
   }
 
   .btn-outline-light::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-color: var(--c-btn-cream);
+    background-color: var(--c-overlay-light-full);
     transform: scaleX(0);
     transform-origin: left;
     transition: transform 300ms var(--ease-out-expo);
@@ -857,7 +862,13 @@ body.single-post {
   }
 
   .btn-outline-light:hover {
-    color: var(--c-btn-navy) !important;
+    /* On hover the ::before fill turns the button solid white (the same
+       fixed token above), so the text needs a fixed dark color to read
+       against that fill regardless of mode. No fixed-dark token exists
+       yet (tokens.css only documents a fixed *light* overlay scale, for
+       text over photos), so this is a literal value matching
+       --c-btn-navy's light-mode color rather than the token itself. */
+    color: #111827 !important;
     transform: translateY(-2px);
   }
 
@@ -914,7 +925,11 @@ body.single-post {
     font-size: var(--font-size-sm);
     letter-spacing: var(--tracking-wide);
     text-decoration: none;
-    color: var(--c-btn-cream);
+    /* Same reasoning as .btn-outline-light above -- ctaType 'link-light' is
+       always placed on a background image (promo tiles, feature banners),
+       which doesn't change with mode, so this needs a fixed token instead
+       of --c-btn-cream. */
+    color: var(--c-overlay-light-full);
     padding: 0;
     line-height: inherit;
     position: relative;
