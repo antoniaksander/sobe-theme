@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## v3.0.1 - 2026-07-16
+
+### Verified
+
+- Confirmed compatible with WordPress 7.0.1, verified via the Roxder client fork:
+  production smoke-tested (homepage, shop archive, PDP, add-to-cart, checkout,
+  sticky-nav block, mobile viewport) with no new console errors or PHP error
+  leakage. All blocks already declare `apiVersion 3` and the pre-adopted
+  `__nextHasNoMarginBottom`/`__next40pxDefaultSize` props, so no editor-side
+  breakage expected.
+- Bumped `Tested up to: 7.0.1` in style.css.
+
 ## v2.7.0 - 2026-06-08
 
 ### Performance
