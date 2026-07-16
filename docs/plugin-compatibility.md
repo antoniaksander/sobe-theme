@@ -19,7 +19,7 @@ Client-specific plugin notes belong in each private client repo.
 | Variation Swatches for WooCommerce | 2.2.3          | 13-05-2026    | Woo             | supported | shop, Woo catalog, product view, side-cart widget attributes | Optional platform compatibility layer    | [link](https://en-gb.wordpress.org/plugins/woo-variation-swatches/)    |
 | Rank Math SEO                      | 1.0.269        | 13-05-2026    | WP/Woo          | partial   | SEO attributes                                              | Platform baseline SEO bypasses when active | [link](https://en-gb.wordpress.org/plugins/seo-by-rank-math/)        |
 | CookieYes GDPR Cookie Consent      | 3.4.2          | 13-05-2026    | WP/Woo          | supported | Europe GDPR needs                                           | Optional platform compatibility layer    | [link](https://en-gb.wordpress.org/plugins/cookie-law-info/)           |
-| YITH WooCommerce Wishlist          | 4.14.0         | 13-05-2026    | Woo             | partial   | Shop, product                                               | Optional wishlist provider adapter       | [link](https://en-gb.wordpress.org/plugins/yith-woocommerce-wishlist/) |
+| YITH WooCommerce Wishlist          | 4.16.0         | 16-07-2026    | Woo             | partial   | Shop, product                                               | Optional wishlist provider adapter       | [link](https://en-gb.wordpress.org/plugins/yith-woocommerce-wishlist/) |
 
 Add rows as integrations are actually tested.
 
