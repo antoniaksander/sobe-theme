@@ -51,7 +51,16 @@
       <meta name="twitter:description" content="{!! esc_attr($sobe_desc) !!}">
       @if (is_front_page())
         @php
-          $sobe_schema = ['@context' => 'https://schema.org', '@type' => 'Organization', 'name' => $sobe_site_name, 'url' => home_url('/')];
+          // Built via concatenation, not a literal '@context' array key: Blade
+          // has its own built-in @context directive (Illuminate's Context
+          // facade) and scans raw template text for it even inside @php
+          // blocks, which silently corrupts a literal '@context' string key
+          // into compiled directive PHP instead of leaving it as JSON text.
+          $sobe_schema = array_merge(['@' . 'context' => 'https://schema.org'], [
+            '@type' => 'Organization',
+            'name' => $sobe_site_name,
+            'url' => home_url('/'),
+          ]);
           if ($sobe_image) $sobe_schema['logo'] = $sobe_image;
         @endphp
         <script type="application/ld+json">{!! wp_json_encode($sobe_schema, JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT) !!}</script>
