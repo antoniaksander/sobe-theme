@@ -18,7 +18,11 @@
                 : (float) wc_get_price_excluding_tax($product);
             $line_price       = $unit_price * $quantity;
           @endphp
-          <li class="flex gap-md py-md">
+          <li
+            class="flex gap-md py-md"
+            x-data="cartLineItem('{{ $cart_item_key }}', {{ (int) $quantity }})"
+            :class="{ 'opacity-50': pending }"
+          >
             <a href="{{ $product->get_permalink() }}" class="shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-surface-2" tabindex="-1" aria-hidden="true">
               {!! $product->get_image('woocommerce_thumbnail', ['class' => 'w-full h-full object-cover']) !!}
             </a>
@@ -32,27 +36,31 @@
               </p>
               <div class="flex items-center gap-1 mt-1">
                 <button
-                  @click.prevent.stop="updateCartQty('{{ $cart_item_key }}', {{ $quantity - 1 }})"
-                  class="w-7 h-7 flex items-center justify-center rounded border border-border text-text hover:bg-surface-2 transition-colors duration-150 text-base leading-none"
+                  @click.prevent.stop="decrement()"
+                  :disabled="pending || quantity <= 1"
+                  class="w-7 h-7 flex items-center justify-center rounded border border-border text-text hover:bg-surface-2 transition-colors duration-150 text-base leading-none disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   aria-label="{{ __('Decrease quantity', 'sobe') }}"
                 >−</button>
                 <input
                   type="number"
-                  value="{{ $quantity }}"
-                  min="0"
-                  @change.prevent.stop="updateCartQty('{{ $cart_item_key }}', parseInt($event.target.value) || 0)"
-                  class="w-10 h-7 text-center text-sm border border-border rounded bg-surface-1 text-text focus:outline-none focus:ring-1 focus:ring-ring"
+                  :value="quantity"
+                  min="1"
+                  :disabled="pending"
+                  @change.prevent.stop="onInputChange($event.target.value)"
+                  class="w-10 h-7 text-center text-sm border border-border rounded bg-surface-1 text-text focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed"
                   aria-label="{{ __('Quantity', 'sobe') }}"
                 />
                 <button
-                  @click.prevent.stop="updateCartQty('{{ $cart_item_key }}', {{ $quantity + 1 }})"
-                  class="w-7 h-7 flex items-center justify-center rounded border border-border text-text hover:bg-surface-2 transition-colors duration-150 text-base leading-none"
+                  @click.prevent.stop="increment()"
+                  :disabled="pending"
+                  class="w-7 h-7 flex items-center justify-center rounded border border-border text-text hover:bg-surface-2 transition-colors duration-150 text-base leading-none disabled:cursor-not-allowed disabled:hover:bg-transparent"
                   aria-label="{{ __('Increase quantity', 'sobe') }}"
                 >+</button>
               </div>
               <button
-                @click.prevent.stop="removeFromCart('{{ $cart_item_key }}')"
-                class="text-xs text-text-subtle hover:text-accent transition-colors duration-200 mt-auto w-fit remove_from_cart_button"
+                @click.prevent.stop="remove()"
+                :disabled="pending"
+                class="text-xs text-text-subtle hover:text-accent transition-colors duration-200 mt-auto w-fit remove_from_cart_button disabled:cursor-not-allowed"
                 aria-label="{{ sprintf(__('Remove %s from cart', 'sobe'), $product->get_name()) }}"
               >
                 {{ __('Remove', 'sobe') }}
