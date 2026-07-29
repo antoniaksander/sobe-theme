@@ -48,6 +48,94 @@ function getCartCount(cart) {
   );
 }
 
+async function fetchFreshCart() {
+  const resp = await fetch(getStoreApiCartUrl(), {
+    headers: { Nonce: getStoreApiNonce() },
+    credentials: 'same-origin',
+  });
+
+  if (!resp.ok) {
+    return { items: [], count: 0 };
+  }
+
+  const cart = await resp.json();
+
+  return {
+    items: cart.items || [],
+    count: getCartCount(cart),
+  };
+}
+
+// Module-level (not an Alpine method) so the side cart's per-item
+// x-data="cartLineItem(...)" components can call it directly. Returns the
+// item's server-confirmed quantity (0 if removed) so callers can resync
+// their own local state — the server may clamp the requested quantity (e.g.
+// stock limits), so the caller's own guess isn't necessarily final.
+async function updateCartQty(itemKey, quantity) {
+  const nonce = getStoreApiNonce();
+  const url = `/wp-json/wc/store/v1/cart/items/${encodeURIComponent(itemKey)}`;
+  const method = quantity < 1 ? 'DELETE' : 'PUT';
+  const opts = {
+    method,
+    credentials: 'same-origin',
+    headers: { Nonce: nonce, 'Content-Type': 'application/json' },
+  };
+
+  if (method === 'PUT') opts.body = JSON.stringify({ quantity });
+
+  let confirmedQuantity = 0;
+
+  try {
+    const response = await fetch(url, opts);
+
+    if (response.ok || response.status === 200) {
+      const result = await fetchFreshCart();
+      const item = result.items.find((cartItem) => cartItem.key === itemKey);
+      confirmedQuantity = item ? parseInt(item.quantity, 10) || 0 : 0;
+
+      window.dispatchEvent(
+        new CustomEvent('cart-updated', {
+          detail: { items: result.items, count: result.count },
+        }),
+      );
+    }
+  } finally {
+    if (typeof jQuery !== 'undefined') {
+      jQuery(document.body).trigger('wc_fragment_refresh');
+    }
+  }
+
+  return confirmedQuantity;
+}
+
+async function removeFromCart(itemKey) {
+  const nonce = getStoreApiNonce();
+
+  try {
+    const response = await fetch(
+      `/wp-json/wc/store/v1/cart/items/${encodeURIComponent(itemKey)}`,
+      {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: { Nonce: nonce },
+      },
+    );
+
+    if (response.ok || response.status === 200) {
+      const result = await fetchFreshCart();
+      window.dispatchEvent(
+        new CustomEvent('cart-updated', {
+          detail: { items: result.items, count: result.count },
+        }),
+      );
+    }
+  } finally {
+    if (typeof jQuery !== 'undefined') {
+      jQuery(document.body).trigger('wc_fragment_refresh');
+    }
+  }
+}
+
 function normalizeToast(notice) {
   const id = notice.id || `toast-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
   return { ...notice, id, timestamp: Date.now() };
@@ -391,84 +479,78 @@ Alpine.data('app', () => ({
     }, 40);
   },
 
-  async fetchFreshCart() {
-    const resp = await fetch(getStoreApiCartUrl(), {
-      headers: { Nonce: getStoreApiNonce() },
-      credentials: 'same-origin',
-    });
-
-    if (!resp.ok) {
-      return { items: [], count: 0 };
-    }
-
-    const cart = await resp.json();
-
-    return {
-      items: cart.items || [],
-      count: getCartCount(cart),
-    };
-  },
-
-  async updateCartQty(itemKey, quantity) {
-    const nonce = getStoreApiNonce();
-    const url = `/wp-json/wc/store/v1/cart/items/${encodeURIComponent(itemKey)}`;
-    const method = quantity < 1 ? 'DELETE' : 'PUT';
-    const opts = {
-      method,
-      credentials: 'same-origin',
-      headers: { Nonce: nonce, 'Content-Type': 'application/json' },
-    };
-
-    if (method === 'PUT') opts.body = JSON.stringify({ quantity });
-
-    try {
-      const response = await fetch(url, opts);
-      if (response.ok || response.status === 200) {
-        const result = await this.fetchFreshCart();
-        window.dispatchEvent(
-          new CustomEvent('cart-updated', {
-            detail: { items: result.items, count: result.count },
-          }),
-        );
-      }
-    } finally {
-      if (typeof jQuery !== 'undefined') {
-        jQuery(document.body).trigger('wc_fragment_refresh');
-      }
-    }
-  },
-
-  async removeFromCart(itemKey) {
-    const nonce = getStoreApiNonce();
-
-    try {
-      const response = await fetch(
-        `/wp-json/wc/store/v1/cart/items/${encodeURIComponent(itemKey)}`,
-        {
-          method: 'DELETE',
-          credentials: 'same-origin',
-          headers: { Nonce: nonce },
-        },
-      );
-
-      if (response.ok || response.status === 200) {
-        const result = await this.fetchFreshCart();
-        window.dispatchEvent(
-          new CustomEvent('cart-updated', {
-            detail: { items: result.items, count: result.count },
-          }),
-        );
-      }
-    } finally {
-      if (typeof jQuery !== 'undefined') {
-        jQuery(document.body).trigger('wc_fragment_refresh');
-      }
-    }
-  },
-
   toggleDark() {
     this.dark = !this.dark;
     localStorage.setItem('theme', this.dark ? 'dark' : 'light');
+  },
+}));
+
+// The side cart's quantity stepper for each line item. Previously the +/-
+// buttons and input computed their next quantity from the value PHP baked
+// into the markup at render time (`{{ $quantity - 1 }}` / `{{ $quantity + 1 }}`),
+// which never changed after the initial render. Clicking a button multiple
+// times in a row (or before the previous request resolved) kept resending
+// the same stale computed value instead of building on the last click — the
+// stepper looked like it needed two clicks to register one. Tracking
+// quantity as reactive Alpine state, and queuing a second change while one
+// is in flight instead of firing both requests at once, fixes both.
+Alpine.data('cartLineItem', (itemKey, initialQuantity) => ({
+  quantity: initialQuantity,
+  pending: false,
+  queuedQuantity: null,
+
+  // Floor of 1, not 0 — the stepper (buttons + input) never removes the
+  // item on its own. Reaching 0 here used to trigger a DELETE, which is
+  // exactly how a rapid extra click (or a customer just trying to reach 1)
+  // could silently drop the item from the cart. The explicit "Remove" link
+  // (below) is the only path that actually removes an item.
+  async apply(nextQuantity) {
+    const clamped = Math.max(1, nextQuantity);
+
+    if (this.pending) {
+      this.queuedQuantity = clamped;
+      return;
+    }
+
+    this.pending = true;
+    this.quantity = clamped;
+
+    try {
+      const confirmed = await updateCartQty(itemKey, clamped);
+      this.quantity = confirmed;
+    } finally {
+      this.pending = false;
+
+      if (this.queuedQuantity !== null) {
+        const next = this.queuedQuantity;
+        this.queuedQuantity = null;
+        this.apply(next);
+      }
+    }
+  },
+
+  decrement() {
+    this.apply((this.queuedQuantity ?? this.quantity) - 1);
+  },
+
+  increment() {
+    this.apply((this.queuedQuantity ?? this.quantity) + 1);
+  },
+
+  onInputChange(value) {
+    this.apply(parseInt(value, 10) || 1);
+  },
+
+  async remove() {
+    if (this.pending) return;
+
+    this.pending = true;
+
+    try {
+      await removeFromCart(itemKey);
+    } finally {
+      this.pending = false;
+    }
   },
 }));
 
