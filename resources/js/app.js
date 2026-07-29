@@ -660,7 +660,56 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
   // the correct position under smooth scroll. Without this, ScrollTrigger relies
   // only on native scroll events, which fire inconsistently while Lenis smooths
   // the scroll — causing scroll-in reveals to intermittently not trigger.
-  lenis.on('scroll', ScrollTrigger.update);
+  //
+  // The ticker itself only runs while Lenis has something to process: a plain
+  // `gsap.ticker.add` here would call lenis.raf() on every animation frame for
+  // the rest of the page's life, even once the user stops touching the wheel —
+  // a permanent ~60fps callback competing with every other GSAP tween. Instead
+  // the ticker starts on the first scroll input and stops itself after 250ms of
+  // no motion, restarting on the next wheel/touch/scroll.
+  let lenisTickerActive = false;
+  let lenisTickerIdleSince = 0;
+
+  const stopLenisTicker = () => {
+    gsap.ticker.remove(tickLenis);
+    lenisTickerActive = false;
+    lenisTickerIdleSince = 0;
+  };
+
+  const tickLenis = (time) => {
+    const now = time * 1000;
+
+    lenis.raf(now);
+
+    if (lenis.isScrolling) {
+      lenisTickerIdleSince = 0;
+      return;
+    }
+
+    if (!lenisTickerIdleSince) {
+      lenisTickerIdleSince = now;
+      return;
+    }
+
+    if (now - lenisTickerIdleSince > 250) {
+      stopLenisTicker();
+    }
+  };
+
+  const startLenisTicker = () => {
+    lenisTickerIdleSince = 0;
+
+    if (lenisTickerActive) return;
+
+    gsap.ticker.add(tickLenis);
+    lenisTickerActive = true;
+  };
+
+  lenis.on('virtual-scroll', startLenisTicker);
+  lenis.on('scroll', () => {
+    ScrollTrigger.update();
+    startLenisTicker();
+  });
 
   // ScrollTrigger.refresh() fires for reasons that can change the document's
   // real scroll height (viewport resize, dynamic content injection, a pinned
@@ -669,9 +718,6 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
   // Keep it in sync globally rather than requiring every block to know this.
   ScrollTrigger.addEventListener('refresh', () => lenis.resize());
 
-  gsap.ticker.add((time) => {
-    lenis.raf(time * 1000);
-  });
   gsap.ticker.lagSmoothing(0);
 }));
 
