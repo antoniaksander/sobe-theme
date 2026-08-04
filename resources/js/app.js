@@ -37,7 +37,70 @@ const getStoreApiCartUrl = () =>
 const getStoreApiAddUrl = () =>
   getThemeCartParams().storeApiAddUrl ?? '/wp-json/wc/store/v1/cart/add-item';
 
-const getStoreApiNonce = () => getThemeCartParams().storeApiNonce ?? '';
+// The nonce baked into window.themeCartParams at page-render time can go
+// stale well before any full-page cache a client site runs expires (or
+// simply if a visitor leaves a tab open past WordPress's ~24-48h nonce
+// lifetime) — every cart action then fails with "Nonce is invalid". Track it
+// as mutable state instead of a static read, and refresh it from the Store
+// API's own response — WooCommerce's Store API always returns a fresh nonce
+// in the `Nonce` response header (success or failure), specifically so
+// clients can self-heal from exactly this scenario.
+let currentStoreApiNonce = null;
+
+function getStoreApiNonce() {
+  if (currentStoreApiNonce === null) {
+    currentStoreApiNonce = getThemeCartParams().storeApiNonce ?? '';
+  }
+  return currentStoreApiNonce;
+}
+
+function captureNonceFromResponse(response) {
+  const fresh = response.headers.get('Nonce');
+  if (fresh) {
+    currentStoreApiNonce = fresh;
+  }
+}
+
+async function isInvalidNonceResponse(response) {
+  if (response.status !== 403) return false;
+
+  try {
+    const body = await response.clone().json();
+    return (
+      body?.code === 'woocommerce_rest_cart_invalid_nonce' ||
+      /nonce/i.test(body?.message || '')
+    );
+  } catch (_error) {
+    return false;
+  }
+}
+
+// Wraps every Store API call: attaches the current nonce, captures whatever
+// fresh nonce the response hands back, and — on an invalid-nonce failure
+// specifically — retries exactly once using the fresh nonce that failed
+// response's own headers just provided. Centralizing this here means the
+// fix (and the shared nonce state) applies to every call site at once.
+async function storeApiFetch(url, options = {}) {
+  const opts = {
+    ...options,
+    credentials: 'same-origin',
+    headers: { ...(options.headers || {}), Nonce: getStoreApiNonce() },
+  };
+
+  let response = await fetch(url, opts);
+  captureNonceFromResponse(response);
+
+  if (!response.ok && (await isInvalidNonceResponse(response))) {
+    const retryOpts = {
+      ...opts,
+      headers: { ...opts.headers, Nonce: getStoreApiNonce() },
+    };
+    response = await fetch(url, retryOpts);
+    captureNonceFromResponse(response);
+  }
+
+  return response;
+}
 
 function getCartCount(cart) {
   return (
@@ -49,10 +112,7 @@ function getCartCount(cart) {
 }
 
 async function fetchFreshCart() {
-  const resp = await fetch(getStoreApiCartUrl(), {
-    headers: { Nonce: getStoreApiNonce() },
-    credentials: 'same-origin',
-  });
+  const resp = await storeApiFetch(getStoreApiCartUrl());
 
   if (!resp.ok) {
     return { items: [], count: 0 };
@@ -72,13 +132,11 @@ async function fetchFreshCart() {
 // their own local state — the server may clamp the requested quantity (e.g.
 // stock limits), so the caller's own guess isn't necessarily final.
 async function updateCartQty(itemKey, quantity) {
-  const nonce = getStoreApiNonce();
   const url = `/wp-json/wc/store/v1/cart/items/${encodeURIComponent(itemKey)}`;
   const method = quantity < 1 ? 'DELETE' : 'PUT';
   const opts = {
     method,
-    credentials: 'same-origin',
-    headers: { Nonce: nonce, 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json' },
   };
 
   if (method === 'PUT') opts.body = JSON.stringify({ quantity });
@@ -86,7 +144,7 @@ async function updateCartQty(itemKey, quantity) {
   let confirmedQuantity = 0;
 
   try {
-    const response = await fetch(url, opts);
+    const response = await storeApiFetch(url, opts);
 
     if (response.ok || response.status === 200) {
       const result = await fetchFreshCart();
@@ -109,16 +167,10 @@ async function updateCartQty(itemKey, quantity) {
 }
 
 async function removeFromCart(itemKey) {
-  const nonce = getStoreApiNonce();
-
   try {
-    const response = await fetch(
+    const response = await storeApiFetch(
       `/wp-json/wc/store/v1/cart/items/${encodeURIComponent(itemKey)}`,
-      {
-        method: 'DELETE',
-        credentials: 'same-origin',
-        headers: { Nonce: nonce },
-      },
+      { method: 'DELETE' },
     );
 
     if (response.ok || response.status === 200) {
@@ -261,13 +313,9 @@ async function addSingleProductViaStoreApi(form, trigger) {
     throw new Error('Missing product payload');
   }
 
-  const response = await fetch(getStoreApiAddUrl(), {
+  const response = await storeApiFetch(getStoreApiAddUrl(), {
     method: 'POST',
-    credentials: 'same-origin',
-    headers: {
-      Nonce: getStoreApiNonce(),
-      'Content-Type': 'application/json',
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
@@ -572,7 +620,11 @@ Alpine.data('sideCartRefresh', () => ({
   },
 
   get nonce() {
-    return window.themeCartParams?.storeApiNonce || '';
+    // Shared module-level state (see getStoreApiNonce/storeApiFetch above),
+    // not a static read of window.themeCartParams — this endpoint checks the
+    // same 'wc_store_api' nonce action as the Store API REST routes, so it
+    // benefits from any refresh those calls picked up too.
+    return getStoreApiNonce();
   },
 
   scheduleRefresh() {
@@ -591,16 +643,32 @@ Alpine.data('sideCartRefresh', () => ({
     this.fetchController = new AbortController();
 
     const controller = this.fetchController;
-    const url = new URL(this.ajaxUrl, window.location.origin);
-
-    url.searchParams.set('action', this.ajaxAction);
-    url.searchParams.set('_wpnonce', this.nonce);
+    const buildUrl = () => {
+      const url = new URL(this.ajaxUrl, window.location.origin);
+      url.searchParams.set('action', this.ajaxAction);
+      url.searchParams.set('_wpnonce', this.nonce);
+      return url;
+    };
 
     try {
-      const response = await fetch(url, {
+      let response = await fetch(buildUrl(), {
         credentials: 'same-origin',
         signal: controller.signal,
       });
+
+      // check_ajax_referer() (this endpoint's nonce check, app/woocommerce-
+      // sidecart.php) dies with 403 on the same stale nonce as every Store
+      // API call — but classic admin-ajax doesn't hand back a fresh one
+      // itself the way the REST routes do. Hit the (always-fresh) cart
+      // endpoint once purely to have storeApiFetch capture a valid nonce,
+      // then retry with it.
+      if (response.status === 403) {
+        await storeApiFetch(getStoreApiCartUrl());
+        response = await fetch(buildUrl(), {
+          credentials: 'same-origin',
+          signal: controller.signal,
+        });
+      }
 
       if (!response.ok) {
         throw new Error(`Cart refresh failed with status ${response.status}.`);
