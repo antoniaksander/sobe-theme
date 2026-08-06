@@ -32,7 +32,7 @@
     "@roots/vite-plugin": "^2.2.0",
     "@tailwindcss/vite": "^4.3.2",
     "@vitejs/plugin-react": "^6.0.3",
-    "@wordpress/scripts": "^32.6.0",
+    "@wordpress/scripts": "^33.0.0",
     "babel-jest": "^30.4.1",
     "jest": "^30.4.2",
     "jest-environment-node": "^30.4.1",
