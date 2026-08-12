@@ -4,6 +4,10 @@
 
 Required Notice: Copyright © Sobe Agency (https://sobe.agency)
 
+This project is a fork of [Sage](https://github.com/roots/sage), originally
+MIT-licensed by Roots Software LLC. See [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)
+for the required MIT notice.
+
 ## Acceptance
 
 In order to get any license under these terms, you must agree to them as both strict obligations and conditions to all your licenses.
