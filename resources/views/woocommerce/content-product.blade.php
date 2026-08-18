@@ -9,6 +9,7 @@ Template for displaying product content in the loop.
 @php
   if (!class_exists('WooCommerce')) return;
   global $product;
+  if (empty($product) || ! $product->is_visible()) return;
   $currentView = 'woocommerce.content-product';
   $productCardView = $product instanceof \WC_Product
       ? apply_filters('sobe/shop_loop/product_card_view', $currentView, $product)
