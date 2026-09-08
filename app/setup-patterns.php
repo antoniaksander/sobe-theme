@@ -90,10 +90,32 @@ add_action('init', function () {
 });
 
 /**
- * Register product_brand taxonomy.
+ * Register product_brand taxonomy — fallback only.
+ *
+ * WooCommerce's native Brands feature (enabled by default since WooCommerce
+ * 9.6, shipped behind a feature flag from 9.4) registers its own taxonomy of
+ * the same name via `WC_Brands::init_taxonomy()`, hooked to `init` at
+ * priority 5 (through the `woocommerce_register_taxonomy` action fired from
+ * `WC_Post_types::register_taxonomies()`). That runs before this callback's
+ * default `init` priority (10), so by the time this fires, `taxonomy_exists()`
+ * already reflects whether WooCommerce has claimed `product_brand`.
+ *
+ * Sobe only steps in when nothing else has registered it — an older
+ * WooCommerce, or the native feature explicitly disabled
+ * (`wc_feature_woocommerce_brands_enabled` option) — so every call site that
+ * reads the `product_brand` taxonomy (filters, archive hero, breadcrumbs,
+ * search) keeps working either way, and WooCommerce's own registration is
+ * never silently overwritten when it's present.
  */
-add_action('init', function () {
+add_action('init', 'App\\sobe_register_product_brand_taxonomy');
+
+function sobe_register_product_brand_taxonomy(): void
+{
     if (! apply_filters('sobe/product_brand/register', true)) {
+        return;
+    }
+
+    if (taxonomy_exists('product_brand')) {
         return;
     }
 
@@ -112,7 +134,7 @@ add_action('init', function () {
         'show_in_rest' => true,
         'rewrite' => ['slug' => 'brand'],
     ]);
-});
+}
 
 /**
  * Preload variable fonts before the @font-face declaration fires.
