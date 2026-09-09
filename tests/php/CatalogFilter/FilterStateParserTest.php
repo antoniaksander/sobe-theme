@@ -222,6 +222,69 @@ it('caps an unreasonably large term list per taxonomy', function () {
     expect(count($state->categorySlugs))->toBeLessThanOrEqual(50);
 });
 
+// ── normalizeLegacyAttributeEncoding() ──────────────────────────────────────
+//
+// WooCommerce's own native attribute parsing (both its classic tax_query
+// layered nav and the attributes-lookup-table filterer) splits strictly on
+// comma. The native main query (QueryTransformer::applyToMainQuery())
+// deliberately never re-parses attributes itself — it leaves them entirely
+// to WooCommerce — so a legacy '+'/space-joined filter_{attribute} value has
+// to be rewritten to comma form before WooCommerce ever reads it, or a
+// bookmarked legacy attribute URL silently diverges on direct GET even
+// though this parser itself accepts it fine.
+
+it('rewrites a legacy +-joined attribute value to canonical comma form', function () {
+    $normalized = FilterStateParser::normalizeLegacyAttributeEncoding(['filter_size' => '42+43']);
+
+    expect($normalized['filter_size'])->toBe('42,43');
+});
+
+it('rewrites a space-joined attribute value (raw unescaped + decoded by PHP) to comma form', function () {
+    $normalized = FilterStateParser::normalizeLegacyAttributeEncoding(['filter_size' => '42 43']);
+
+    expect($normalized['filter_size'])->toBe('42,43');
+});
+
+it('leaves an already-canonical comma-joined value untouched', function () {
+    $normalized = FilterStateParser::normalizeLegacyAttributeEncoding(['filter_size' => '42,43']);
+
+    expect($normalized['filter_size'])->toBe('42,43');
+});
+
+it('leaves a single-term value untouched', function () {
+    $normalized = FilterStateParser::normalizeLegacyAttributeEncoding(['filter_color' => 'red']);
+
+    expect($normalized['filter_color'])->toBe('red');
+});
+
+it('only rewrites keys matching a registered attribute, never category/tag/brand/unrelated keys', function () {
+    $params = [
+        'filter_product_cat' => 'shoes+boots',
+        'filter_product_brand' => 'nike+adidas',
+        'some_unrelated_key' => 'a+b',
+    ];
+
+    $normalized = FilterStateParser::normalizeLegacyAttributeEncoding($params);
+
+    expect($normalized)->toBe($params);
+});
+
+it('leaves the whole params array untouched when there is nothing to normalize', function () {
+    $params = ['product_cat' => 'shoes', 'filter_color' => 'red,blue'];
+
+    expect(FilterStateParser::normalizeLegacyAttributeEncoding($params))->toBe($params);
+});
+
+it('makes WooCommerce\'s own comma-only split produce the same terms as this parser for a legacy URL', function () {
+    // Simulates WC_Query::get_layered_nav_chosen_attributes()'s own parsing
+    // (explode(',', ...)) against the output of the normalizer, proving the
+    // two are reconciled rather than just asserting the string shape.
+    $normalized = FilterStateParser::normalizeLegacyAttributeEncoding(['filter_size' => '42+43']);
+    $wooCommerceNativeSplit = explode(',', $normalized['filter_size']);
+
+    expect($wooCommerceNativeSplit)->toBe(['42', '43']);
+});
+
 // ── search ───────────────────────────────────────────────────────────────────
 
 it('parses a search term from s', function () {
