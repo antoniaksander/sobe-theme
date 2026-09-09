@@ -12,6 +12,9 @@ namespace App;
 
 
 
+use App\WooCommerce\CatalogFilter\CatalogContext;
+use App\WooCommerce\CatalogFilter\FilterStateParser;
+use App\WooCommerce\CatalogFilter\QueryTransformer;
 use App\WooCommerce\FilterHandler;
 
 
@@ -24,133 +27,49 @@ if (! class_exists('WooCommerce')) {
 
 
 
-// ── Same-taxonomy archive intersection ───────────────────────────────────────
+// ── Legacy attribute URL compatibility for the native main query ─────────────
 //
-// On a product taxonomy archive, a filter for that SAME taxonomy (e.g.
-// /product-category/shoes/?filter_product_cat=boots) must intersect with the
-// archive term, not replace it. Append both the selected term(s) and the
-// archive term to the main product query so the result is shoes AND boots.
+// WooCommerce's own attribute-filter parsing (both its classic tax_query
+// layered nav and the product-attributes-lookup-table filterer that replaces
+// it when that feature is active) splits filter_{attribute} strictly on
+// comma. FilterStateParser accepts legacy '+'/space-delimited values too,
+// but the native main query never runs through FilterStateParser for
+// attributes (see the woocommerce_product_query hook below) — so without
+// this, a bookmarked/shared legacy attribute URL would parse correctly
+// everywhere except here. Runs at 'init' priority 1, well before
+// pre_get_posts / WC_Query::product_query(), so WooCommerce's own parsing
+// (whichever internal mechanism is active) sees an already-canonical value.
+add_action('init', function (): void {
+    $_GET = FilterStateParser::normalizeLegacyAttributeEncoding($_GET);
+}, 1);
 
-if (! function_exists('App\sobe_catalog_filter_slug_list')) {
-    function sobe_catalog_filter_slug_list(mixed $value): array
-    {
-        $items = is_array($value) ? $value : preg_split('/[+\s]+/', (string) $value);
-
-        if (! is_array($items)) {
-            return [];
-        }
-
-        return array_values(array_unique(array_filter(array_map(
-            static fn ($item): string => sanitize_title((string) $item),
-            $items
-        ))));
-    }
-}
-
-if (! function_exists('App\sobe_catalog_filter_keys_for_taxonomy')) {
-    function sobe_catalog_filter_keys_for_taxonomy(string $taxonomy): array
-    {
-        $taxonomy = sanitize_key($taxonomy);
-        $keys = [$taxonomy, "filter_{$taxonomy}"];
-
-        if ($taxonomy === 'product_cat') {
-            $keys[] = 'product_cat';
-            $keys[] = 'filter_product_cat';
-        } elseif ($taxonomy === 'product_tag') {
-            $keys[] = 'product_tag';
-            $keys[] = 'filter_product_tag';
-        } elseif (str_starts_with($taxonomy, 'pa_')) {
-            $attribute = substr($taxonomy, 3);
-            $keys[] = "filter_{$attribute}";
-        }
-
-        $brandTaxonomy = function_exists('App\sobe_product_brand_taxonomy')
-            ? sobe_product_brand_taxonomy()
-            : (string) apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
-        if ($taxonomy === sanitize_key($brandTaxonomy)) {
-            array_push($keys, 'brand', 'filter_brand', 'product_brand', 'filter_product_brand');
-        }
-
-        return array_values(array_unique(array_filter($keys)));
-    }
-}
-
-if (! function_exists('App\sobe_catalog_filter_request_slugs_for_taxonomy')) {
-    function sobe_catalog_filter_request_slugs_for_taxonomy(string $taxonomy, array $source): array
-    {
-        $slugs = [];
-
-        foreach (sobe_catalog_filter_keys_for_taxonomy($taxonomy) as $key) {
-            if (! array_key_exists($key, $source)) {
-                continue;
-            }
-
-            $slugs = array_merge($slugs, sobe_catalog_filter_slug_list($source[$key]));
-        }
-
-        return array_values(array_unique($slugs));
-    }
-}
-
-if (! function_exists('App\sobe_append_catalog_tax_query_clause')) {
-    function sobe_append_catalog_tax_query_clause(array $taxQuery, array $clause): array
-    {
-        $clauses = [];
-        foreach ($taxQuery as $key => $item) {
-            if ($key === 'relation' || ! is_array($item)) {
-                continue;
-            }
-
-            $clauses[] = $item;
-        }
-
-        $clauses[] = $clause;
-
-        return count($clauses) > 1
-            ? array_merge(['relation' => 'AND'], $clauses)
-            : $clauses;
-    }
-}
-
+// ── Normalized filter state on the native main query ─────────────────────────
+//
+// woocommerce_product_query fires at the end of WC_Query::product_query(),
+// after WooCommerce has already applied its own baseline (catalog
+// visibility, global hide-out-of-stock, native pa_* layered nav, and —
+// because WC_Query::price_filter_post_clauses() reads $_GET directly —
+// native min/max price). This hook only adds what WooCommerce doesn't
+// already do for the main query: category/tag/brand selection, price_type
+// (on_sale/full_price), and the generic stock-state filter. It deliberately
+// never touches attribute tax_query or price — see
+// QueryTransformer::applyToMainQuery() for why duplicating either would be
+// wrong, not just redundant.
+//
+// This also replaces the previous same-taxonomy-only archive-intersection
+// hook: that behavior is still enforced (see
+// QueryTransformer::archiveIntersectionClause()), now as one part of the
+// same normalized pipeline AJAX and load-more use, instead of a separate,
+// narrower implementation.
 add_action('woocommerce_product_query', function (\WP_Query $query): void {
-    if (! is_product_taxonomy()) {
+    if (! $query->is_main_query()) {
         return;
     }
 
-    $term = get_queried_object();
-    if (! $term instanceof \WP_Term || empty($term->taxonomy) || empty($term->slug)) {
-        return;
-    }
+    $state = FilterStateParser::fromArray($_GET);
+    $context = CatalogContext::fromCurrentQuery();
 
-    $taxonomy = sanitize_key((string) $term->taxonomy);
-    if (! taxonomy_exists($taxonomy)) {
-        return;
-    }
-
-    $archiveTerm = sanitize_title((string) $term->slug);
-    $selectedTerms = array_values(array_diff(
-        sobe_catalog_filter_request_slugs_for_taxonomy($taxonomy, $_GET),
-        [$archiveTerm]
-    ));
-
-    if ($selectedTerms === []) {
-        return;
-    }
-
-    $taxQuery = $query->get('tax_query');
-    $taxQuery = is_array($taxQuery) ? $taxQuery : [];
-    $taxQuery = sobe_append_catalog_tax_query_clause($taxQuery, [
-        'taxonomy' => $taxonomy,
-        'field' => 'slug',
-        'terms' => $selectedTerms,
-        'operator' => 'IN',
-    ]);
-    $query->set('tax_query', sobe_append_catalog_tax_query_clause($taxQuery, [
-        'taxonomy' => $taxonomy,
-        'field' => 'slug',
-        'terms' => [$archiveTerm],
-        'operator' => 'IN',
-    ]));
+    QueryTransformer::applyToMainQuery($query, $state, $context);
 }, 20);
 
 // ── Catalog filter helpers ────────────────────────────────────────────────────
@@ -299,9 +218,26 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 /**
  * Compute the available product price range for the current non-price filters.
  *
- * The incoming query args include the active price clause (the frontend always
- * submits min/max inputs), so strip it first — that way changing a brand /
- * category / attribute can re-scope the slider bounds to the matching set.
+ * The incoming query args include the active price constraint (the frontend
+ * always submits min/max inputs), so strip it first — that way changing a
+ * brand / category / attribute can re-scope the slider bounds to the
+ * matching set, without the current price selection itself narrowing what
+ * range the slider offers to move to. This strips both the legacy raw
+ * `_price` meta_query shape (kept for any external `sobe/catalog_filters/
+ * query_args` consumer that still adds one) and the
+ * `sobe_catalog_price_filter` marker QueryTransformer::buildStandaloneQueryArgs()
+ * sets — belt-and-suspenders, since the marker only takes effect while
+ * $_GET['min_price']/['max_price'] are also set, which they won't be by the
+ * time this runs (see FilterHandler::process() — this is called after
+ * QueryTransformer::withPriceFilterQuery()'s scope has already restored
+ * $_GET), but a caller building query_args directly rather than through
+ * that method shouldn't have to know that.
+ *
+ * IMPORTANT: unlike sobe_get_filtered_term_counts(), which must run *inside*
+ * QueryTransformer::withPriceFilterQuery()'s $_GET scope so its per-facet
+ * counts reflect the active price constraint, this function must run
+ * *outside* it — it deliberately wants the opposite: every other active
+ * constraint applied, price itself excluded.
  *
  * @param  array  $base_query_args  Full WP_Query args including all active filters.
  * @return array{min: float, max: float}
@@ -309,13 +245,19 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 function sobe_get_filtered_price_range(array $base_query_args): array
 {
     $query_args = $base_query_args;
+    // Only the min/max price constraint is excluded (see docblock) —
+    // price_type (on_sale/full_price)'s post__in/post__not_in, set by
+    // QueryTransformer::applyPriceTypeToArgs(), is deliberately left in
+    // place: that matches this function's pre-existing behavior (it only
+    // ever stripped the _price meta_query key, never on_sale's clauses).
+    unset($query_args['sobe_catalog_price_filter']);
 
-    if (! empty($query_args['meta_query']) && is_array($query_args['meta_query'])) {
-        $relation = isset($query_args['meta_query']['relation'])
-            ? sanitize_key((string) $query_args['meta_query']['relation'])
+    if (! empty($base_query_args['meta_query']) && is_array($base_query_args['meta_query'])) {
+        $relation = isset($base_query_args['meta_query']['relation'])
+            ? sanitize_key((string) $base_query_args['meta_query']['relation'])
             : '';
         $meta_query = [];
-        foreach ($query_args['meta_query'] as $key => $clause) {
+        foreach ($base_query_args['meta_query'] as $key => $clause) {
             if ($key === 'relation') {
                 continue;
             }
@@ -349,17 +291,19 @@ function sobe_get_filtered_price_range(array $base_query_args): array
 
     global $wpdb;
 
+    // wc_product_meta_lookup, not raw _price postmeta — this is the same
+    // table WC_Query::price_filter_post_clauses() uses for the visible
+    // query, so a variable product's real [min_price, max_price] range
+    // (not just its parent _price, which is not authoritative for ranges)
+    // is reflected here identically to what actually determined the
+    // visible result set.
     // $ids are intval-cast above, so the IN list is safe to interpolate.
     $ids_list = implode(',', $ids);
-    $row = $wpdb->get_row($wpdb->prepare(
-        "SELECT MIN(meta_value+0) AS min_price, MAX(meta_value+0) AS max_price
-         FROM {$wpdb->postmeta}
-         WHERE post_id IN ($ids_list)
-         AND meta_key = %s
-         AND meta_value != ''
-         AND meta_value IS NOT NULL",
-        '_price'
-    ));
+    $row = $wpdb->get_row(
+        "SELECT MIN(min_price) AS min_price, MAX(max_price) AS max_price
+         FROM {$wpdb->wc_product_meta_lookup}
+         WHERE product_id IN ($ids_list)"
+    );
 
     $range = [
         'min' => (float) ($row->min_price ?? 0),
