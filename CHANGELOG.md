@@ -18,6 +18,15 @@
   current page and the current selection.
 - Catalog filters: added a **Reset price** control to the price section — clears
   only `min_price`/`max_price`, keeps every other filter, returns to page 1.
+- Catalog filters: `QueryTransformer::priceRangeBaseArgs()` now also strips the
+  catalog-ordering keys (`orderby`/`order`/`meta_key`/`meta_type`) and any
+  `offset`/`page` from the available-price-range lookup. A leftover ordering
+  `meta_key` — WooCommerce sets `total_sales` for "popularity" and
+  `_wc_average_rating` for "rating" — made WP_Query add a filtering
+  `INNER JOIN wp_postmeta ... WHERE meta_key = '<that>'`, so a popularity- or
+  rating-sorted archive computed its slider bounds from only the products that
+  had ever sold / been rated. A MIN/MAX over an id set is order-invariant, so
+  the visible product query keeps its ordering untouched.
 
 ### Verified
 
