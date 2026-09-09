@@ -241,6 +241,26 @@ $load_more_handler = function (): void {
         'orderby' => $orderby,
     ]);
 
+    // A raw orderby string like 'popularity'/'rating'/'price'/'price-desc'
+    // means nothing to WP_Query on its own -- WooCommerce translates those
+    // via get_catalog_ordering_args(), which for those four values works by
+    // registering posts_clauses filters (unconditionally, unlike price
+    // range filtering) that join wc_product_meta_lookup. Without calling it,
+    // this path fell back to WP_Query's default ordering for exactly those
+    // four sort modes while direct GET and FilterHandler AJAX (which already
+    // calls this) sorted correctly -- same fix as FilterHandler::buildQueryArgs().
+    $ordering = \App\WooCommerce\CatalogFilter\QueryTransformer::withOrderbyScope(
+        $orderby,
+        static fn () => WC()->query ? WC()->query->get_catalog_ordering_args() : null
+    );
+    if ($ordering !== null) {
+        $query_args['orderby'] = $ordering['orderby'];
+        $query_args['order'] = $ordering['order'];
+        if (! empty($ordering['meta_key'])) {
+            $query_args['meta_key'] = $ordering['meta_key'];
+        }
+    }
+
     $query_args = (array) apply_filters('sobe/shop_loop/query_args', $query_args, [
         'context' => 'load_more',
         'page' => $page,
