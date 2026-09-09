@@ -212,6 +212,19 @@ final class FilterStateParser
      * that already works with WooCommerce's layered nav widget means the
      * same thing here).
      *
+     * The default when query_type_{attribute} is absent is 'AND', not 'OR'
+     * — confirmed by running the real WC_Query::get_layered_nav_chosen_
+     * attributes() against a real WooCommerce install: it defaults to
+     * apply_filters('woocommerce_layered_nav_default_query_type', 'and'),
+     * not 'or'. An earlier version of this parser defaulted to 'or', which
+     * is exactly backwards from WooCommerce's own behavior — a multi-value
+     * attribute URL with no explicit query_type meant "match every
+     * selected term" on a direct GET (native WooCommerce) but "match any
+     * selected term" via this parser (AJAX/load-more), a real divergence
+     * only a live comparison against WordPress+WooCommerce caught. Calling
+     * the same filter here (rather than hardcoding 'and') keeps the two in
+     * sync if a store ever customizes the global default.
+     *
      * @return array<string, array{terms: string[], operator: 'AND'|'OR'}>
      */
     private static function parseAttributes(array $params, string $brandTaxonomy): array
@@ -222,6 +235,7 @@ final class FilterStateParser
 
         $reserved = ['product_cat', 'product_tag', sanitize_key($brandTaxonomy), 'brand', 'sobe_brands'];
         $attributes = [];
+        $defaultQueryType = strtolower((string) apply_filters('woocommerce_layered_nav_default_query_type', 'and'));
 
         foreach (wc_get_attribute_taxonomies() as $attr) {
             $attrName = sanitize_key((string) $attr->attribute_name);
@@ -242,8 +256,11 @@ final class FilterStateParser
                 continue;
             }
 
-            $queryType = strtolower((string) ($params["query_type_{$attrName}"] ?? 'or'));
-            $operator = $queryType === 'and' ? FilterState::OPERATOR_AND : FilterState::OPERATOR_OR;
+            $rawQueryType = $params["query_type_{$attrName}"] ?? null;
+            $queryType = in_array($rawQueryType, ['and', 'or'], true)
+                ? $rawQueryType
+                : $defaultQueryType;
+            $operator = $queryType === 'or' ? FilterState::OPERATOR_OR : FilterState::OPERATOR_AND;
 
             $attributes[$taxonomy] = ['terms' => $terms, 'operator' => $operator];
         }
