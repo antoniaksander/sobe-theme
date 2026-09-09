@@ -72,10 +72,20 @@ class FilterHandler
             'context' => 'catalog_filters',
             'state' => $state,
         ]);
-        $query = QueryTransformer::withPriceFilterQuery(
+        // Term counts must run inside the same $_GET-scoped price window as
+        // the visible query — sobe_get_filtered_term_counts() builds its own
+        // per-taxonomy WP_Query instances from a clone of $queryArgs, and
+        // those only pick up the active min/max price constraint (via
+        // WooCommerce's own WC_Query::price_filter_post_clauses(), which
+        // reads $_GET directly) while this scope is still active. Computed
+        // together so "visible results" and "facet counts" can't silently
+        // disagree about whether price is applied.
+        [$query, $termCounts] = QueryTransformer::withPriceFilterQuery(
             $filterState->minPrice,
             $filterState->maxPrice,
-            static fn () => new \WP_Query($queryArgs)
+            static function () use ($queryArgs) {
+                return [new \WP_Query($queryArgs), sobe_get_filtered_term_counts($queryArgs)];
+            }
         );
 
         ob_start();
@@ -135,11 +145,12 @@ class FilterHandler
             'posts_per_page' => $perPage,
         ]);
 
-        if ($state->orderby !== '') {
-            $_GET['orderby'] = $state->orderby;
-        }
-        if (WC()->query) {
-            $ordering = WC()->query->get_catalog_ordering_args();
+        $ordering = QueryTransformer::withOrderbyScope(
+            $state->orderby,
+            static fn () => WC()->query ? WC()->query->get_catalog_ordering_args() : null
+        );
+
+        if ($ordering !== null) {
             $args['orderby'] = $ordering['orderby'];
             $args['order'] = $ordering['order'];
             if (! empty($ordering['meta_key'])) {
