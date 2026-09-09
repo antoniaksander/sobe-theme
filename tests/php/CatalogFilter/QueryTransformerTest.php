@@ -522,6 +522,7 @@ it('strips the price selection and pagination but keeps every other constraint',
     expect($args)->not->toHaveKey('paged');
     expect($args)->not->toHaveKey('sobe_catalog_price_filter');
     expect($args['posts_per_page'])->toBe(-1);
+    expect($args['nopaging'])->toBeTrue();
     expect($args['fields'])->toBe('ids');
     expect($args['no_found_rows'])->toBeTrue();
     // non-price constraints survive
@@ -573,6 +574,41 @@ it('leaves a universe-level post__in (price_type on_sale) in place', function ()
 
     expect($args['post__in'])->toBe([12, 34, 56]);
     expect($args)->not->toHaveKey('sobe_catalog_price_filter');
+});
+
+it('strips the catalog ordering keys so a popularity/rating meta_key cannot filter the range universe', function () {
+    // WC_Query::get_catalog_ordering_args() shape for "popularity".
+    $args = QueryTransformer::priceRangeBaseArgs([
+        'post_type' => 'product',
+        'meta_key' => 'total_sales',
+        'meta_type' => 'NUMERIC',
+        'orderby' => 'meta_value_num',
+        'order' => 'DESC',
+        'tax_query' => [['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['samelin']]],
+    ]);
+
+    expect($args)->not->toHaveKey('meta_key');
+    expect($args)->not->toHaveKey('meta_type');
+    expect($args)->not->toHaveKey('orderby');
+    expect($args)->not->toHaveKey('order');
+    // the actual filter constraint is untouched
+    expect($args['tax_query'])->toBe([['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['samelin']]]);
+});
+
+it('strips offset / page and forces nopaging alongside paged', function () {
+    $args = QueryTransformer::priceRangeBaseArgs([
+        'post_type' => 'product',
+        'paged' => 4,
+        'page' => 4,
+        'offset' => 36,
+        'nopaging' => false,
+    ]);
+
+    expect($args)->not->toHaveKey('paged');
+    expect($args)->not->toHaveKey('page');
+    expect($args)->not->toHaveKey('offset');
+    expect($args['nopaging'])->toBeTrue();
+    expect($args['posts_per_page'])->toBe(-1);
 });
 
 /** Find a single tax_query clause for a taxonomy (asserts at most one). */

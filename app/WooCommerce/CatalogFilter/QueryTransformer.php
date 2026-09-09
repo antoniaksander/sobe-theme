@@ -287,9 +287,20 @@ final class QueryTransformer
      * - the current min/max price selection itself — otherwise the slider
      *   could never be widened back out. Both the `_price` meta_query shape
      *   and the `sobe_catalog_price_filter` marker are stripped.
-     * - the current page — `paged` is removed and `posts_per_page` forced to
-     *   -1, so page 1 / page 2 / page N of one filter state all produce the
-     *   identical query and the slider bounds never shift as you paginate.
+     * - the current page — `paged`/`offset`/`page` are removed, `nopaging` is
+     *   forced on and `posts_per_page` to -1, so page 1 / page 2 / page N of
+     *   one filter state all produce the identical query and the slider
+     *   bounds never shift as you paginate.
+     * - the catalog ordering — `orderby`/`order`/`meta_key`/`meta_type` are
+     *   removed. A MIN/MAX aggregate over an id set is order-invariant so
+     *   this changes no visible ordering (the visible product query keeps
+     *   its own), but a leftover ordering `meta_key` — WooCommerce's
+     *   get_catalog_ordering_args() sets `total_sales` for "popularity" and
+     *   `_wc_average_rating` for "rating" — would make WP_Query add a
+     *   filtering `INNER JOIN {$wpdb->postmeta} ON ... WHERE meta_key =
+     *   '<that>'` and silently drop every product without that meta row
+     *   (never sold / never rated) from the available-range universe, so a
+     *   popularity- or rating-sorted archive showed a too-narrow range.
      *
      * `post__in` / `post__not_in` pass through untouched: the only ones that
      * reach here are universe-level (price_type via applyPriceTypeToArgs(),
@@ -302,7 +313,15 @@ final class QueryTransformer
     {
         $args = $baseArgs;
 
-        unset($args['sobe_catalog_price_filter']);
+        unset(
+            $args['sobe_catalog_price_filter'],
+            $args['orderby'],
+            $args['order'],
+            $args['meta_key'],
+            $args['meta_type'],
+            $args['offset'],
+            $args['page']
+        );
 
         if (! empty($baseArgs['meta_query']) && is_array($baseArgs['meta_query'])) {
             $relation = isset($baseArgs['meta_query']['relation'])
@@ -330,6 +349,7 @@ final class QueryTransformer
 
         $args['fields'] = 'ids';
         $args['posts_per_page'] = -1;
+        $args['nopaging'] = true;
         $args['no_found_rows'] = true;
         unset($args['paged']);
 
