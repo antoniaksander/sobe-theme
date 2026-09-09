@@ -27,6 +27,22 @@ if (! class_exists('WooCommerce')) {
 
 
 
+// ── Legacy attribute URL compatibility for the native main query ─────────────
+//
+// WooCommerce's own attribute-filter parsing (both its classic tax_query
+// layered nav and the product-attributes-lookup-table filterer that replaces
+// it when that feature is active) splits filter_{attribute} strictly on
+// comma. FilterStateParser accepts legacy '+'/space-delimited values too,
+// but the native main query never runs through FilterStateParser for
+// attributes (see the woocommerce_product_query hook below) — so without
+// this, a bookmarked/shared legacy attribute URL would parse correctly
+// everywhere except here. Runs at 'init' priority 1, well before
+// pre_get_posts / WC_Query::product_query(), so WooCommerce's own parsing
+// (whichever internal mechanism is active) sees an already-canonical value.
+add_action('init', function (): void {
+    $_GET = FilterStateParser::normalizeLegacyAttributeEncoding($_GET);
+}, 1);
+
 // ── Normalized filter state on the native main query ─────────────────────────
 //
 // woocommerce_product_query fires at the end of WC_Query::product_query(),
@@ -202,9 +218,26 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 /**
  * Compute the available product price range for the current non-price filters.
  *
- * The incoming query args include the active price clause (the frontend always
- * submits min/max inputs), so strip it first — that way changing a brand /
- * category / attribute can re-scope the slider bounds to the matching set.
+ * The incoming query args include the active price constraint (the frontend
+ * always submits min/max inputs), so strip it first — that way changing a
+ * brand / category / attribute can re-scope the slider bounds to the
+ * matching set, without the current price selection itself narrowing what
+ * range the slider offers to move to. This strips both the legacy raw
+ * `_price` meta_query shape (kept for any external `sobe/catalog_filters/
+ * query_args` consumer that still adds one) and the
+ * `sobe_catalog_price_filter` marker QueryTransformer::buildStandaloneQueryArgs()
+ * sets — belt-and-suspenders, since the marker only takes effect while
+ * $_GET['min_price']/['max_price'] are also set, which they won't be by the
+ * time this runs (see FilterHandler::process() — this is called after
+ * QueryTransformer::withPriceFilterQuery()'s scope has already restored
+ * $_GET), but a caller building query_args directly rather than through
+ * that method shouldn't have to know that.
+ *
+ * IMPORTANT: unlike sobe_get_filtered_term_counts(), which must run *inside*
+ * QueryTransformer::withPriceFilterQuery()'s $_GET scope so its per-facet
+ * counts reflect the active price constraint, this function must run
+ * *outside* it — it deliberately wants the opposite: every other active
+ * constraint applied, price itself excluded.
  *
  * @param  array  $base_query_args  Full WP_Query args including all active filters.
  * @return array{min: float, max: float}
@@ -212,13 +245,19 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
 function sobe_get_filtered_price_range(array $base_query_args): array
 {
     $query_args = $base_query_args;
+    // Only the min/max price constraint is excluded (see docblock) —
+    // price_type (on_sale/full_price)'s post__in/post__not_in, set by
+    // QueryTransformer::applyPriceTypeToArgs(), is deliberately left in
+    // place: that matches this function's pre-existing behavior (it only
+    // ever stripped the _price meta_query key, never on_sale's clauses).
+    unset($query_args['sobe_catalog_price_filter']);
 
-    if (! empty($query_args['meta_query']) && is_array($query_args['meta_query'])) {
-        $relation = isset($query_args['meta_query']['relation'])
-            ? sanitize_key((string) $query_args['meta_query']['relation'])
+    if (! empty($base_query_args['meta_query']) && is_array($base_query_args['meta_query'])) {
+        $relation = isset($base_query_args['meta_query']['relation'])
+            ? sanitize_key((string) $base_query_args['meta_query']['relation'])
             : '';
         $meta_query = [];
-        foreach ($query_args['meta_query'] as $key => $clause) {
+        foreach ($base_query_args['meta_query'] as $key => $clause) {
             if ($key === 'relation') {
                 continue;
             }
@@ -252,17 +291,19 @@ function sobe_get_filtered_price_range(array $base_query_args): array
 
     global $wpdb;
 
+    // wc_product_meta_lookup, not raw _price postmeta — this is the same
+    // table WC_Query::price_filter_post_clauses() uses for the visible
+    // query, so a variable product's real [min_price, max_price] range
+    // (not just its parent _price, which is not authoritative for ranges)
+    // is reflected here identically to what actually determined the
+    // visible result set.
     // $ids are intval-cast above, so the IN list is safe to interpolate.
     $ids_list = implode(',', $ids);
-    $row = $wpdb->get_row($wpdb->prepare(
-        "SELECT MIN(meta_value+0) AS min_price, MAX(meta_value+0) AS max_price
-         FROM {$wpdb->postmeta}
-         WHERE post_id IN ($ids_list)
-         AND meta_key = %s
-         AND meta_value != ''
-         AND meta_value IS NOT NULL",
-        '_price'
-    ));
+    $row = $wpdb->get_row(
+        "SELECT MIN(min_price) AS min_price, MAX(max_price) AS max_price
+         FROM {$wpdb->wc_product_meta_lookup}
+         WHERE product_id IN ($ids_list)"
+    );
 
     $range = [
         'min' => (float) ($row->min_price ?? 0),

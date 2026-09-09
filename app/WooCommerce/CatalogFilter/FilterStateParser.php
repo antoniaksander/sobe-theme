@@ -118,6 +118,61 @@ final class FilterStateParser
     }
 
     /**
+     * Rewrites legacy '+'/space-delimited `filter_{attribute}` GET values into
+     * canonical comma-delimited form, for registered attributes only.
+     *
+     * WooCommerce's own native attribute parsing (WC_Query::
+     * get_layered_nav_chosen_attributes(), and the product-attributes-lookup
+     * -table filterer that replaces it when that WooCommerce feature is
+     * active) both split strictly on comma — `explode(',', ...)` — never on
+     * '+' or space. FilterStateParser::fromArray() itself accepts either
+     * encoding, but the native main query (QueryTransformer::
+     * applyToMainQuery()) deliberately leaves attribute filtering entirely to
+     * WooCommerce, so a legacy '+'-joined attribute URL (e.g.
+     * ?filter_size=42+43) was being handed to WooCommerce's own parser
+     * unchanged, which read it as one bogus term ("42+43"/"42 43") that
+     * matches nothing — direct GET silently diverged from AJAX for that one
+     * case despite this parser itself accepting the URL correctly.
+     *
+     * Call this once, early (before pre_get_posts / WC_Query::product_query()
+     * runs), so whichever internal WooCommerce attribute-filtering mechanism
+     * is active sees an already-clean comma-joined value it already
+     * understands — this fixes the input WooCommerce reads rather than
+     * trying to duplicate or override whichever of WooCommerce's two
+     * attribute-filtering code paths happens to be active, which would have
+     * to be kept in sync with WooCommerce internals across versions.
+     *
+     * A value with no '+' or whitespace (a single term, or already
+     * comma-joined) is left completely untouched.
+     *
+     * @param  array<string, mixed>  $params  Typically $_GET.
+     * @return array<string, mixed>
+     */
+    public static function normalizeLegacyAttributeEncoding(array $params): array
+    {
+        if (! function_exists('wc_get_attribute_taxonomies')) {
+            return $params;
+        }
+
+        foreach (wc_get_attribute_taxonomies() as $attr) {
+            $attrName = sanitize_key((string) $attr->attribute_name);
+            $key = "filter_{$attrName}";
+
+            if ($attrName === '' || ! isset($params[$key]) || ! is_string($params[$key])) {
+                continue;
+            }
+
+            if (! preg_match('/[+\s]/', $params[$key])) {
+                continue;
+            }
+
+            $params[$key] = implode(',', self::splitSlugList($params[$key]));
+        }
+
+        return $params;
+    }
+
+    /**
      * Split on '+', ',' or whitespace so legacy '+'-joined values, the new
      * canonical ','-joined values, and a plain array from decoded JSON all
      * normalize identically. sanitize_title() is deliberately applied here
