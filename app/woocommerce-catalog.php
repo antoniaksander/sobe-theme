@@ -217,25 +217,29 @@ $load_more_handler = function (): void {
         'term_id' => $term_id ?: null,
     ]);
 
-    $query_args = [
-        'post_type' => 'product',
-        'post_status' => 'publish',
+    // This branch runs only when catalog-filters/shop-load-more.js reports no
+    // active filters (see hasActiveFilters() there) — an empty FilterState is
+    // correct, not a placeholder. It still goes through the same
+    // QueryTransformer as the filtered path so a plain "load more" gets the
+    // same WooCommerce catalog-visibility/hide-out-of-stock baseline as
+    // everywhere else, not just post_status=publish.
+    $termSlug = '';
+    if ($taxonomy && $term_id) {
+        $term = get_term($term_id, $taxonomy);
+        $termSlug = $term instanceof \WP_Term ? $term->slug : '';
+    }
+
+    $context = $taxonomy && $termSlug !== ''
+        ? \App\WooCommerce\CatalogFilter\CatalogContext::taxonomy($taxonomy, $termSlug, $term_id)
+        : ($search !== '' ? \App\WooCommerce\CatalogFilter\CatalogContext::search($search) : \App\WooCommerce\CatalogFilter\CatalogContext::shop());
+
+    $filterState = \App\WooCommerce\CatalogFilter\FilterStateParser::fromArray(['orderby' => $orderby]);
+
+    $query_args = \App\WooCommerce\CatalogFilter\QueryTransformer::buildStandaloneQueryArgs($filterState, $context, [
         'paged' => $page,
         'posts_per_page' => $per_page,
         'orderby' => $orderby,
-    ];
-
-    if ($taxonomy && $term_id) {
-        $query_args['tax_query'] = [[
-            'taxonomy' => $taxonomy,
-            'field' => 'term_id',
-            'terms' => $term_id,
-        ]];
-    }
-
-    if ($search) {
-        $query_args['s'] = $search;
-    }
+    ]);
 
     $query_args = (array) apply_filters('sobe/shop_loop/query_args', $query_args, [
         'context' => 'load_more',
