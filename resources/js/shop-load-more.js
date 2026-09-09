@@ -67,10 +67,21 @@ async function loadMore(state) {
 
   try {
     if (hasActiveFilters(filterState)) {
+      // Must match catalog-filters/view.js's applyFilters() body exactly:
+      // FilterHandler::process() only re-applies the immutable archive/search
+      // context (via applyArchiveIntersection()) when filter_context is
+      // present. Omitting it here was the load-more path silently losing the
+      // current taxonomy archive term the moment a filter was also active.
       const body = new FormData();
       body.append('action', filterAction);
       body.append('nonce', filterNonce);
       body.append('filter_state', JSON.stringify({ ...filterState, paged: page }));
+      body.append('filter_context', JSON.stringify({
+        contextType: params.contextType ?? '',
+        archiveTaxonomy: params.archiveTaxonomy ?? '',
+        archiveTerm: params.archiveTerm ?? '',
+        queriedObjectId: params.queriedObjectId ?? 0,
+      }));
       const data = await fetchJson(state, body);
       if (!data) return;
 
