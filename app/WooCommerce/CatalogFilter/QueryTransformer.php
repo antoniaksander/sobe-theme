@@ -274,6 +274,68 @@ final class QueryTransformer
         return $args;
     }
 
+    /**
+     * The inverse of the price constraint: turn a fully-filtered query args
+     * array into the args that resolve the AVAILABLE price range for the
+     * current non-price filters.
+     *
+     * "Available range" is standard faceted-search behavior — the bounds the
+     * slider lets the customer move between. It must reflect every other
+     * active constraint (brand/category/attribute/stock/price_type, archive
+     * context, visibility) but NOT:
+     *
+     * - the current min/max price selection itself — otherwise the slider
+     *   could never be widened back out. Both the `_price` meta_query shape
+     *   and the `sobe_catalog_price_filter` marker are stripped.
+     * - the current page — `paged` is removed and `posts_per_page` forced to
+     *   -1, so page 1 / page 2 / page N of one filter state all produce the
+     *   identical query and the slider bounds never shift as you paginate.
+     *
+     * `post__in` / `post__not_in` pass through untouched: the only ones that
+     * reach here are universe-level (price_type via applyPriceTypeToArgs(),
+     * or a fail-closed [0]), never a current-page id fragment.
+     *
+     * @param  array<string, mixed>  $baseArgs
+     * @return array<string, mixed>
+     */
+    public static function priceRangeBaseArgs(array $baseArgs): array
+    {
+        $args = $baseArgs;
+
+        unset($args['sobe_catalog_price_filter']);
+
+        if (! empty($baseArgs['meta_query']) && is_array($baseArgs['meta_query'])) {
+            $relation = isset($baseArgs['meta_query']['relation'])
+                ? strtoupper((string) $baseArgs['meta_query']['relation'])
+                : '';
+            $metaQuery = [];
+            foreach ($baseArgs['meta_query'] as $key => $clause) {
+                if ($key === 'relation') {
+                    continue;
+                }
+                if (is_array($clause) && ($clause['key'] ?? '') === '_price') {
+                    continue;
+                }
+                $metaQuery[] = $clause;
+            }
+
+            if ($metaQuery === []) {
+                unset($args['meta_query']);
+            } elseif ($relation !== '' && count($metaQuery) > 1) {
+                $args['meta_query'] = array_merge(['relation' => $relation], $metaQuery);
+            } else {
+                $args['meta_query'] = $metaQuery;
+            }
+        }
+
+        $args['fields'] = 'ids';
+        $args['posts_per_page'] = -1;
+        $args['no_found_rows'] = true;
+        unset($args['paged']);
+
+        return $args;
+    }
+
     // ── price_type (on_sale / full_price) ───────────────────────────────────
 
     private static function applyToMainQueryPriceType(\WP_Query $query, string $priceType): void

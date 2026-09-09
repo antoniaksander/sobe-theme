@@ -304,6 +304,12 @@
           aria-label="{{ __('Maximum price', 'sobe') }}"
         >
       </div>
+      <button
+        type="button"
+        class="sobe-range-slider__reset"
+        data-reset-price
+        @unless (isset($activeFilters['min_price']) || isset($activeFilters['max_price'])) hidden @endunless
+      >{{ __('Reset price', 'sobe') }}</button>
     </div>
   </details>
   @endif

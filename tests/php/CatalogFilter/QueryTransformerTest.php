@@ -498,6 +498,83 @@ it('does not overwrite an explicit orderby/order the caller passed in $baseArgs'
     expect($args['order'])->toBe('DESC');
 });
 
+// ── priceRangeBaseArgs(): the AVAILABLE price range query ──────────────────
+
+it('strips the price selection and pagination but keeps every other constraint', function () {
+    $filtered = [
+        'post_type' => 'product',
+        'posts_per_page' => 12,
+        'paged' => 3,
+        'sobe_catalog_price_filter' => true,
+        'tax_query' => [
+            ['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['samelin']],
+            ['taxonomy' => 'pa_color', 'field' => 'slug', 'terms' => ['black']],
+        ],
+        'meta_query' => [
+            'relation' => 'AND',
+            ['key' => '_price', 'value' => [80, 180], 'compare' => 'BETWEEN', 'type' => 'NUMERIC'],
+            ['key' => '_stock_status', 'value' => ['instock'], 'compare' => 'IN'],
+        ],
+    ];
+
+    $args = QueryTransformer::priceRangeBaseArgs($filtered);
+
+    expect($args)->not->toHaveKey('paged');
+    expect($args)->not->toHaveKey('sobe_catalog_price_filter');
+    expect($args['posts_per_page'])->toBe(-1);
+    expect($args['fields'])->toBe('ids');
+    expect($args['no_found_rows'])->toBeTrue();
+    // non-price constraints survive
+    expect($args['tax_query'])->toBe($filtered['tax_query']);
+    // _price clause gone, _stock_status clause kept (single clause, no relation)
+    expect($args['meta_query'])->toBe([
+        ['key' => '_stock_status', 'value' => ['instock'], 'compare' => 'IN'],
+    ]);
+});
+
+it('produces the identical query for page 1, page 2 and page N of one filter state', function () {
+    $base = [
+        'post_type' => 'product',
+        'posts_per_page' => 12,
+        'tax_query' => [['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['samelin']]],
+    ];
+
+    $page1 = QueryTransformer::priceRangeBaseArgs($base + ['paged' => 1]);
+    $page2 = QueryTransformer::priceRangeBaseArgs($base + ['paged' => 2]);
+    $page7 = QueryTransformer::priceRangeBaseArgs($base + ['paged' => 7]);
+
+    expect($page1)->toBe($page2);
+    expect($page2)->toBe($page7);
+});
+
+it('keeps a multi-clause meta_query relation when only the _price clause is removed', function () {
+    $args = QueryTransformer::priceRangeBaseArgs([
+        'meta_query' => [
+            'relation' => 'AND',
+            ['key' => '_price', 'value' => [10, 20], 'compare' => 'BETWEEN'],
+            ['key' => '_stock_status', 'value' => ['instock'], 'compare' => 'IN'],
+            ['key' => 'total_sales', 'value' => 0, 'compare' => '>'],
+        ],
+    ]);
+
+    expect($args['meta_query'])->toBe([
+        'relation' => 'AND',
+        ['key' => '_stock_status', 'value' => ['instock'], 'compare' => 'IN'],
+        ['key' => 'total_sales', 'value' => 0, 'compare' => '>'],
+    ]);
+});
+
+it('leaves a universe-level post__in (price_type on_sale) in place', function () {
+    $args = QueryTransformer::priceRangeBaseArgs([
+        'post_type' => 'product',
+        'post__in' => [12, 34, 56],
+        'sobe_catalog_price_filter' => true,
+    ]);
+
+    expect($args['post__in'])->toBe([12, 34, 56]);
+    expect($args)->not->toHaveKey('sobe_catalog_price_filter');
+});
+
 /** Find a single tax_query clause for a taxonomy (asserts at most one). */
 function collect_clauses(array $taxQuery, string $taxonomy): ?array
 {

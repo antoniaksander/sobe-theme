@@ -1,5 +1,5 @@
 import noUiSlider from 'nouislider';
-import { buildFilterUrl, splitFilterValue } from '../../js/filter-utils.js';
+import { activePriceSelection, buildFilterUrl, projectPriceSelection, splitFilterValue } from '../../js/filter-utils.js';
 import { commit as commitFilterStore, reset as resetFilterStore } from '../../js/filter-store.js';
 import { readParams, isCurrentContext } from '../../js/dom-params.js';
 import { registerReinit } from '../../js/sobe-reinit.js';
@@ -127,6 +127,7 @@ function initCatalogFilters(instance, params) {
   const openBtn = instance.querySelector('[data-catalog-filters-open]');
   const closeButtons = [...instance.querySelectorAll('[data-catalog-filters-close]')];
   const clearAllBtn = root?.querySelector('[data-clear-all-filters]');
+  const resetPriceBtn = root?.querySelector('[data-reset-price]');
   const triggerSlot = document.querySelector('[data-catalog-filters-trigger-slot]');
   const widgetShell = instance.closest('.shop-sidebar .widget');
 
@@ -206,10 +207,22 @@ function initCatalogFilters(instance, params) {
       filterState[name].push(el.value);
     });
 
+    // The price inputs are always populated (the slider seeds them from its
+    // bounds), so emit min_price/max_price only when a thumb sits strictly
+    // inside the CURRENTLY AVAILABLE range (data-min/data-max). Otherwise a
+    // non-price filter that re-scopes the available range — which moves the
+    // thumbs onto the new bounds — would be captured here as a phantom price
+    // constraint that then sticks after that filter is removed.
+    const sliderEl = root.querySelector('[data-range-slider]');
     const minInput = root.querySelector('[data-price-min]');
     const maxInput = root.querySelector('[data-price-max]');
-    if (minInput) filterState.min_price = minInput.value;
-    if (maxInput) filterState.max_price = maxInput.value;
+    if (sliderEl && (minInput || maxInput)) {
+      Object.assign(filterState, activePriceSelection(
+        minInput?.value,
+        maxInput?.value,
+        { min: sliderEl.dataset.min, max: sliderEl.dataset.max }
+      ));
+    }
 
     root.querySelectorAll('[data-filter-select]').forEach((el) => {
       if (el.value && el.value !== 'all') {
@@ -324,14 +337,17 @@ function initCatalogFilters(instance, params) {
     const nextMax = parseFloat(range.max);
     if (!Number.isFinite(nextMin) || !Number.isFinite(nextMax) || nextMax <= nextMin) return;
 
-    const oldMin = parseFloat(sliderEl.dataset.min ?? nextMin);
-    const oldMax = parseFloat(sliderEl.dataset.max ?? nextMax);
-    const requestedMin = parseFloat(filterState.min_price);
-    const requestedMax = parseFloat(filterState.max_price);
-    const minWasDefault = !Number.isFinite(requestedMin) || requestedMin <= oldMin;
-    const maxWasDefault = !Number.isFinite(requestedMax) || requestedMax >= oldMax;
-    const nextFrom = minWasDefault ? nextMin : Math.min(Math.max(requestedMin, nextMin), nextMax);
-    const nextTo = maxWasDefault ? nextMax : Math.min(Math.max(requestedMax, nextMin), nextMax);
+    // range.min/range.max is the AVAILABLE range for the current non-price
+    // filters (the server computes it with the price constraint stripped, so
+    // it's independent of the current selection and of pagination). Project
+    // the active selection — if any — onto it: an unset side snaps to the new
+    // bound, a real selection is clamped in. filterState carries min_price/
+    // max_price only when collectState() judged them a real selection, so a
+    // re-scope here can move the thumbs without fabricating a constraint.
+    const { from: nextFrom, to: nextTo } = projectPriceSelection(
+      { min: nextMin, max: nextMax },
+      { min_price: filterState.min_price, max_price: filterState.max_price }
+    );
     const minInput = root.querySelector('[data-price-min]');
     const maxInput = root.querySelector('[data-price-max]');
 
@@ -421,6 +437,7 @@ function initCatalogFilters(instance, params) {
       if (data.filters) updateFilterCounts(data);
       updatePriceRange(data, filterState);
       updateClearAllVisibility(filterState);
+      updatePriceResetVisibility(filterState);
 
       // When Swup is active, preserve its history state structure so back-nav over
       // filter URLs triggers a Swup visit. Without source: 'swup', Swup's default
@@ -481,10 +498,41 @@ function initCatalogFilters(instance, params) {
     applyFilters(cleared);
   }
 
+  // Reset only the price selection: thumbs back to the available bounds,
+  // min_price/max_price dropped, every other filter kept, pagination back to
+  // page 1 (collectState() carries no paged). Runs the normal filter
+  // lifecycle — it is not a substitute for a correct available range.
+  function resetPrice() {
+    setActive();
+    const sliderEl = root.querySelector('[data-range-slider]');
+    if (sliderEl?.noUiSlider) {
+      sliderEl.noUiSlider.set([
+        parseFloat(sliderEl.dataset.min),
+        parseFloat(sliderEl.dataset.max),
+      ]);
+    }
+    const next = collectState();
+    delete next.min_price;
+    delete next.max_price;
+    applyFilters(next);
+  }
+
+  function updatePriceResetVisibility(filterState) {
+    if (!resetPriceBtn) return;
+    const sliderEl = root.querySelector('[data-range-slider]');
+    const selection = activePriceSelection(
+      filterState.min_price,
+      filterState.max_price,
+      { min: sliderEl?.dataset.min, max: sliderEl?.dataset.max }
+    );
+    resetPriceBtn.hidden = selection.min_price === undefined && selection.max_price === undefined;
+  }
+
   const debouncedCheckbox = debounce(state, () => applyFilters(collectState()), DEBOUNCE_CHECKBOX);
   const debouncedPrice = debounce(state, () => applyFilters(collectState()), DEBOUNCE_PRICE);
 
   clearAllBtn?.addEventListener('click', clearAllFilters, { signal });
+  resetPriceBtn?.addEventListener('click', resetPrice, { signal });
 
   root.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-remove-filter]');
@@ -789,6 +837,7 @@ function initCatalogFilters(instance, params) {
   const initState = collectState();
   commitFilterStore(initState, params.action, params.nonce);
   updateClearAllVisibility(initState);
+  updatePriceResetVisibility(initState);
 
   if (!activeController) activeController = state;
   return state;

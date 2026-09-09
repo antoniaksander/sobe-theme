@@ -2,7 +2,22 @@
 
 ## Unreleased
 
-## v3.0.1 - 2026-07-16
+### Fixed
+
+- Catalog filters: the price slider now separates the AVAILABLE range (the
+  bounds the customer can move between, re-scoped only by non-price filters)
+  from the SELECTED range (the customer's min/max choice). Previously the
+  slider thumbs were always re-collected as an explicit `min_price`/`max_price`
+  constraint, so a non-price filter that re-scoped the available range
+  silently pinned a phantom price filter that persisted after that filter was
+  removed, polluted the canonical URL, and made AJAX navigation disagree with
+  a hard reload of the same URL. `activePriceSelection()` /
+  `projectPriceSelection()` (in `filter-utils.js`) are the single source of
+  truth for "is a price filter active"; `QueryTransformer::priceRangeBaseArgs()`
+  makes the server-side available-range query provably independent of the
+  current page and the current selection.
+- Catalog filters: added a **Reset price** control to the price section — clears
+  only `min_price`/`max_price`, keeps every other filter, returns to page 1.
 
 ### Verified
 

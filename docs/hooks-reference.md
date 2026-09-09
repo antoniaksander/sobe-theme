@@ -123,6 +123,7 @@ add_filter('sobe/shop_loop/per_page', function (int $perPage, array $context): i
 | `sobe/catalog_filters/pagination_html` | filter | `string $html, WP_Query $query, array $state` | Pagination HTML |
 | `sobe/catalog_filters/response` | filter | `array $response, WP_Query $query, array $state` | AJAX response data |
 | `sobe/catalog_filters/term_counts` | filter | `array $counts, array $baseQueryArgs` | Term count data |
+| `sobe/catalog_filters/price_range` | filter | `array{min: float, max: float} $range, array $baseQueryArgs` | Available price-slider bounds (non-price filters only; independent of page and of the current selection) |
 | `sobe/catalog_filters/swatch_value` | filter | `?string $value, WP_Term $term, string $attributeName` | Swatch value |
 | `sobe_swatch_value` | filter | `?string $value, WP_Term $term, string $attributeName` | Legacy swatch value |
 
