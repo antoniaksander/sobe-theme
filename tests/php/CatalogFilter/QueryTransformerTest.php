@@ -192,6 +192,75 @@ it('does not mark the query for price filtering when no price range is set', fun
     expect($args)->not->toHaveKey('sobe_catalog_price_filter');
 });
 
+// ── TYPE_INVALID must fail closed (zero results), never fall through ───────
+
+it('forces zero results for an invalid context, rather than an unscoped query', function () {
+    $args = QueryTransformer::buildStandaloneQueryArgs(fakeState(), CatalogContext::invalid());
+
+    expect($args['post__in'])->toBe([0]);
+});
+
+it('ignores the rest of the filter state entirely once the context is invalid', function () {
+    // Even a "wide open" filter state (nothing selected) must not leak
+    // through as an effectively-unscoped query once the context itself is
+    // invalid -- there is no meaningful selection that makes an invalid
+    // archive claim safe to serve.
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['categorySlugs' => ['shoes']]),
+        CatalogContext::invalid()
+    );
+
+    expect($args['post__in'])->toBe([0]);
+    expect($args)->not->toHaveKey('tax_query');
+});
+
+// ── withOrderbyScope() ───────────────────────────────────────────────────────
+
+it('scopes $_GET[orderby] for the duration of the callback and restores it after', function () {
+    unset($_GET['orderby']);
+
+    $seenDuring = QueryTransformer::withOrderbyScope('popularity', function () {
+        return $_GET['orderby'] ?? null;
+    });
+
+    expect($seenDuring)->toBe('popularity');
+    expect(array_key_exists('orderby', $_GET))->toBeFalse();
+});
+
+it('restores a pre-existing $_GET[orderby] value rather than just unsetting it', function () {
+    $_GET['orderby'] = 'date';
+
+    QueryTransformer::withOrderbyScope('popularity', function () {
+        expect($_GET['orderby'])->toBe('popularity');
+    });
+
+    expect($_GET['orderby'])->toBe('date');
+    unset($_GET['orderby']);
+});
+
+it('does not touch $_GET at all for an empty orderby', function () {
+    unset($_GET['orderby']);
+
+    QueryTransformer::withOrderbyScope('', function () {
+        expect(array_key_exists('orderby', $_GET))->toBeFalse();
+    });
+});
+
+it('restores $_GET[orderby] even if the callback throws', function () {
+    $_GET['orderby'] = 'date';
+
+    try {
+        QueryTransformer::withOrderbyScope('popularity', function () {
+            throw new \RuntimeException('boom');
+        });
+    } catch (\RuntimeException) {
+        // expected
+    }
+
+    expect($_GET['orderby'])->toBe('date');
+    unset($_GET['orderby']);
+});
+
 /** Find a single tax_query clause for a taxonomy (asserts at most one). */
 function collect_clauses(array $taxQuery, string $taxonomy): ?array
 {

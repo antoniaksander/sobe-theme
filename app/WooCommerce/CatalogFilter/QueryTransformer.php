@@ -65,6 +65,20 @@ final class QueryTransformer
      */
     public static function buildStandaloneQueryArgs(FilterState $state, CatalogContext $context, array $baseArgs = []): array
     {
+        // A context that claimed to be a taxonomy archive but failed
+        // validation (see CatalogContext::taxonomyFromArray()) must never
+        // fall through to an unscoped query — that would widen a request
+        // that was supposed to be narrowed to one archive term into the
+        // whole catalog. Fail closed to zero results instead; a caller that
+        // wants a distinct error response for this case can check
+        // $context->isInvalid() itself before calling this.
+        if ($context->isInvalid()) {
+            return array_merge($baseArgs, [
+                'post_type' => 'product',
+                'post__in' => [0],
+            ]);
+        }
+
         $brandTaxonomy = FilterStateParser::brandTaxonomy();
 
         $args = array_merge([
@@ -108,20 +122,27 @@ final class QueryTransformer
     }
 
     /**
-     * Runs $factory (expected to construct and return a WP_Query) with
-     * $_GET['min_price']/['max_price'] temporarily set so WooCommerce's own
-     * WC_Query::price_filter_post_clauses() — which reads $_GET directly,
-     * not query vars — applies its normal wc_product_meta_lookup-based range
-     * check (correct for variable products and tax-inclusive/exclusive
-     * display) to this one query. $_GET is restored immediately after,
+     * Runs $factory with $_GET['min_price']/['max_price'] temporarily set so
+     * WooCommerce's own WC_Query::price_filter_post_clauses() — which reads
+     * $_GET directly, not query vars — applies its normal
+     * wc_product_meta_lookup-based range check (correct for variable
+     * products and tax-inclusive/exclusive display) to any WP_Query built
+     * inside $factory that carries the sobe_catalog_price_filter marker
+     * (see withPriceFilterMarker()). $_GET is restored immediately after,
      * synchronously, so nothing else on the request sees the mutation.
+     *
+     * $factory may return anything (a single WP_Query, or a tuple including
+     * one, e.g. FilterHandler::process() also computing term counts inside
+     * this same scope so facet counts see the identical effective price
+     * constraint as the visible query) — whatever it returns is passed
+     * through unchanged.
      *
      * This is the standalone-query equivalent of what already happens for
      * free on a direct GET, where $_GET naturally carries these values and
      * WooCommerce's own main-query price filtering picks them up without any
      * Sobe code at all.
      */
-    public static function withPriceFilterQuery(?float $minPrice, ?float $maxPrice, callable $factory): \WP_Query
+    public static function withPriceFilterQuery(?float $minPrice, ?float $maxPrice, callable $factory): mixed
     {
         if ($minPrice === null && $maxPrice === null) {
             return $factory();
@@ -129,30 +150,63 @@ final class QueryTransformer
 
         self::registerPriceFilterHook();
 
-        $hadMin = array_key_exists('min_price', $_GET);
-        $hadMax = array_key_exists('max_price', $_GET);
-        $originalMin = $_GET['min_price'] ?? null;
-        $originalMax = $_GET['max_price'] ?? null;
-
+        $overrides = [];
         if ($minPrice !== null) {
-            $_GET['min_price'] = (string) $minPrice;
+            $overrides['min_price'] = (string) $minPrice;
         }
         if ($maxPrice !== null) {
-            $_GET['max_price'] = (string) $maxPrice;
+            $overrides['max_price'] = (string) $maxPrice;
+        }
+
+        return self::withScopedGetParams($overrides, $factory);
+    }
+
+    /**
+     * Same need as withPriceFilterQuery(), for a different WooCommerce
+     * method: WC_Query::get_catalog_ordering_args() also reads $_GET
+     * directly (['orderby']) rather than accepting a parameter, so a
+     * standalone query (which received its orderby via POST/JSON, not a
+     * real query string) has to feed it through $_GET too. Scoped and
+     * restored via the same helper as price filtering, rather than the
+     * previous unscoped `$_GET['orderby'] = ...` with no restore, which
+     * could leak into anything else reading $_GET later in the same
+     * request (facet counts, price range, pagination HTML all run after
+     * this, before the AJAX response is sent).
+     */
+    public static function withOrderbyScope(string $orderby, callable $callback): mixed
+    {
+        if ($orderby === '') {
+            return $callback();
+        }
+
+        return self::withScopedGetParams(['orderby' => $orderby], $callback);
+    }
+
+    /**
+     * Runs $callback with the given $_GET keys temporarily overridden,
+     * restoring each key's original value — or removing it, if it wasn't
+     * set before — synchronously in a finally block, so a thrown exception
+     * can't leave the mutation in place either.
+     *
+     * @param  array<string, string>  $overrides
+     */
+    private static function withScopedGetParams(array $overrides, callable $callback): mixed
+    {
+        $originals = [];
+        foreach ($overrides as $key => $value) {
+            $originals[$key] = ['had' => array_key_exists($key, $_GET), 'value' => $_GET[$key] ?? null];
+            $_GET[$key] = $value;
         }
 
         try {
-            return $factory();
+            return $callback();
         } finally {
-            if ($hadMin) {
-                $_GET['min_price'] = $originalMin;
-            } else {
-                unset($_GET['min_price']);
-            }
-            if ($hadMax) {
-                $_GET['max_price'] = $originalMax;
-            } else {
-                unset($_GET['max_price']);
+            foreach ($originals as $key => $original) {
+                if ($original['had']) {
+                    $_GET[$key] = $original['value'];
+                } else {
+                    unset($_GET[$key]);
+                }
             }
         }
     }
