@@ -278,24 +278,14 @@ final class QueryTransformer
 
     private static function applyToMainQueryPriceType(\WP_Query $query, string $priceType): void
     {
-        if ($priceType === FilterState::PRICE_TYPE_ALL || ! function_exists('wc_get_product_ids_on_sale')) {
-            return;
-        }
+        [$postIn, $postNotIn] = self::normalizedPostIdConstraints(
+            $query->get('post__in'),
+            $query->get('post__not_in'),
+            $priceType
+        );
 
-        $onSaleIds = array_map('intval', wc_get_product_ids_on_sale());
-
-        if ($priceType === FilterState::PRICE_TYPE_ON_SALE) {
-            $existing = array_map('intval', (array) $query->get('post__in'));
-            $ids = $existing === [] ? $onSaleIds : array_values(array_intersect($existing, $onSaleIds));
-            // No matches must mean "no results", not "no constraint" — 0 is
-            // never a real product ID, so post__in=>[0] fails closed.
-            $query->set('post__in', $ids === [] ? [0] : $ids);
-
-            return;
-        }
-
-        $existingNotIn = array_map('intval', (array) $query->get('post__not_in'));
-        $query->set('post__not_in', array_values(array_unique(array_merge($existingNotIn, $onSaleIds))));
+        $query->set('post__in', $postIn);
+        $query->set('post__not_in', $postNotIn);
     }
 
     /**
@@ -304,24 +294,89 @@ final class QueryTransformer
      */
     private static function applyPriceTypeToArgs(array $args, string $priceType): array
     {
-        if ($priceType === FilterState::PRICE_TYPE_ALL || ! function_exists('wc_get_product_ids_on_sale')) {
+        $hasPostIdConstraint = array_key_exists('post__in', $args) || array_key_exists('post__not_in', $args);
+        $canApplyPriceType = $priceType !== FilterState::PRICE_TYPE_ALL && function_exists('wc_get_product_ids_on_sale');
+
+        if (! $hasPostIdConstraint && ! $canApplyPriceType) {
             return $args;
         }
 
-        $onSaleIds = array_map('intval', wc_get_product_ids_on_sale());
+        [$postIn, $postNotIn] = self::normalizedPostIdConstraints(
+            $args['post__in'] ?? [],
+            $args['post__not_in'] ?? [],
+            $priceType
+        );
 
-        if ($priceType === FilterState::PRICE_TYPE_ON_SALE) {
-            $existing = array_map('intval', (array) ($args['post__in'] ?? []));
-            $ids = $existing === [] ? $onSaleIds : array_values(array_intersect($existing, $onSaleIds));
-            $args['post__in'] = $ids === [] ? [0] : $ids;
-
-            return $args;
+        if ($postIn !== []) {
+            $args['post__in'] = $postIn;
+        } else {
+            unset($args['post__in']);
         }
 
-        $existingNotIn = array_map('intval', (array) ($args['post__not_in'] ?? []));
-        $args['post__not_in'] = array_values(array_unique(array_merge($existingNotIn, $onSaleIds)));
+        if ($postNotIn !== []) {
+            $args['post__not_in'] = $postNotIn;
+        } else {
+            unset($args['post__not_in']);
+        }
 
         return $args;
+    }
+
+    /**
+     * Collapse post__in/post__not_in into constraints WP_Query will actually
+     * combine. WordPress builds these clauses through an elseif chain, so a
+     * non-empty post__in silently prevents post__not_in from reaching SQL.
+     * When an inclusion set exists, materialize every exclusion by subtracting
+     * it from that set and clear post__not_in. An empty result becomes [0], a
+     * fail-closed inclusion because zero can never be a real product ID.
+     *
+     * @return array{0: array<int, int>, 1: array<int, int>}
+     */
+    private static function normalizedPostIdConstraints(mixed $postIn, mixed $postNotIn, string $priceType): array
+    {
+        $includedIds = self::normalizePostIds($postIn);
+        $excludedIds = self::normalizePostIds($postNotIn);
+
+        if ($includedIds !== []) {
+            $includedIds = array_values(array_diff($includedIds, $excludedIds));
+            $includedIds = $includedIds === [] ? [0] : $includedIds;
+            $excludedIds = [];
+        }
+
+        if ($priceType === FilterState::PRICE_TYPE_ALL || ! function_exists('wc_get_product_ids_on_sale')) {
+            return [$includedIds, $excludedIds];
+        }
+
+        $onSaleIds = self::normalizePostIds(wc_get_product_ids_on_sale());
+
+        if ($priceType === FilterState::PRICE_TYPE_ON_SALE) {
+            $allowedIds = $includedIds === []
+                ? array_values(array_diff($onSaleIds, $excludedIds))
+                : array_values(array_intersect($includedIds, $onSaleIds));
+
+            return [$allowedIds === [] ? [0] : $allowedIds, []];
+        }
+
+        if ($includedIds !== []) {
+            $allowedIds = array_values(array_diff($includedIds, $onSaleIds));
+
+            return [$allowedIds === [] ? [0] : $allowedIds, []];
+        }
+
+        return [[], array_values(array_unique(array_merge($excludedIds, $onSaleIds)))];
+    }
+
+    /** @return array<int, int> */
+    private static function normalizePostIds(mixed $ids): array
+    {
+        if ($ids === null || $ids === '' || $ids === false) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map(
+            static fn ($id): int => abs((int) $id),
+            (array) $ids
+        )));
     }
 
     // ── tax_query / meta_query fragment builders ────────────────────────────
