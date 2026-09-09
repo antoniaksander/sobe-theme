@@ -24,17 +24,6 @@ namespace {
     if (! class_exists('WooCommerce')) {
         class WooCommerce {}
     }
-
-    if (! class_exists('WP_Term')) {
-        class WP_Term
-        {
-            public function __construct(
-                public int $term_id = 0,
-                public string $slug = '',
-                public string $taxonomy = ''
-            ) {}
-        }
-    }
 }
 
 namespace App\WooCommerce\CatalogFilter {
@@ -57,7 +46,6 @@ namespace App\WooCommerce\CatalogFilter {
             'exclude-from-search' => 21,
             'outofstock' => 22,
         ]);
-        Functions\when('get_term_by')->alias(fn ($field, $value, $taxonomy) => new \WP_Term(7, (string) $value, (string) $taxonomy));
 
         $wcQuery = new class {
             public string $mode = 'menu_order';
@@ -88,10 +76,9 @@ namespace App\WooCommerce\CatalogFilter {
      *
      * @return array<string, mixed>
      */
-    function priceLookupArgsForPage(array $state, array $contextArr, int $paged): array
+    function priceLookupArgsForPage(array $state, CatalogContext $context, int $paged): array
     {
         $filterState = FilterStateParser::fromArray($state + ['paged' => $paged]);
-        $context = CatalogContext::fromArray($contextArr);
 
         $queryArgs = \invokeMethod(new FilterHandler('sobe'), 'buildQueryArgs', [$filterState, $context, 12]);
         $queryArgs = (array) apply_filters('sobe/catalog_filters/query_args', $queryArgs, $state);
@@ -119,9 +106,12 @@ namespace App\WooCommerce\CatalogFilter {
         return $prices === [] ? ['min' => 0.0, 'max' => 0.0] : ['min' => min($prices), 'max' => max($prices)];
     }
 
-    function brandArchiveContext(): array
+    // The validated context FilterHandler::process() would hold after
+    // CatalogContext::fromArray() accepts the posted brand-archive payload
+    // (term validation itself is covered by CatalogContextTest).
+    function brandArchiveContext(): CatalogContext
     {
-        return ['contextType' => 'taxonomy', 'archiveTaxonomy' => 'product_brand', 'archiveTerm' => 'samelin', 'queriedObjectId' => 7];
+        return CatalogContext::taxonomy('product_brand', 'samelin', 7);
     }
 
     function priceUniverse(): array
