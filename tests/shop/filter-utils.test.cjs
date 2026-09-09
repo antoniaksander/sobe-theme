@@ -5,7 +5,13 @@
  * any change to the filter URL or state logic.
  */
 
-const { buildFilterUrl, hasActiveFilters, splitFilterValue } = require('../../resources/js/filter-utils.js');
+const {
+  activePriceSelection,
+  buildFilterUrl,
+  hasActiveFilters,
+  projectPriceSelection,
+  splitFilterValue,
+} = require('../../resources/js/filter-utils.js');
 
 const BASE = 'https://example.com/shop/';
 
@@ -125,6 +131,110 @@ describe('buildFilterUrl', () => {
   test('empty string s is omitted', () => {
     const url = buildFilterUrl({ s: '' }, BASE);
     expect(new URL(url).searchParams.get('s')).toBeNull();
+  });
+});
+
+describe('buildFilterUrl — available vs selected price range', () => {
+  test('a re-scoped available range does not resurrect a price param the thumbs sit on', () => {
+    // A non-price filter narrowed the available range to 30–260 and the
+    // slider thumbs snapped to those bounds. collectState() carries those
+    // exact values; the URL must stay clean.
+    const url = buildFilterUrl(
+      { filter_color: ['black'], min_price: '30', max_price: '260' },
+      BASE,
+      null,
+      null,
+      { min: 30, max: 260 },
+    );
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get('min_price')).toBeNull();
+    expect(parsed.searchParams.get('max_price')).toBeNull();
+    expect(parsed.searchParams.get('filter_color')).toBe('black');
+  });
+
+  test('a genuine selection survives when the available range widens again', () => {
+    const url = buildFilterUrl(
+      { min_price: '80', max_price: '180' },
+      BASE,
+      null,
+      null,
+      { min: 18, max: 347 },
+    );
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get('min_price')).toBe('80');
+    expect(parsed.searchParams.get('max_price')).toBe('180');
+  });
+
+  test('sub-unit lookup bounds (18.99) are not treated as a selection', () => {
+    const url = buildFilterUrl(
+      { min_price: '19', max_price: '346' },
+      BASE,
+      null,
+      null,
+      { min: 18.99, max: 346.01 },
+    );
+    const parsed = new URL(url);
+    expect(parsed.searchParams.get('min_price')).toBeNull();
+    expect(parsed.searchParams.get('max_price')).toBeNull();
+  });
+});
+
+// ── activePriceSelection ──────────────────────────────────────────────────────
+
+describe('activePriceSelection', () => {
+  test('thumbs on the available bounds are not a selection', () => {
+    expect(activePriceSelection('18', '347', { min: 18, max: 347 })).toEqual({});
+  });
+
+  test('a value strictly inside the range on each side is a selection', () => {
+    expect(activePriceSelection('80', '180', { min: 18, max: 347 })).toEqual({
+      min_price: '80',
+      max_price: '180',
+    });
+  });
+
+  test('only one side inside the range', () => {
+    expect(activePriceSelection('18', '180', { min: 18, max: 347 })).toEqual({ max_price: '180' });
+    expect(activePriceSelection('80', '347', { min: 18, max: 347 })).toEqual({ min_price: '80' });
+  });
+
+  test('half-step slop around a bound is absorbed', () => {
+    expect(activePriceSelection('19', '346', { min: 18.99, max: 346.01 })).toEqual({});
+  });
+
+  test('an available range that narrowed past the current thumbs yields no selection', () => {
+    // available re-scoped to 100–150; thumbs still report the old 80/180
+    expect(activePriceSelection('80', '180', { min: 100, max: 150 })).toEqual({});
+  });
+
+  test('missing inputs yield no selection', () => {
+    expect(activePriceSelection(undefined, undefined, { min: 0, max: 100 })).toEqual({});
+  });
+});
+
+// ── projectPriceSelection ─────────────────────────────────────────────────────
+
+describe('projectPriceSelection', () => {
+  test('no selection snaps both thumbs to the new available bounds', () => {
+    expect(projectPriceSelection({ min: 30, max: 260 }, {})).toEqual({ from: 30, to: 260 });
+  });
+
+  test('a selection inside the new range is preserved', () => {
+    expect(
+      projectPriceSelection({ min: 18, max: 347 }, { min_price: '80', max_price: '180' }),
+    ).toEqual({ from: 80, to: 180 });
+  });
+
+  test('a selection outside the new range is clamped to it', () => {
+    expect(
+      projectPriceSelection({ min: 100, max: 150 }, { min_price: '80', max_price: '180' }),
+    ).toEqual({ from: 100, to: 150 });
+  });
+
+  test('pagination re-sends the same available range and the thumbs do not move', () => {
+    const page1 = projectPriceSelection({ min: 18, max: 347 }, { min_price: '80', max_price: '180' });
+    const page2 = projectPriceSelection({ min: 18, max: 347 }, { min_price: '80', max_price: '180' });
+    expect(page1).toEqual(page2);
   });
 });
 

@@ -219,19 +219,12 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
  * Compute the available product price range for the current non-price filters.
  *
  * The incoming query args include the active price constraint (the frontend
- * always submits min/max inputs), so strip it first — that way changing a
- * brand / category / attribute can re-scope the slider bounds to the
- * matching set, without the current price selection itself narrowing what
- * range the slider offers to move to. This strips both the legacy raw
- * `_price` meta_query shape (kept for any external `sobe/catalog_filters/
- * query_args` consumer that still adds one) and the
- * `sobe_catalog_price_filter` marker QueryTransformer::buildStandaloneQueryArgs()
- * sets — belt-and-suspenders, since the marker only takes effect while
- * $_GET['min_price']/['max_price'] are also set, which they won't be by the
- * time this runs (see FilterHandler::process() — this is called after
- * QueryTransformer::withPriceFilterQuery()'s scope has already restored
- * $_GET), but a caller building query_args directly rather than through
- * that method shouldn't have to know that.
+ * may submit min/max) and the current page, so both are stripped via
+ * QueryTransformer::priceRangeBaseArgs() — that way changing a brand /
+ * category / attribute can re-scope the slider bounds to the matching set,
+ * while the current price selection never narrows its own bounds and
+ * pagination never shifts them (page 1 / page 2 / page N of one filter state
+ * all resolve to the identical range).
  *
  * IMPORTANT: unlike sobe_get_filtered_term_counts(), which must run *inside*
  * QueryTransformer::withPriceFilterQuery()'s $_GET scope so its per-facet
@@ -244,42 +237,12 @@ function sobe_get_filtered_term_counts(array $base_query_args): array
  */
 function sobe_get_filtered_price_range(array $base_query_args): array
 {
-    $query_args = $base_query_args;
-    // Only the min/max price constraint is excluded (see docblock) —
-    // price_type (on_sale/full_price)'s post__in/post__not_in, set by
-    // QueryTransformer::applyPriceTypeToArgs(), is deliberately left in
-    // place: that matches this function's pre-existing behavior (it only
-    // ever stripped the _price meta_query key, never on_sale's clauses).
-    unset($query_args['sobe_catalog_price_filter']);
-
-    if (! empty($base_query_args['meta_query']) && is_array($base_query_args['meta_query'])) {
-        $relation = isset($base_query_args['meta_query']['relation'])
-            ? sanitize_key((string) $base_query_args['meta_query']['relation'])
-            : '';
-        $meta_query = [];
-        foreach ($base_query_args['meta_query'] as $key => $clause) {
-            if ($key === 'relation') {
-                continue;
-            }
-            if (is_array($clause) && ($clause['key'] ?? '') === '_price') {
-                continue;
-            }
-            $meta_query[] = $clause;
-        }
-
-        if ($meta_query === []) {
-            unset($query_args['meta_query']);
-        } elseif ($relation !== '' && count($meta_query) > 1) {
-            $query_args['meta_query'] = array_merge(['relation' => $relation], $meta_query);
-        } else {
-            $query_args['meta_query'] = $meta_query;
-        }
-    }
-
-    $query_args['fields'] = 'ids';
-    $query_args['posts_per_page'] = -1;
-    $query_args['no_found_rows'] = true;
-    unset($query_args['paged']);
+    // The incoming args carry every active constraint including the current
+    // min/max price selection and the current page. QueryTransformer strips
+    // exactly those two — price and pagination — so the range reflects "what
+    // else is filtered" without the selection narrowing its own bounds and
+    // without pagination ever shifting it.
+    $query_args = QueryTransformer::priceRangeBaseArgs($base_query_args);
 
     $query = new \WP_Query($query_args);
     $ids = array_map('intval', (array) $query->posts);
