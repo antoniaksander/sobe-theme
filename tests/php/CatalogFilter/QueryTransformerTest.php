@@ -103,7 +103,7 @@ it('builds category/tag/brand IN clauses from the normalized state', function ()
     expect(collect_clauses($args['tax_query'], 'product_brand'))->toBe(['taxonomy' => 'product_brand', 'field' => 'slug', 'terms' => ['samelin'], 'operator' => 'IN']);
 });
 
-it('builds an attribute clause with the AND/OR operator carried from FilterState', function () {
+it('translates FilterState OPERATOR_AND to the literal WP_Tax_Query operator AND', function () {
     Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
 
     $args = QueryTransformer::buildStandaloneQueryArgs(
@@ -114,6 +114,27 @@ it('builds an attribute clause with the AND/OR operator carried from FilterState
     expect(collect_clauses($args['tax_query'], 'pa_color'))->toBe([
         'taxonomy' => 'pa_color', 'field' => 'slug', 'terms' => ['red', 'blue'], 'operator' => 'AND',
     ]);
+});
+
+it('translates FilterState OPERATOR_OR to WP_Tax_Query\'s IN, never the literal string "OR"', function () {
+    // WP_Tax_Query has no 'OR' operator at all (only IN, NOT IN, AND,
+    // EXISTS, NOT EXISTS) -- an unrecognized operator string is silently
+    // ignored by WordPress core, which is exactly how this shipped broken
+    // in a real WordPress+WooCommerce environment: the array shape looked
+    // correct (this is why a shape-only assertion here would not have
+    // caught it), WordPress accepted the clause, and then applied no
+    // constraint from it at all. Confirmed via real WP_Query execution
+    // during PR #140 review -- see the PR description's runtime matrix.
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['attributes' => ['pa_size' => ['terms' => ['42', '43'], 'operator' => 'OR']]]),
+        CatalogContext::shop()
+    );
+
+    $clause = collect_clauses($args['tax_query'], 'pa_size');
+    expect($clause['operator'])->toBe('IN');
+    expect($clause['operator'])->not->toBe('OR');
 });
 
 it('intersects a same-taxonomy filter with the archive term rather than replacing it', function () {
@@ -259,6 +280,50 @@ it('restores $_GET[orderby] even if the callback throws', function () {
 
     expect($_GET['orderby'])->toBe('date');
     unset($_GET['orderby']);
+});
+
+// ── buildStandaloneQueryArgs() must extend $baseArgs, never silently replace it ──
+//
+// Confirmed via a real WordPress+WooCommerce request during PR #140 review:
+// the plain (no-active-filter) load-more handler parses its FilterState from
+// a params array that has no 'paged' key at all (pagination arrives as a
+// separate $_POST['page'], not part of filter state), so $state->paged is
+// always its default of 1. Before this fix, buildStandaloneQueryArgs()
+// unconditionally set $args['paged'] = $state->paged at the end, silently
+// discarding the real page number the caller had explicitly passed via
+// $baseArgs — every "load more" request re-served page 1's products.
+
+it('does not overwrite a paged value the caller explicitly passed in $baseArgs', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(), // default paged: 1 — the caller's baseArgs must still win
+        CatalogContext::shop(),
+        ['paged' => 3]
+    );
+
+    expect($args['paged'])->toBe(3);
+});
+
+it('falls back to FilterState paged only when the caller did not specify one', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(fakeState(['paged' => 5]), CatalogContext::shop());
+
+    expect($args['paged'])->toBe(5);
+});
+
+it('does not overwrite an explicit orderby/order the caller passed in $baseArgs', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['orderby' => 'menu_order', 'order' => 'ASC']),
+        CatalogContext::shop(),
+        ['orderby' => 'price', 'order' => 'DESC']
+    );
+
+    expect($args['orderby'])->toBe('price');
+    expect($args['order'])->toBe('DESC');
 });
 
 /** Find a single tax_query clause for a taxonomy (asserts at most one). */
