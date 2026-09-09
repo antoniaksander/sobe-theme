@@ -22,7 +22,10 @@ export function buildFilterUrl(state, pageBase, archiveKey = null, archiveTerm =
     if (key === archiveKey) {
       const slugs = Array.isArray(val) ? val : [val];
       if (slugs.length === 1 && slugs[0] === archiveTerm) continue;
-      url.searchParams.set('filter_' + key.replace(/^filter_/, ''), slugs.join('+'));
+      // Comma is the WooCommerce-canonical multi-value separator (matches
+      // native layered nav's own filter_{attribute}=a,b convention) — new
+      // URLs use it; splitFilterValue() below still reads legacy '+' URLs.
+      url.searchParams.set('filter_' + key.replace(/^filter_/, ''), slugs.join(','));
       continue;
     }
 
@@ -52,7 +55,7 @@ export function buildFilterUrl(state, pageBase, archiveKey = null, archiveTerm =
     }
 
     if (Array.isArray(val)) {
-      url.searchParams.set('filter_' + key.replace(/^filter_/, ''), val.join('+'));
+      url.searchParams.set('filter_' + key.replace(/^filter_/, ''), val.join(','));
     } else if (val !== '' && val !== null && val !== undefined) {
       url.searchParams.set(key, val);
     }
@@ -67,15 +70,17 @@ export function buildFilterUrl(state, pageBase, archiveKey = null, archiveTerm =
 /**
  * Split a filter value read from a URL back into taxonomy slugs.
  *
- * Filter URLs use + between selected slugs. URLSearchParams preserves encoded
- * plus signs as literal +, while some older URLs may decode them to spaces.
+ * New URLs use ',' (WooCommerce-canonical, matches native layered nav).
+ * Legacy Sobe URLs used '+' and must keep parsing the same way indefinitely —
+ * this function is the one place accepting both, so a bookmarked/shared
+ * legacy URL and a newly-generated one produce identical filter state.
  *
  * @param {string|null|undefined} value
  * @returns {string[]}
  */
 export function splitFilterValue(value) {
   return String(value ?? '')
-    .split(/[+\s]+/)
+    .split(/[+,\s]+/)
     .filter(Boolean);
 }
 

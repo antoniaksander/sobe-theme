@@ -217,24 +217,48 @@ $load_more_handler = function (): void {
         'term_id' => $term_id ?: null,
     ]);
 
-    $query_args = [
-        'post_type' => 'product',
-        'post_status' => 'publish',
+    // This branch runs only when catalog-filters/shop-load-more.js reports no
+    // active filters (see hasActiveFilters() there) — an empty FilterState is
+    // correct, not a placeholder. It still goes through the same
+    // QueryTransformer as the filtered path so a plain "load more" gets the
+    // same WooCommerce catalog-visibility/hide-out-of-stock baseline as
+    // everywhere else, not just post_status=publish.
+    $termSlug = '';
+    if ($taxonomy && $term_id) {
+        $term = get_term($term_id, $taxonomy);
+        $termSlug = $term instanceof \WP_Term ? $term->slug : '';
+    }
+
+    $context = $taxonomy && $termSlug !== ''
+        ? \App\WooCommerce\CatalogFilter\CatalogContext::taxonomy($taxonomy, $termSlug, $term_id)
+        : ($search !== '' ? \App\WooCommerce\CatalogFilter\CatalogContext::search($search) : \App\WooCommerce\CatalogFilter\CatalogContext::shop());
+
+    $filterState = \App\WooCommerce\CatalogFilter\FilterStateParser::fromArray(['orderby' => $orderby]);
+
+    $query_args = \App\WooCommerce\CatalogFilter\QueryTransformer::buildStandaloneQueryArgs($filterState, $context, [
         'paged' => $page,
         'posts_per_page' => $per_page,
         'orderby' => $orderby,
-    ];
+    ]);
 
-    if ($taxonomy && $term_id) {
-        $query_args['tax_query'] = [[
-            'taxonomy' => $taxonomy,
-            'field' => 'term_id',
-            'terms' => $term_id,
-        ]];
-    }
-
-    if ($search) {
-        $query_args['s'] = $search;
+    // A raw orderby string like 'popularity'/'rating'/'price'/'price-desc'
+    // means nothing to WP_Query on its own -- WooCommerce translates those
+    // via get_catalog_ordering_args(), which for those four values works by
+    // registering posts_clauses filters (unconditionally, unlike price
+    // range filtering) that join wc_product_meta_lookup. Without calling it,
+    // this path fell back to WP_Query's default ordering for exactly those
+    // four sort modes while direct GET and FilterHandler AJAX (which already
+    // calls this) sorted correctly -- same fix as FilterHandler::buildQueryArgs().
+    $ordering = \App\WooCommerce\CatalogFilter\QueryTransformer::withOrderbyScope(
+        $orderby,
+        static fn () => WC()->query ? WC()->query->get_catalog_ordering_args() : null
+    );
+    if ($ordering !== null) {
+        $query_args['orderby'] = $ordering['orderby'];
+        $query_args['order'] = $ordering['order'];
+        if (! empty($ordering['meta_key'])) {
+            $query_args['meta_key'] = $ordering['meta_key'];
+        }
     }
 
     $query_args = (array) apply_filters('sobe/shop_loop/query_args', $query_args, [

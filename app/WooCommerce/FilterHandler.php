@@ -2,6 +2,10 @@
 
 namespace App\WooCommerce;
 
+use App\WooCommerce\CatalogFilter\CatalogContext;
+use App\WooCommerce\CatalogFilter\FilterState;
+use App\WooCommerce\CatalogFilter\FilterStateParser;
+use App\WooCommerce\CatalogFilter\QueryTransformer;
 use function App\sobe_get_filtered_term_counts;
 use function App\sobe_get_filtered_price_range;
 use function App\sobe_catalog_pagination_html;
@@ -11,6 +15,12 @@ use function App\sobe_catalog_pagination_html;
  *
  * Extracted from the closure in woocommerce.php so the core logic is unit-testable
  * without bootstrapping WordPress HTTP: call process() directly with a filter_state array.
+ *
+ * Query construction itself lives in CatalogFilter\FilterStateParser and
+ * CatalogFilter\QueryTransformer — the same normalized pipeline the native
+ * main query (woocommerce-filters.php's woocommerce_product_query hook) and
+ * load-more use, so a given filter_state/filter_context pair means the same
+ * thing regardless of which of the three ever handles it.
  */
 class FilterHandler
 {
@@ -51,15 +61,32 @@ class FilterHandler
         $perPage = (int) apply_filters('sobe/shop_loop/per_page', (int) get_theme_mod("{$this->prefix}_products_per_page", config('theme.product_catalog.per_page', 12)), [
             'context' => 'catalog_filters',
         ]);
-        $paged = max(1, (int) ($state['paged'] ?? 1));
 
-        $queryArgs = $this->buildQueryArgs($state, $perPage, $paged, $context);
+        $filterState = FilterStateParser::fromArray($state);
+        $catalogContext = CatalogContext::fromArray($context);
+        $paged = $filterState->paged;
+
+        $queryArgs = $this->buildQueryArgs($filterState, $catalogContext, $perPage);
         $queryArgs = (array) apply_filters('sobe/catalog_filters/query_args', $queryArgs, $state);
         $queryArgs = (array) apply_filters('sobe/shop_loop/query_args', $queryArgs, [
             'context' => 'catalog_filters',
             'state' => $state,
         ]);
-        $query = new \WP_Query($queryArgs);
+        // Term counts must run inside the same $_GET-scoped price window as
+        // the visible query — sobe_get_filtered_term_counts() builds its own
+        // per-taxonomy WP_Query instances from a clone of $queryArgs, and
+        // those only pick up the active min/max price constraint (via
+        // WooCommerce's own WC_Query::price_filter_post_clauses(), which
+        // reads $_GET directly) while this scope is still active. Computed
+        // together so "visible results" and "facet counts" can't silently
+        // disagree about whether price is applied.
+        [$query, $termCounts] = QueryTransformer::withPriceFilterQuery(
+            $filterState->minPrice,
+            $filterState->maxPrice,
+            static function () use ($queryArgs) {
+                return [new \WP_Query($queryArgs), sobe_get_filtered_term_counts($queryArgs)];
+            }
+        );
 
         ob_start();
         if ($query->have_posts()) {
@@ -102,38 +129,28 @@ class FilterHandler
 
     // ── Query builders ────────────────────────────────────────────────────────
 
-    private function buildQueryArgs(array $state, int $perPage, int $paged, array $context = []): array
+    /**
+     * Delegates all filter/visibility/stock/price/archive-context translation
+     * to QueryTransformer::buildStandaloneQueryArgs() — the same builder
+     * load-more uses — so this AJAX path and load-more can't diverge in how
+     * a given FilterState + CatalogContext turn into query args. Only
+     * per-page/pagination and WooCommerce's catalog-ordering translation
+     * stay here, since those are specific to how this handler paginates and
+     * were already correct (get_catalog_ordering_args() is itself a native
+     * WooCommerce delegation, not something to re-implement).
+     */
+    private function buildQueryArgs(FilterState $state, CatalogContext $context, int $perPage): array
     {
-        $args = [
-            'post_type' => 'product',
-            'post_status' => 'publish',
+        $args = QueryTransformer::buildStandaloneQueryArgs($state, $context, [
             'posts_per_page' => $perPage,
-            'paged' => $paged,
-        ];
+        ]);
 
-        $taxQuery = $this->buildTaxQuery($state, $context);
-        if (! empty($taxQuery)) {
-            $args['tax_query'] = count($taxQuery) > 1
-                ? array_merge(['relation' => 'AND'], $taxQuery)
-                : $taxQuery;
-        }
+        $ordering = QueryTransformer::withOrderbyScope(
+            $state->orderby,
+            static fn () => WC()->query ? WC()->query->get_catalog_ordering_args() : null
+        );
 
-        $metaQuery = $this->buildMetaQuery($state);
-        if (! empty($metaQuery)) {
-            $args['meta_query'] = $metaQuery;
-        }
-
-        $search = sanitize_text_field($state['s'] ?? '');
-        if ($search) {
-            $args['s'] = $search;
-        }
-
-        $orderby = sanitize_key($state['orderby'] ?? '');
-        if ($orderby) {
-            $_GET['orderby'] = $orderby;
-        }
-        if (WC()->query) {
-            $ordering = WC()->query->get_catalog_ordering_args();
+        if ($ordering !== null) {
             $args['orderby'] = $ordering['orderby'];
             $args['order'] = $ordering['order'];
             if (! empty($ordering['meta_key'])) {
@@ -142,190 +159,6 @@ class FilterHandler
         }
 
         return $args;
-    }
-
-    private function buildTaxQuery(array $state, array $context = []): array
-    {
-        $clauses = [];
-
-        $brandTaxonomy = apply_filters('sobe/catalog_filters/brand_taxonomy', 'product_brand');
-        $brandFilterKeys = $this->brandFilterKeys(is_string($brandTaxonomy) ? $brandTaxonomy : 'product_brand');
-
-        $categorySlugs = $this->slugList($state['product_cat'] ?? $state['filter_product_cat'] ?? []);
-        if (! empty($categorySlugs)) {
-            $clauses[] = [
-                'taxonomy' => 'product_cat',
-                'field' => 'slug',
-                'terms' => $categorySlugs,
-                'operator' => 'IN',
-            ];
-        }
-
-        $tagSlugs = $this->slugList($state['product_tag'] ?? $state['filter_product_tag'] ?? []);
-        if (! empty($tagSlugs)) {
-            $clauses[] = [
-                'taxonomy' => 'product_tag',
-                'field' => 'slug',
-                'terms' => $tagSlugs,
-                'operator' => 'IN',
-            ];
-        }
-
-        foreach ($state as $key => $val) {
-            if (! str_starts_with($key, 'filter_')) {
-                continue;
-            }
-            $attrName = substr($key, 7);
-            // Category/tag/brand arrive as filter_* keys too; they are handled
-            // explicitly above/below, so don't also treat them as pa_* attributes.
-            if (in_array($attrName, array_merge(['product_cat', 'product_tag'], $brandFilterKeys), true)) {
-                continue;
-            }
-            $taxonomy = 'pa_'.sanitize_key($attrName);
-            $slugs = $this->slugList($val);
-            if (! empty($slugs)) {
-                $clauses[] = [
-                    'taxonomy' => $taxonomy,
-                    'field' => 'slug',
-                    'terms' => $slugs,
-                    'operator' => 'IN',
-                ];
-            }
-        }
-
-        $brandKey = $this->prefix.'_brands';
-        $brandSlugs = [];
-        foreach (array_merge([$brandKey], $brandFilterKeys) as $key) {
-            $brandSlugs = array_merge($brandSlugs, $this->slugList($state[$key] ?? []));
-            $brandSlugs = array_merge($brandSlugs, $this->slugList($state["filter_{$key}"] ?? []));
-        }
-        $brandSlugs = array_values(array_unique($brandSlugs));
-        if (! empty($brandSlugs) && is_string($brandTaxonomy) && taxonomy_exists($brandTaxonomy)) {
-            $clauses[] = [
-                'taxonomy' => $brandTaxonomy,
-                'field' => 'slug',
-                'terms' => $brandSlugs,
-                'operator' => 'IN',
-            ];
-        }
-
-        return $this->applyArchiveIntersection($clauses, $context);
-    }
-
-    /**
-     * On a product taxonomy archive, intersect a filter for that SAME taxonomy
-     * with the archive term instead of replacing it (e.g. on a category archive,
-     * selecting another category narrows to the overlap, not the whole other
-     * category). The archive context is supplied by the catalog-filters params
-     * (contextType / archiveTaxonomy / archiveTerm).
-     */
-    private function applyArchiveIntersection(array $clauses, array $context): array
-    {
-        if (($context['contextType'] ?? '') !== 'taxonomy') {
-            return $clauses;
-        }
-
-        $taxonomy = sanitize_key((string) ($context['archiveTaxonomy'] ?? ''));
-        $term = sanitize_title((string) ($context['archiveTerm'] ?? ''));
-
-        if ($taxonomy === '' || $term === '' || ! taxonomy_exists($taxonomy)) {
-            return $clauses;
-        }
-
-        $intersected = [];
-        foreach ($clauses as $clause) {
-            if (! is_array($clause) || ($clause['taxonomy'] ?? '') !== $taxonomy) {
-                $intersected[] = $clause;
-                continue;
-            }
-
-            // Drop the archive term from the selection clause, then add it back
-            // as its own AND clause so the two are intersected, not unioned.
-            $terms = array_values(array_diff($this->slugList($clause['terms'] ?? []), [$term]));
-            if ($terms === []) {
-                continue;
-            }
-
-            $clause['terms'] = $terms;
-            $clause['operator'] = 'IN';
-            $intersected[] = $clause;
-        }
-
-        $intersected[] = [
-            'taxonomy' => $taxonomy,
-            'field' => 'slug',
-            'terms' => [$term],
-            'operator' => 'IN',
-        ];
-
-        return $intersected;
-    }
-
-    /**
-     * Request keys that should be treated as the brand taxonomy.
-     */
-    private function brandFilterKeys(string $brandTaxonomy): array
-    {
-        return array_values(array_unique(array_filter([
-            'brand',
-            'product_brand',
-            sanitize_key($brandTaxonomy),
-        ])));
-    }
-
-    /**
-     * Normalise a filter value (array, or a +/space-delimited string) into a
-     * de-duplicated list of term slugs.
-     */
-    private function slugList(mixed $value): array
-    {
-        $items = is_array($value) ? $value : preg_split('/[+\s]+/', (string) $value);
-
-        if (! is_array($items)) {
-            return [];
-        }
-
-        return array_values(array_unique(array_filter(array_map(
-            static fn ($item): string => sanitize_title((string) $item),
-            $items
-        ))));
-    }
-
-    private function buildMetaQuery(array $state): array
-    {
-        $clauses = [];
-
-        $minPrice = isset($state['min_price']) ? (float) $state['min_price'] : null;
-        $maxPrice = isset($state['max_price']) ? (float) $state['max_price'] : null;
-
-        if ($minPrice !== null || $maxPrice !== null) {
-            $price = ['key' => '_price', 'type' => 'NUMERIC'];
-            if ($minPrice !== null && $maxPrice !== null) {
-                $price['value'] = [$minPrice, $maxPrice];
-                $price['compare'] = 'BETWEEN';
-            } elseif ($minPrice !== null) {
-                $price['value'] = $minPrice;
-                $price['compare'] = '>=';
-            } else {
-                $price['value'] = $maxPrice;
-                $price['compare'] = '<=';
-            }
-            $clauses[] = $price;
-        }
-
-        $priceType = sanitize_key($state['price_type'] ?? 'all');
-        if ($priceType === 'on_sale') {
-            $clauses[] = ['key' => '_sale_price', 'value' => '', 'compare' => '!='];
-            $clauses[] = ['key' => '_sale_price', 'value' => '0', 'compare' => '>', 'type' => 'NUMERIC'];
-        } elseif ($priceType === 'full_price') {
-            $clauses[] = [
-                'relation' => 'OR',
-                ['key' => '_sale_price', 'compare' => 'NOT EXISTS'],
-                ['key' => '_sale_price', 'value' => '', 'compare' => '='],
-            ];
-        }
-
-        return $clauses;
     }
 
     private function generateCountHtml(int $total, int $paged, int $perPage): string
