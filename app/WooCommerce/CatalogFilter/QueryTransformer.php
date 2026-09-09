@@ -114,9 +114,25 @@ final class QueryTransformer
         $args = self::withPriceFilterMarker($args, $state->minPrice, $state->maxPrice);
         $args = self::applyPriceTypeToArgs($args, $state->priceType);
 
-        $args['paged'] = $state->paged;
-        $args['orderby'] = $state->orderby;
-        $args['order'] = $state->order;
+        // Only default paged/orderby/order from $state when the caller
+        // didn't already specify them in $baseArgs — this method's own
+        // docblock says it "extends rather than replaces" $baseArgs, but
+        // unconditionally overwriting these three broke that: a caller
+        // (the plain load-more handler) that parses FilterState from a
+        // params array with no 'paged' key at all (because pagination
+        // arrives as a separate $_POST['page'], not part of filter state)
+        // got $state->paged's default of 1 stomped back in over the real
+        // requested page it had explicitly passed via $baseArgs — every
+        // "load more" request silently re-served page 1.
+        if (! array_key_exists('paged', $baseArgs)) {
+            $args['paged'] = $state->paged;
+        }
+        if (! array_key_exists('orderby', $baseArgs)) {
+            $args['orderby'] = $state->orderby;
+        }
+        if (! array_key_exists('order', $baseArgs)) {
+            $args['order'] = $state->order;
+        }
 
         return $args;
     }
@@ -349,11 +365,28 @@ final class QueryTransformer
                 'taxonomy' => $taxonomy,
                 'field' => 'slug',
                 'terms' => $selection['terms'],
-                'operator' => $selection['operator'],
+                'operator' => self::taxQueryOperator($selection['operator']),
             ];
         }
 
         return $clauses;
+    }
+
+    /**
+     * FilterState::OPERATOR_OR/OPERATOR_AND ('OR'/'AND') describe the
+     * user-facing semantic, not a literal WP_Tax_Query operator value —
+     * WP_Tax_Query has no 'OR' operator at all (only IN, NOT IN, AND,
+     * EXISTS, NOT EXISTS; an unrecognized operator string is silently
+     * ignored, which is exactly how this shipped broken: passing 'OR'
+     * straight through produced a syntactically valid-looking tax_query
+     * clause that WordPress accepted and then applied no constraint from
+     * at all, real-environment-only findable). 'OR' means "matches any of
+     * these terms", which is WP_Tax_Query's 'IN'; 'AND' is already a
+     * literal WP_Tax_Query operator and passes through unchanged.
+     */
+    private static function taxQueryOperator(string $filterStateOperator): string
+    {
+        return $filterStateOperator === FilterState::OPERATOR_AND ? 'AND' : 'IN';
     }
 
     /**
