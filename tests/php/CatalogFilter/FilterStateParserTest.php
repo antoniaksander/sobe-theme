@@ -94,11 +94,41 @@ it('only accepts registered product attribute taxonomies, not an arbitrary key',
     expect($state->attributes)->not->toHaveKey('pa_not_a_real_attribute');
 });
 
-it('defaults attribute selection to OR (IN) semantics', function () {
+it('defaults attribute selection to AND, matching WooCommerce\'s own native default', function () {
+    // Confirmed against a real WordPress+WooCommerce install:
+    // WC_Query::get_layered_nav_chosen_attributes() defaults to
+    // apply_filters('woocommerce_layered_nav_default_query_type', 'and')
+    // when query_type_{attribute} is absent -- not 'or'. Getting this
+    // backwards meant a multi-value attribute URL with no explicit
+    // query_type matched every selected term on a direct GET but any
+    // selected term via AJAX/load-more, a real divergence only caught by
+    // running both against the same real database.
+    $state = FilterStateParser::fromArray(['filter_color' => 'red,blue']);
+
+    expect($state->attributes['pa_color']['operator'])->toBe(FilterState::OPERATOR_AND);
+    expect($state->attributes['pa_color']['terms'])->toBe(['red', 'blue']);
+});
+
+it('respects a store-customized woocommerce_layered_nav_default_query_type default', function () {
+    Functions\when('apply_filters')->alias(function ($hook, $value = null) {
+        return $hook === 'woocommerce_layered_nav_default_query_type' ? 'or' : $value;
+    });
+
     $state = FilterStateParser::fromArray(['filter_color' => 'red,blue']);
 
     expect($state->attributes['pa_color']['operator'])->toBe(FilterState::OPERATOR_OR);
-    expect($state->attributes['pa_color']['terms'])->toBe(['red', 'blue']);
+});
+
+it('an explicit query_type_{attribute}=or always wins over the default, whatever the default is', function () {
+    $state = FilterStateParser::fromArray(['filter_color' => 'red,blue', 'query_type_color' => 'or']);
+
+    expect($state->attributes['pa_color']['operator'])->toBe(FilterState::OPERATOR_OR);
+});
+
+it('an explicit query_type_{attribute}=and is honoured (already the default, but must not depend on that)', function () {
+    $state = FilterStateParser::fromArray(['filter_color' => 'red,blue', 'query_type_color' => 'and']);
+
+    expect($state->attributes['pa_color']['operator'])->toBe(FilterState::OPERATOR_AND);
 });
 
 it('honours query_type_{attribute}=and using WooCommerce\'s own native param name', function () {
@@ -114,7 +144,7 @@ it('handles multiple simultaneously selected attributes independently', function
         'query_type_size' => 'and',
     ]);
 
-    expect($state->attributes['pa_color'])->toBe(['terms' => ['red'], 'operator' => FilterState::OPERATOR_OR]);
+    expect($state->attributes['pa_color'])->toBe(['terms' => ['red'], 'operator' => FilterState::OPERATOR_AND]);
     expect($state->attributes['pa_size'])->toBe(['terms' => ['m', 'l'], 'operator' => FilterState::OPERATOR_AND]);
 });
 
