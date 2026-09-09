@@ -24,6 +24,18 @@ final class CatalogContext
     public const TYPE_CUSTOM = 'custom';
 
     /**
+     * A posted context that claimed to be TYPE_TAXONOMY but failed
+     * validation (unknown taxonomy, unknown term, or a term/taxonomy-ID
+     * mismatch between what was posted and what actually exists). This is
+     * deliberately its own type, never silently reinterpreted as TYPE_SHOP —
+     * falling back to "shop" would widen a request that was supposed to be
+     * scoped to one archive term into an unscoped catalog-wide query, which
+     * is exactly the failure mode the immutable-context contract exists to
+     * prevent. QueryTransformer treats this as "must match zero results."
+     */
+    public const TYPE_INVALID = 'invalid';
+
+    /**
      * @param  array<string, mixed>  $custom  Opaque payload for a client-owned adapter
      *                                        (see CustomContextAdapter). Sobe never reads
      *                                        into this beyond passing it to the adapter.
@@ -50,6 +62,11 @@ final class CatalogContext
     public static function search(string $searchTerm): self
     {
         return new self(self::TYPE_SEARCH, null, null, 0, sanitize_text_field($searchTerm), []);
+    }
+
+    public static function invalid(): self
+    {
+        return new self(self::TYPE_INVALID, null, null, 0, null, []);
     }
 
     /**
@@ -85,14 +102,16 @@ final class CatalogContext
     /**
      * Build from a JSON-decoded payload posted by the frontend (the shape
      * `catalog-filters/view.js` already sends as `filter_context`, and that
-     * `shop-load-more.js` must send too — see FilterStateParser::context()).
-     * Unlike fromCurrentQuery(), this trusts client input only for *which*
-     * taxonomy/term the browser believes it's on; callers that need to
-     * defend against a forged context (e.g. claiming a taxonomy archive that
-     * isn't actually the current request) should validate the term exists
-     * and is public before trusting it for anything privileged. Catalog
-     * filtering itself is read-only, so a forged context can at most narrow
-     * to the wrong (but still public) term — it cannot widen visibility.
+     * `shop-load-more.js` must send too).
+     *
+     * A payload that does not claim TYPE_TAXONOMY (absent, "shop", "search",
+     * "custom", or garbage) is treated as a legitimate non-taxonomy request —
+     * that's the normal shape for the shop page or search. A payload that
+     * *does* claim TYPE_TAXONOMY is validated against the real taxonomy/term
+     * (see taxonomyFromArray()); if that validation fails, this returns
+     * TYPE_INVALID, never TYPE_SHOP — a request that claimed to be scoped to
+     * one archive term must never silently become an unscoped shop query
+     * just because its context payload was malformed, stale, or forged.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -105,18 +124,7 @@ final class CatalogContext
         }
 
         if ($contextType === self::TYPE_TAXONOMY) {
-            $taxonomy = sanitize_key((string) ($payload['archiveTaxonomy'] ?? ''));
-            $termSlug = sanitize_title((string) ($payload['archiveTerm'] ?? ''));
-            $termId = (int) ($payload['queriedObjectId'] ?? 0);
-
-            if ($taxonomy !== '' && $termSlug !== '' && taxonomy_exists($taxonomy)) {
-                return self::taxonomy($taxonomy, $termSlug, $termId);
-            }
-
-            // Malformed taxonomy context must fail closed to "shop", never to
-            // "no context" (which would mean no narrowing at all) or to a
-            // half-populated taxonomy context a consumer might mishandle.
-            return self::shop();
+            return self::taxonomyFromArray($payload);
         }
 
         if ($contextType === self::TYPE_CUSTOM) {
@@ -126,9 +134,48 @@ final class CatalogContext
         return self::shop();
     }
 
+    /**
+     * Validates a claimed taxonomy context against the real term: the
+     * taxonomy must exist, a term with the posted slug must exist in it, and
+     * — when a term ID was also posted — it must be the same term the slug
+     * resolves to. That last check is what stops a posted ID/slug pair that
+     * don't actually match (a stale payload, a client bug, or a forged
+     * request) from silently being accepted as whichever half happens to
+     * validate.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private static function taxonomyFromArray(array $payload): self
+    {
+        $taxonomy = sanitize_key((string) ($payload['archiveTaxonomy'] ?? ''));
+        $termSlug = sanitize_title((string) ($payload['archiveTerm'] ?? ''));
+        $postedTermId = (int) ($payload['queriedObjectId'] ?? 0);
+
+        if ($taxonomy === '' || $termSlug === '' || ! taxonomy_exists($taxonomy)) {
+            return self::invalid();
+        }
+
+        $term = get_term_by('slug', $termSlug, $taxonomy);
+
+        if (! $term instanceof \WP_Term) {
+            return self::invalid();
+        }
+
+        if ($postedTermId > 0 && $postedTermId !== (int) $term->term_id) {
+            return self::invalid();
+        }
+
+        return self::taxonomy($taxonomy, $term->slug, (int) $term->term_id);
+    }
+
     public function isTaxonomy(): bool
     {
         return $this->type === self::TYPE_TAXONOMY;
+    }
+
+    public function isInvalid(): bool
+    {
+        return $this->type === self::TYPE_INVALID;
     }
 
     /**

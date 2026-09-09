@@ -53,9 +53,26 @@ it('builds a search context from the current search query', function () {
 });
 
 // ── fromArray() — the AJAX/load-more path ───────────────────────────────────
+//
+// A claimed taxonomy context is validated against the real term (taxonomy
+// exists, term exists in it, and a posted term ID must match what the slug
+// actually resolves to) — see taxonomyFromArray(). Failure must produce
+// TYPE_INVALID, never TYPE_SHOP: falling back to shop would let a malformed
+// or forged context WIDEN a request that was supposed to be scoped to one
+// archive term into the whole catalog.
 
-it('rebuilds a taxonomy context from a posted filter_context payload', function () {
+function mockRealTerm(string $taxonomy, string $slug, int $termId): void
+{
+    $term = Mockery::mock(WP_Term::class);
+    $term->term_id = $termId;
+    $term->slug = $slug;
+    $term->taxonomy = $taxonomy;
+    Functions\when('get_term_by')->justReturn($term);
+}
+
+it('rebuilds a taxonomy context from a posted filter_context payload that matches a real term', function () {
     Functions\when('taxonomy_exists')->justReturn(true);
+    mockRealTerm('product_brand', 'samelin', 693);
 
     $context = CatalogContext::fromArray([
         'contextType' => 'taxonomy',
@@ -70,7 +87,21 @@ it('rebuilds a taxonomy context from a posted filter_context payload', function 
     expect($context->termId)->toBe(693);
 });
 
-it('fails closed to shop when a claimed taxonomy context names a taxonomy that does not exist', function () {
+it('is valid even without a posted term ID, as long as the slug resolves to a real term', function () {
+    Functions\when('taxonomy_exists')->justReturn(true);
+    mockRealTerm('product_brand', 'samelin', 693);
+
+    $context = CatalogContext::fromArray([
+        'contextType' => 'taxonomy',
+        'archiveTaxonomy' => 'product_brand',
+        'archiveTerm' => 'samelin',
+    ]);
+
+    expect($context->type)->toBe(CatalogContext::TYPE_TAXONOMY);
+    expect($context->termId)->toBe(693);
+});
+
+it('fails CLOSED (invalid, not shop) when a claimed taxonomy does not exist', function () {
     Functions\when('taxonomy_exists')->justReturn(false);
 
     $context = CatalogContext::fromArray([
@@ -79,10 +110,49 @@ it('fails closed to shop when a claimed taxonomy context names a taxonomy that d
         'archiveTerm' => 'x',
     ]);
 
-    expect($context->type)->toBe(CatalogContext::TYPE_SHOP);
+    expect($context->type)->toBe(CatalogContext::TYPE_INVALID);
+    expect($context->isInvalid())->toBeTrue();
+    expect($context->isTaxonomy())->toBeFalse();
 });
 
-it('fails closed to shop for an empty/malformed payload rather than an ambiguous context', function () {
+it('fails CLOSED when the taxonomy exists but no term with that slug does', function () {
+    Functions\when('taxonomy_exists')->justReturn(true);
+    Functions\when('get_term_by')->justReturn(false);
+
+    $context = CatalogContext::fromArray([
+        'contextType' => 'taxonomy',
+        'archiveTaxonomy' => 'product_brand',
+        'archiveTerm' => 'not-a-real-brand',
+    ]);
+
+    expect($context->type)->toBe(CatalogContext::TYPE_INVALID);
+});
+
+it('fails CLOSED when the posted term ID does not match what the slug actually resolves to', function () {
+    Functions\when('taxonomy_exists')->justReturn(true);
+    // Slug "samelin" really resolves to term_id 693, but the payload claims 1.
+    mockRealTerm('product_brand', 'samelin', 693);
+
+    $context = CatalogContext::fromArray([
+        'contextType' => 'taxonomy',
+        'archiveTaxonomy' => 'product_brand',
+        'archiveTerm' => 'samelin',
+        'queriedObjectId' => 1,
+    ]);
+
+    expect($context->type)->toBe(CatalogContext::TYPE_INVALID);
+});
+
+it('never widens: an invalid taxonomy claim must not equal a legitimate shop context', function () {
+    Functions\when('taxonomy_exists')->justReturn(false);
+
+    $invalid = CatalogContext::fromArray(['contextType' => 'taxonomy', 'archiveTaxonomy' => 'x', 'archiveTerm' => 'y']);
+    $shop = CatalogContext::shop();
+
+    expect($invalid->type)->not->toBe($shop->type);
+});
+
+it('treats an absent/non-taxonomy contextType as a legitimate shop request, not invalid', function () {
     expect(CatalogContext::fromArray([])->type)->toBe(CatalogContext::TYPE_SHOP);
     expect(CatalogContext::fromArray(['contextType' => 'bogus'])->type)->toBe(CatalogContext::TYPE_SHOP);
 });
@@ -96,6 +166,7 @@ it('rebuilds a search context from a posted payload', function () {
 
 it('round-trips toArray() back into an equivalent context via fromArray()', function () {
     Functions\when('taxonomy_exists')->justReturn(true);
+    mockRealTerm('product_brand', 'samelin', 693);
 
     $original = CatalogContext::taxonomy('product_brand', 'samelin', 693);
     $rebuilt = CatalogContext::fromArray($original->toArray());
