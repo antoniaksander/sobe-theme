@@ -197,6 +197,178 @@ it('excludes on-sale products via post__not_in for full_price', function () {
     expect($args['post__not_in'])->toBe([101, 102]);
 });
 
+it('intersects an existing post__in with on-sale IDs and normalizes integers and duplicates', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn(['102', 103, 103, -104]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'on_sale']),
+        CatalogContext::shop(),
+        ['post__in' => ['101', 102, 102, 104]]
+    );
+
+    expect($args['post__in'])->toBe([102, 104]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('subtracts on-sale IDs from an existing post__in for full_price', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([102, 104]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'full_price']),
+        CatalogContext::shop(),
+        ['post__in' => [101, 102, 103, 104]]
+    );
+
+    expect($args['post__in'])->toBe([101, 103]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('fails closed when full_price removes every ID from an existing post__in', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([101, 102]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'full_price']),
+        CatalogContext::shop(),
+        ['post__in' => [101, 102]]
+    );
+
+    expect($args['post__in'])->toBe([0]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('constructs an on-sale inclusion set after applying an existing post__not_in', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([101, 102, 103]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'on_sale']),
+        CatalogContext::shop(),
+        ['post__not_in' => ['102', 999]]
+    );
+
+    expect($args['post__in'])->toBe([101, 103]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('fails closed when an existing post__not_in excludes every on-sale ID', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([101, 102]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'on_sale']),
+        CatalogContext::shop(),
+        ['post__not_in' => [101, 102]]
+    );
+
+    expect($args['post__in'])->toBe([0]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('merges and normalizes existing exclusions with on-sale IDs for full_price', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn(['102', 103, 103]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'full_price']),
+        CatalogContext::shop(),
+        ['post__not_in' => ['101', 102, 101]]
+    );
+
+    expect($args['post__not_in'])->toBe([101, 102, 103]);
+    expect($args)->not->toHaveKey('post__in');
+});
+
+it('normalizes an incoming post__in plus post__not_in even without a price-type filter', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(),
+        CatalogContext::shop(),
+        ['post__in' => ['101', 102, 102, 103], 'post__not_in' => ['102', 999]]
+    );
+
+    expect($args['post__in'])->toBe([101, 103]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('fails closed when incoming post__not_in removes every incoming post__in ID', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(),
+        CatalogContext::shop(),
+        ['post__in' => [101], 'post__not_in' => [101]]
+    );
+
+    expect($args['post__in'])->toBe([0]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('preserves an existing post__in for full_price when there are no products on sale', function () {
+    Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([]);
+
+    $args = QueryTransformer::buildStandaloneQueryArgs(
+        fakeState(['priceType' => 'full_price']),
+        CatalogContext::shop(),
+        ['post__in' => ['101', 102, 102]]
+    );
+
+    expect($args['post__in'])->toBe([101, 102]);
+    expect($args)->not->toHaveKey('post__not_in');
+});
+
+it('normalizes the main-query post ID constraints before applying full_price', function () {
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([101, 102]);
+
+    $queryVars = [
+        'tax_query' => [],
+        'post__in' => ['101', 102, 103],
+        'post__not_in' => [103, 999],
+    ];
+    $query = Mockery::mock('WP_Query');
+    $query->shouldReceive('get')->andReturnUsing(fn ($key) => $queryVars[$key] ?? '');
+    $query->shouldReceive('set')->andReturnUsing(function ($key, $value) use (&$queryVars): void {
+        $queryVars[$key] = $value;
+    });
+
+    QueryTransformer::applyToMainQuery(
+        $query,
+        fakeState(['priceType' => 'full_price']),
+        CatalogContext::shop()
+    );
+
+    expect($queryVars['post__in'])->toBe([0]);
+    expect($queryVars['post__not_in'])->toBe([]);
+});
+
+it('materializes an existing main-query exclusion into the on-sale inclusion set', function () {
+    Functions\when('wc_get_product_ids_on_sale')->justReturn([101, 102, 103]);
+
+    $queryVars = [
+        'tax_query' => [],
+        'post__in' => [],
+        'post__not_in' => ['102', 999],
+    ];
+    $query = Mockery::mock('WP_Query');
+    $query->shouldReceive('get')->andReturnUsing(fn ($key) => $queryVars[$key] ?? '');
+    $query->shouldReceive('set')->andReturnUsing(function ($key, $value) use (&$queryVars): void {
+        $queryVars[$key] = $value;
+    });
+
+    QueryTransformer::applyToMainQuery(
+        $query,
+        fakeState(['priceType' => 'on_sale']),
+        CatalogContext::shop()
+    );
+
+    expect($queryVars['post__in'])->toBe([101, 103]);
+    expect($queryVars['post__not_in'])->toBe([]);
+});
+
 it('marks the query for WooCommerce price-lookup-table filtering when a price range is set', function () {
     Functions\when('wc_get_product_visibility_term_ids')->justReturn([]);
 
