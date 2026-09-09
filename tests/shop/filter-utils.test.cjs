@@ -5,7 +5,7 @@
  * any change to the filter URL or state logic.
  */
 
-const { buildFilterUrl, hasActiveFilters } = require('../../resources/js/filter-utils.js');
+const { buildFilterUrl, hasActiveFilters, splitFilterValue } = require('../../resources/js/filter-utils.js');
 
 const BASE = 'https://example.com/shop/';
 
@@ -64,12 +64,12 @@ describe('buildFilterUrl', () => {
       'filter_brand',
       'nike',
     );
-    expect(new URL(url).searchParams.get('filter_brand')).toBe('nike+adidas');
+    expect(new URL(url).searchParams.get('filter_brand')).toBe('nike,adidas');
   });
 
-  test('attribute filter (array) uses + separator', () => {
+  test('attribute filter (array) uses the WooCommerce-canonical comma separator', () => {
     const url = buildFilterUrl({ 'filter_color': ['blue', 'red'] }, BASE);
-    expect(new URL(url).searchParams.get('filter_color')).toBe('blue+red');
+    expect(new URL(url).searchParams.get('filter_color')).toBe('blue,red');
   });
 
   test('price range is included when outside slider defaults', () => {
@@ -125,6 +125,31 @@ describe('buildFilterUrl', () => {
   test('empty string s is omitted', () => {
     const url = buildFilterUrl({ s: '' }, BASE);
     expect(new URL(url).searchParams.get('s')).toBeNull();
+  });
+});
+
+// ── splitFilterValue ──────────────────────────────────────────────────────────
+
+describe('splitFilterValue', () => {
+  test('parses new canonical comma-delimited values', () => {
+    expect(splitFilterValue('blue,red')).toEqual(['blue', 'red']);
+  });
+
+  test('still parses legacy +-delimited values (backward compatibility)', () => {
+    expect(splitFilterValue('blue+red')).toEqual(['blue', 'red']);
+  });
+
+  test('a single slug round-trips through both encodings identically', () => {
+    expect(splitFilterValue('nike')).toEqual(['nike']);
+  });
+
+  test('mixed/malformed separators still degrade to a clean slug list', () => {
+    expect(splitFilterValue('blue,+red  green')).toEqual(['blue', 'red', 'green']);
+  });
+
+  test('empty/undefined input returns an empty list', () => {
+    expect(splitFilterValue(undefined)).toEqual([]);
+    expect(splitFilterValue('')).toEqual([]);
   });
 });
 
