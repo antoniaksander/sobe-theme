@@ -353,6 +353,16 @@ drawer, so it is no longer coupled to archive-owned drawer markup and can also
 be placed in a standalone single-instance context when a compatible product
 listing target exists.
 
+The archive/shop/search template wraps its product grid, pagination and result
+count in `<div data-sobe-catalog-results>`. The catalog-filters AJAX and
+load-more resolve their targets *inside* that marker
+(`resolveCatalogResultsScope()` in `resources/js/filter-utils.js`), so unrelated
+`.products` markup elsewhere on the page — an editorial `product-carousel`,
+say — is never selected. A fork that overrides `archive-product.blade.php`
+(or renders a filterable product listing in its own block) **must** keep/add
+this wrapper around the grid + pagination + count; without it the code logs a
+one-time console warning and falls back to a document-wide lookup.
+
 On the shop archive, the template provides an optional
 `data-catalog-filters-trigger-slot` above the product toolbar. On mobile, the
 block moves its own trigger into that slot so the archive owns placement only;

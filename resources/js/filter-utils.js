@@ -3,6 +3,51 @@
  * Exported as ES module so they can be unit-tested with Jest without a browser.
  */
 
+/** Attribute marking the container that owns one catalog instance's results. */
+export const CATALOG_RESULTS_SCOPE_SELECTOR = '[data-sobe-catalog-results]';
+
+let scopeFallbackWarned = false;
+
+/**
+ * Resolve the element that owns a catalog instance's results — its product
+ * grid, pagination, result count and load-more sentinel.
+ *
+ * The archive/shop/search template (and any filterable Product Grid instance)
+ * wraps exactly those nodes in `[data-sobe-catalog-results]`. Resolving inside
+ * that marker means AJAX result HTML can never be injected into an unrelated
+ * `.products` element on the page — e.g. an editorial Product Carousel placed
+ * above or below the catalog, whose `.swiper-wrapper`/per-slide markup also
+ * carries the `products` class.
+ *
+ * Falls back to `root` (document-wide, the pre-marker behaviour) when no
+ * marker is present, so a client's un-migrated overridden template keeps
+ * working; it warns once so the gap is visible.
+ *
+ * @param {Document|Element|null} [root=document]
+ * @returns {Document|Element}
+ */
+export function resolveCatalogResultsScope(root = (typeof document !== 'undefined' ? document : null)) {
+  if (!root || typeof root.querySelector !== 'function') return root;
+
+  const scope = root.querySelector(CATALOG_RESULTS_SCOPE_SELECTOR);
+  if (scope) return scope;
+
+  if (!scopeFallbackWarned && typeof console !== 'undefined') {
+    scopeFallbackWarned = true;
+    console.warn(
+      `[sobe catalog-filters] No ${CATALOG_RESULTS_SCOPE_SELECTOR} found — using document-wide result lookups. `
+      + 'Wrap the catalog grid, pagination and result count in that container.',
+    );
+  }
+
+  return root;
+}
+
+/** Test-only: reset the one-time fallback warning latch. */
+export function _resetCatalogScopeWarning() {
+  scopeFallbackWarned = false;
+}
+
 /**
  * Half a slider step. A price input sitting within this distance of an
  * available bound is treated as "no selection on that side", not a filter —

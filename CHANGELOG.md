@@ -4,6 +4,17 @@
 
 ### Fixed
 
+- Catalog filters: the AJAX filter and load-more now resolve the product grid,
+  pagination, result count and load-more sentinel inside an explicit
+  `[data-sobe-catalog-results]` container instead of a document-wide
+  `.products` / `[data-pagination]` lookup. An editorial Product Carousel
+  placed above the archive grid (its `.swiper-wrapper` carries the `products`
+  class) could otherwise be the first `.products` on the page and receive the
+  archive's filtered results — showing ~1 clipped card while the real grid
+  went untouched. `resolveCatalogResultsScope()` (in `filter-utils.js`) is the
+  shared resolver; the archive template renders the marker, and it degrades to
+  the old document-wide behaviour (with a one-time console warning) when a
+  client's overridden template has not adopted it.
 - Catalog filters: the AVAILABLE price-slider bounds are now normalized the
   WooCommerce way — `floor()` the minimum, `ceil()` the maximum
   (`QueryTransformer::normalizePriceBounds()`) — so the slider range always
