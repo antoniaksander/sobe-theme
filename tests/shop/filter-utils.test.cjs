@@ -10,6 +10,8 @@ const {
   buildFilterUrl,
   hasActiveFilters,
   projectPriceSelection,
+  resolveCatalogResultsScope,
+  _resetCatalogScopeWarning,
   splitFilterValue,
 } = require('../../resources/js/filter-utils.js');
 
@@ -304,5 +306,62 @@ describe('hasActiveFilters', () => {
 
   test('mixed state with paged and real filter returns true', () => {
     expect(hasActiveFilters({ paged: 2, orderby: 'popularity', filter_color: ['red'] })).toBe(true);
+  });
+});
+
+// ── resolveCatalogResultsScope ───────────────────────────────────────────────
+
+describe('resolveCatalogResultsScope', () => {
+  beforeEach(() => _resetCatalogScopeWarning());
+
+  test('returns the [data-sobe-catalog-results] element when present', () => {
+    const scopeEl = { __id: 'results' };
+    const root = { querySelector: (s) => (s === '[data-sobe-catalog-results]' ? scopeEl : null) };
+    expect(resolveCatalogResultsScope(root)).toBe(scopeEl);
+  });
+
+  test('grid lookups run inside the marker, not the first .products on the page', () => {
+    const archiveGrid = { __id: 'archive-grid' };
+    const carouselGrid = { __id: 'carousel-grid' };
+    const scopeEl = {
+      querySelector: (s) => ({
+        '.products': archiveGrid,
+        '[data-pagination]': { __id: 'archive-pagination' },
+        '[data-result-count]': { __id: 'archive-count' },
+      }[s] ?? null),
+    };
+    const root = {
+      // document-wide, the carousel's .products comes first
+      querySelector: (s) => (s === '[data-sobe-catalog-results]' ? scopeEl : (s === '.products' ? carouselGrid : null)),
+    };
+
+    const scope = resolveCatalogResultsScope(root);
+    expect(scope.querySelector('.products')).toBe(archiveGrid);
+    expect(scope.querySelector('.products')).not.toBe(carouselGrid);
+    expect(scope.querySelector('[data-pagination]').__id).toBe('archive-pagination');
+  });
+
+  test('falls back to root (document-wide) and warns once when no marker exists', () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const root = { querySelector: () => null };
+
+    expect(resolveCatalogResultsScope(root)).toBe(root);
+    expect(resolveCatalogResultsScope(root)).toBe(root);
+    expect(warn).toHaveBeenCalledTimes(1); // one-time latch
+
+    warn.mockRestore();
+  });
+
+  test('a Product Grid block instance scopes to its own marker, outside .shop-main', () => {
+    const gridBlockResults = { __id: 'product-grid-results' };
+    const blockRoot = {
+      querySelector: (s) => (s === '[data-sobe-catalog-results]' ? gridBlockResults : null),
+    };
+    expect(resolveCatalogResultsScope(blockRoot)).toBe(gridBlockResults);
+  });
+
+  test('tolerates a null / query-less root', () => {
+    expect(resolveCatalogResultsScope(null)).toBeNull();
+    expect(resolveCatalogResultsScope({})).toEqual({});
   });
 });

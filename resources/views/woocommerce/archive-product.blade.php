@@ -50,6 +50,12 @@ the readme will list any important changes.
         <div data-catalog-filters-trigger-slot></div>
       @endif
 
+      {{-- Owning results container for this catalog instance. The catalog-filters
+           block and load-more resolve their grid / pagination / result count
+           inside this marker, so AJAX results can never land in an unrelated
+           `.products` element (e.g. an editorial Product Carousel above the
+           archive). --}}
+      <div data-sobe-catalog-results>
       @if (woocommerce_product_loop())
         {{-- Flex toolbar keeps result-count + ordering side-by-side without floats --}}
         <div class="flex items-center justify-between mb-6">
@@ -84,6 +90,7 @@ the readme will list any important changes.
           do_action('woocommerce_no_products_found')
         @endphp
       @endif
+      </div> {{-- Close [data-sobe-catalog-results] --}}
 
     </div> {{-- Close shop-main --}}
   </div> {{-- Close layout wrapper --}}

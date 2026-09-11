@@ -1,5 +1,11 @@
 import noUiSlider from 'nouislider';
-import { activePriceSelection, buildFilterUrl, projectPriceSelection, splitFilterValue } from '../../js/filter-utils.js';
+import {
+  activePriceSelection,
+  buildFilterUrl,
+  projectPriceSelection,
+  resolveCatalogResultsScope,
+  splitFilterValue,
+} from '../../js/filter-utils.js';
 import { commit as commitFilterStore, reset as resetFilterStore } from '../../js/filter-store.js';
 import { readParams, isCurrentContext } from '../../js/dom-params.js';
 import { registerReinit } from '../../js/sobe-reinit.js';
@@ -399,9 +405,13 @@ function initCatalogFilters(instance, params) {
     setActive();
     const mySeq = ++state.fetchSeq;
 
-    const grid = document.querySelector('.products');
-    const paginationZone = document.querySelector('[data-pagination]');
-    const countEl = document.querySelector('[data-result-count]');
+    // Resolve grid / pagination / count inside this catalog's own results
+    // container, never document-wide — an editorial Product Carousel above the
+    // archive also carries the `.products` class on its swiper markup.
+    const resultsScope = resolveCatalogResultsScope();
+    const grid = resultsScope.querySelector('.products');
+    const paginationZone = resultsScope.querySelector('[data-pagination]');
+    const countEl = resultsScope.querySelector('[data-result-count]');
 
     try {
       const data = await fetchFiltered(state, filterState);
@@ -457,7 +467,7 @@ function initCatalogFilters(instance, params) {
       }
 
       if (drawer.hidden) {
-        const newCountEl = document.querySelector('[data-result-count]');
+        const newCountEl = resultsScope.querySelector('[data-result-count]');
         newCountEl?.focus({ preventScroll: true });
       } else if (!drawer.contains(document.activeElement)) {
         getFocusable(drawer)[0]?.focus({ preventScroll: true });
@@ -844,7 +854,9 @@ function initCatalogFilters(instance, params) {
 }
 
 function init(root = document) {
-  const resultCountEl = document.querySelector('.woocommerce-result-count');
+  // Tag this catalog's own result-count element (inside its results container,
+  // not the first `.woocommerce-result-count` on the page).
+  const resultCountEl = resolveCatalogResultsScope().querySelector('.woocommerce-result-count');
   if (resultCountEl && !resultCountEl.hasAttribute('data-result-count')) {
     resultCountEl.setAttribute('data-result-count', '');
   }

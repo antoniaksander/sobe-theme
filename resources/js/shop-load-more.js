@@ -1,4 +1,4 @@
-import { hasActiveFilters } from './filter-utils.js';
+import { hasActiveFilters, resolveCatalogResultsScope } from './filter-utils.js';
 import { getState, getAction, getNonce } from './filter-store.js';
 import { readParams, isCurrentContext } from './dom-params.js';
 import { registerReinit } from './sobe-reinit.js';
@@ -58,8 +58,11 @@ async function loadMore(state) {
   state.loading = true;
   const { sentinel, params, observer } = state;
   const page = parseInt(sentinel.dataset.page, 10);
-  const paginationZone = document.querySelector('[data-pagination]');
-  const grid = document.querySelector('.woocommerce ul.products');
+  // Same results container the catalog-filters block targets — never a
+  // document-wide `.products` (e.g. an editorial Product Carousel above the grid).
+  const resultsScope = resolveCatalogResultsScope();
+  const paginationZone = resultsScope.querySelector('[data-pagination]');
+  const grid = resultsScope.querySelector('ul.products');
 
   const filterState  = getState();
   const filterAction = getAction();
@@ -162,7 +165,7 @@ function init(root = document) {
   activeInstances.add(state);
 
   document.addEventListener('sobe:pagination-updated', () => {
-    const newSentinel = document.querySelector('[data-pagination] [data-load-more-sentinel]');
+    const newSentinel = resolveCatalogResultsScope().querySelector('[data-pagination] [data-load-more-sentinel]');
     updateSentinel(state, newSentinel);
   }, { signal: listenerController.signal });
 }
