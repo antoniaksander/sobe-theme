@@ -4,6 +4,16 @@
 
 ### Fixed
 
+- Catalog filters: the AVAILABLE price-slider bounds are now normalized the
+  WooCommerce way — `floor()` the minimum, `ceil()` the maximum
+  (`QueryTransformer::normalizePriceBounds()`) — so the slider range always
+  fully encloses the matching set. A cheapest matching product at 17.95 keeps
+  a slider minimum of 17 instead of the noUiSlider label rounding it up to 18
+  (which read as if nothing under 18 was available). Applied to both
+  `sobe_get_filtered_price_range()` (AJAX) and the `CatalogFilters` composer's
+  cached whole-store fallback (hard load). The customer's active
+  `min_price`/`max_price` selection, the visible product query, ordering and
+  facet counts are unchanged.
 - Catalog filters: the price slider now separates the AVAILABLE range (the
   bounds the customer can move between, re-scoped only by non-price filters)
   from the SELECTED range (the customer's min/max choice). Previously the

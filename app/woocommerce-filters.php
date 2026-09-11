@@ -268,10 +268,12 @@ function sobe_get_filtered_price_range(array $base_query_args): array
          WHERE product_id IN ($ids_list)"
     );
 
-    $range = [
-        'min' => (float) ($row->min_price ?? 0),
-        'max' => (float) ($row->max_price ?? 0),
-    ];
+    // Floor the minimum / ceil the maximum so the slider range fully encloses
+    // the matching set (a cheapest product at 17.95 -> slider min 17, not 18),
+    // matching WC_Widget_Price_Filter. The active selection, visible query,
+    // ordering and facet counts are untouched — see
+    // QueryTransformer::normalizePriceBounds().
+    $range = QueryTransformer::normalizePriceBounds($row->min_price ?? null, $row->max_price ?? null);
 
     return apply_filters('sobe/catalog_filters/price_range', $range, $base_query_args);
 }

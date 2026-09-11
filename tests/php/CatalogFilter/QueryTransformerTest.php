@@ -611,6 +611,45 @@ it('strips offset / page and forces nopaging alongside paged', function () {
     expect($args['posts_per_page'])->toBe(-1);
 });
 
+// ── normalizePriceBounds(): WooCommerce-style floor(min) / ceil(max) ────────
+
+it('floors the minimum and ceils the maximum like the WooCommerce price filter', function () {
+    expect(QueryTransformer::normalizePriceBounds('17.95', '199.95'))
+        ->toBe(['min' => 17.0, 'max' => 200.0]);
+});
+
+it('leaves already-integer bounds untouched', function () {
+    expect(QueryTransformer::normalizePriceBounds(75, 140))->toBe(['min' => 75.0, 'max' => 140.0]);
+    expect(QueryTransformer::normalizePriceBounds('75.00', '140.00'))->toBe(['min' => 75.0, 'max' => 140.0]);
+});
+
+it('collapses a null / empty / non-numeric range to [0, 0]', function () {
+    expect(QueryTransformer::normalizePriceBounds(null, null))->toBe(['min' => 0.0, 'max' => 0.0]);
+    expect(QueryTransformer::normalizePriceBounds('17.95', null))->toBe(['min' => 0.0, 'max' => 0.0]);
+    expect(QueryTransformer::normalizePriceBounds('', ''))->toBe(['min' => 0.0, 'max' => 0.0]);
+    expect(QueryTransformer::normalizePriceBounds('abc', '10'))->toBe(['min' => 0.0, 'max' => 0.0]);
+});
+
+it('collapses a zero-max or inverted range to [0, 0]', function () {
+    expect(QueryTransformer::normalizePriceBounds(0, 0))->toBe(['min' => 0.0, 'max' => 0.0]);
+    expect(QueryTransformer::normalizePriceBounds('80', '20'))->toBe(['min' => 0.0, 'max' => 0.0]);
+});
+
+it('keeps a legitimate zero minimum (free + paid products)', function () {
+    expect(QueryTransformer::normalizePriceBounds(0, '49.50'))->toBe(['min' => 0.0, 'max' => 50.0]);
+});
+
+it('is the single normalization both the AJAX and hard-load price paths use', function () {
+    // sobe_get_filtered_price_range() and CatalogFilters composer both feed
+    // the raw wpdb MIN/MAX pair through this, so a cheapest product at 17.95
+    // resolves to the identical slider minimum (17) on either path.
+    $ajax = QueryTransformer::normalizePriceBounds('17.95', '199.95');
+    $hardLoad = QueryTransformer::normalizePriceBounds('17.95', '199.95');
+
+    expect($ajax)->toBe($hardLoad);
+    expect($ajax['min'])->toBe(17.0);
+});
+
 /** Find a single tax_query clause for a taxonomy (asserts at most one). */
 function collect_clauses(array $taxQuery, string $taxonomy): ?array
 {
