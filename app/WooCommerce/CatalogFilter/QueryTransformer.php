@@ -356,6 +356,38 @@ final class QueryTransformer
         return $args;
     }
 
+    /**
+     * Normalize a raw [min, max] price pair to the integer bounds a price
+     * slider should offer, the same way WooCommerce's own price filter does
+     * (WC_Widget_Price_Filter::get_filtered_price() / the Price Filter block):
+     * the minimum is floored and the maximum ceiled, so the slider range
+     * always fully encloses the real matching set — a cheapest product at
+     * 17.95 keeps a slider minimum of 17, never 18.
+     *
+     * This only shapes the AVAILABLE bounds shown on the slider. It does not
+     * touch the customer's active min_price/max_price selection, the visible
+     * product query, ordering, or facet counts.
+     *
+     * A null / non-positive / inverted pair collapses to [0.0, 0.0] (the
+     * "no range" signal the catalog-filters view already handles).
+     *
+     * @return array{min: float, max: float}
+     */
+    public static function normalizePriceBounds(int|float|string|null $min, int|float|string|null $max): array
+    {
+        $minValue = is_numeric($min) ? (float) $min : null;
+        $maxValue = is_numeric($max) ? (float) $max : null;
+
+        if ($minValue === null || $maxValue === null || $maxValue <= 0.0 || $maxValue < $minValue) {
+            return ['min' => 0.0, 'max' => 0.0];
+        }
+
+        return [
+            'min' => (float) floor(max($minValue, 0.0)),
+            'max' => (float) ceil($maxValue),
+        ];
+    }
+
     // ── price_type (on_sale / full_price) ───────────────────────────────────
 
     private static function applyToMainQueryPriceType(\WP_Query $query, string $priceType): void

@@ -2,6 +2,7 @@
 
 namespace App\View\Composers;
 
+use App\WooCommerce\CatalogFilter\QueryTransformer;
 use Roots\Acorn\View\Composer;
 
 class CatalogFilters extends Composer
@@ -102,10 +103,14 @@ class CatalogFilters extends Composer
                 wp_cache_set($priceCacheKey, $row, '', HOUR_IN_SECONDS);
             }
             if ($row) {
-                $priceRange = (object) [
-                    'min' => (float) ($row->min_price ?? 0),
-                    'max' => (float) ($row->max_price ?? 1000),
-                ];
+                // Floor min / ceil max the WooCommerce way, on both the fresh
+                // and the cached row (the raw row is what gets cached), so the
+                // hard-load slider bounds match the AJAX ones from
+                // sobe_get_filtered_price_range().
+                $priceRange = (object) QueryTransformer::normalizePriceBounds(
+                    $row->min_price ?? null,
+                    $row->max_price ?? null
+                );
             }
         }
 
