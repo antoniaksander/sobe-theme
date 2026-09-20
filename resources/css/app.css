@@ -137,6 +137,7 @@ body.single-post {
 
   /* ── Max widths (sourced from tokens.css --layout-* for single-source rebrand) ── */
   --max-width-reading: var(--layout-reading);
+  --max-width-content: var(--layout-content);
   --max-width-standard: var(--layout-standard);
   --max-width-grid: var(--layout-grid);
 

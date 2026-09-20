@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+### Added
+
+- `--layout-content` (`72rem`) is now exposed as a `max-w-content` Tailwind
+  utility and an `<x-section width="content">` option, matching the
+  existing `reading`/`standard`/`grid` widths. It was already wired into
+  WordPress core blocks' "none" alignment via `theme.json`'s `contentSize`,
+  but had no equivalent for custom blocks/templates to use without
+  hardcoding `72rem` directly.
+
 ### Fixed
 
 - **Guest checkout and Contact Form 7 submissions no longer 401.** The REST
