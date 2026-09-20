@@ -108,7 +108,9 @@
       <x-toast-container />
     </div>
 
-    @include(apply_filters('sobe/search/overlay_view', 'partials.search-overlay'))
+    @if (get_theme_mod(config('theme.prefix') . '_enable_search', false))
+      @include(apply_filters('sobe/search/overlay_view', 'partials.search-overlay'))
+    @endif
 
     @php do_action('get_footer'); @endphp
     @php wp_footer(); @endphp

@@ -4,6 +4,13 @@
 
 ### Changed
 
+- Header search is now off by default, controlled by a new Customizer
+  toggle ("Header: Search" under Header Options) — the search button
+  (`header-1`/`header-2`/`header-3`) and the search overlay markup only
+  render once it's enabled. Previously it rendered unconditionally with no
+  way to turn it off, which reads oddly on a fresh site with only a handful
+  of pages indexed. Clients opt in once they have enough content for search
+  to be useful.
 - `npm run client:identify` now automatically adds the `upstream` git remote
   (pointing at this platform repo) when it is not already configured, instead
   of that being a manual step in the fork guide someone could forget. It also
