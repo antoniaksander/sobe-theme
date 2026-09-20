@@ -54,31 +54,37 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'type' => 'checkbox',
     ]);
 
-    $wp_customize->add_setting("{$pfx}_enable_side_cart", [
-        'default' => true,
-        'sanitize_callback' => 'rest_sanitize_boolean',
-        'transport' => 'refresh',
-    ]);
+    // Side cart and wishlist are WooCommerce-dependent (the header templates
+    // already gate their render on class_exists('WooCommerce') / a wishlist
+    // provider), so keep the dead toggles out of the Customizer entirely on
+    // a non-commerce site rather than exposing controls that do nothing.
+    if (class_exists('WooCommerce')) {
+        $wp_customize->add_setting("{$pfx}_enable_side_cart", [
+            'default' => true,
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'transport' => 'refresh',
+        ]);
 
-    $wp_customize->add_control("{$pfx}_enable_side_cart", [
-        'label' => __('Header: Side Cart', 'sobe'),
-        'description' => __('Shows a cart button in the site header.', 'sobe'),
-        'section' => "{$pfx}_header_options",
-        'type' => 'checkbox',
-    ]);
+        $wp_customize->add_control("{$pfx}_enable_side_cart", [
+            'label' => __('Header: Side Cart', 'sobe'),
+            'description' => __('Shows a cart button in the site header.', 'sobe'),
+            'section' => "{$pfx}_header_options",
+            'type' => 'checkbox',
+        ]);
 
-    $wp_customize->add_setting("{$pfx}_header_wishlist", [
-        'default' => false,
-        'sanitize_callback' => 'rest_sanitize_boolean',
-        'transport' => 'refresh',
-    ]);
+        $wp_customize->add_setting("{$pfx}_header_wishlist", [
+            'default' => false,
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'transport' => 'refresh',
+        ]);
 
-    $wp_customize->add_control("{$pfx}_header_wishlist", [
-        'label' => __('Header: Wishlist Icon', 'sobe'),
-        'description' => __('Shows a heart icon in the site header when a wishlist provider is available.', 'sobe'),
-        'section' => "{$pfx}_header_options",
-        'type' => 'checkbox',
-    ]);
+        $wp_customize->add_control("{$pfx}_header_wishlist", [
+            'label' => __('Header: Wishlist Icon', 'sobe'),
+            'description' => __('Shows a heart icon in the site header when a wishlist provider is available.', 'sobe'),
+            'section' => "{$pfx}_header_options",
+            'type' => 'checkbox',
+        ]);
+    }
 
     // ── Logo ────────────────────────────────────────────────────────────────
     $wp_customize->add_setting("{$pfx}_logo", [

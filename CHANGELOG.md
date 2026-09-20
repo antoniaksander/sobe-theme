@@ -4,6 +4,16 @@
 
 ### Fixed
 
+- Blocks/Customizer: the 7 `sobe-woocommerce`-category blocks (product
+  carousel, catalog filters, product feature, product categories grid, brand
+  carousel, our brands, reviews slider), the "Sobe WooCommerce" block
+  category, and the Customizer's "Header: Side Cart" / "Header: Wishlist
+  Icon" toggles now register only when `class_exists('WooCommerce')`,
+  matching the guard every other WooCommerce-dependent platform file
+  (`app/woocommerce*.php`, `app/store-notice.php`) already used. Previously
+  these appeared in the block inserter and Customizer on a non-commerce site
+  even though the header templates already suppressed the resulting markup —
+  confusing dead controls with no working feature behind them.
 - Catalog filters: the AJAX filter and load-more now resolve the product grid,
   pagination, result count and load-more sentinel inside an explicit
   `[data-sobe-catalog-results]` container instead of a document-wide

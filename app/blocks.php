@@ -15,8 +15,16 @@ add_action('init', function (): void {
         ? json_decode(file_get_contents($manifestPath), true)
         : [];
 
-    foreach (array_keys($manifest ?: []) as $blockPath) {
+    foreach ($manifest ?: [] as $blockPath => $blockEntry) {
         if ($blockPath === 'sobe/example' && ! (bool) config('theme.blocks.register_example', false)) {
+            continue;
+        }
+
+        // WooCommerce-category blocks render product/catalog data that does
+        // not exist without the plugin, so keep them out of the inserter
+        // entirely on a non-commerce site rather than register a block that
+        // can only produce broken/empty output.
+        if (($blockEntry['category'] ?? null) === 'sobe-woocommerce' && ! class_exists('WooCommerce')) {
             continue;
         }
 
@@ -124,10 +132,16 @@ add_filter('allowed_block_types_all', function ($allowedBlocks) {
 });
 
 add_filter('block_categories_all', function ($categories) {
-    return array_merge([
+    $sobeCategories = [
         ['slug' => 'sobe-general', 'title' => __('Sobe General', config('theme.textdomain')), 'icon' => 'layout'],
-        ['slug' => 'sobe-woocommerce', 'title' => __('Sobe WooCommerce', config('theme.textdomain')), 'icon' => 'cart'],
-        ['slug' => 'sobe-content', 'title' => __('Sobe Content', config('theme.textdomain')), 'icon' => 'text'],
-        ['slug' => 'sobe-layout', 'title' => __('Sobe Layout', config('theme.textdomain')), 'icon' => 'layout'],
-    ], $categories);
+    ];
+
+    if (class_exists('WooCommerce')) {
+        $sobeCategories[] = ['slug' => 'sobe-woocommerce', 'title' => __('Sobe WooCommerce', config('theme.textdomain')), 'icon' => 'cart'];
+    }
+
+    $sobeCategories[] = ['slug' => 'sobe-content', 'title' => __('Sobe Content', config('theme.textdomain')), 'icon' => 'text'];
+    $sobeCategories[] = ['slug' => 'sobe-layout', 'title' => __('Sobe Layout', config('theme.textdomain')), 'icon' => 'layout'];
+
+    return array_merge($sobeCategories, $categories);
 });
