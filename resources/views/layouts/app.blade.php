@@ -108,8 +108,19 @@
       <x-toast-container />
     </div>
 
-    @if (get_theme_mod(config('theme.prefix') . '_enable_search', false))
-      @include(apply_filters('sobe/search/overlay_view', 'partials.search-overlay'))
+    @php
+      $sobeSearchOverlayView = apply_filters('sobe/search/overlay_view', 'partials.search-overlay');
+    @endphp
+    {{--
+      A client that has overridden sobe/search/overlay_view has already
+      opted into search with its own custom drawer — that always renders,
+      independent of the generic toggle below. The generic toggle only
+      gates the platform's own stock overlay, so a brand-new fork defaults
+      to no search UI without silently breaking a client that built its own
+      (e.g. Roxder's roxder-search-drawer).
+    --}}
+    @if ($sobeSearchOverlayView !== 'partials.search-overlay' || get_theme_mod(config('theme.prefix') . '_enable_search', false))
+      @include($sobeSearchOverlayView)
     @endif
 
     @php do_action('get_footer'); @endphp
