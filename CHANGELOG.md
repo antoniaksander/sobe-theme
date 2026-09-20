@@ -5,27 +5,22 @@
 ### Changed
 
 - Header search is now off by default, controlled by a new Customizer
-  toggle ("Header: Search" under Header Options) — the search button
-  (`header-1`/`header-2`/`header-3`) and the search overlay markup only
-  render once it's enabled. Previously it rendered unconditionally with no
-  way to turn it off, which reads oddly on a fresh site with only a handful
-  of pages indexed. Clients opt in once they have enough content for search
-  to be useful.
+  toggle ("Header: Search" under Header Options) — the platform's stock
+  search button (`header-1`/`header-2`/`header-3`) and its stock overlay
+  (`partials.search-overlay`) only render once it's enabled. Previously it
+  rendered unconditionally with no way to turn it off, which reads oddly on
+  a fresh site with only a handful of pages indexed. Clients opt in once
+  they have enough content for search to be useful.
 
-  **Action required for any client fork already in production**: this is a
-  behavior change for existing sites, not just new ones. `get_theme_mod()`
-  only returns the new `false` default when the setting has never been
-  saved — true for every existing client, since the setting didn't exist
-  before. A client relying on search always being on (e.g. Roxder) will
-  have it silently disappear the moment this syncs into production, until
-  someone enables the new Customizer toggle. There's deliberately no
-  automatic migration here (any "does this site already have Customizer
-  settings saved" heuristic is unsafe — a client's own dev/staging site
-  almost always has *some* theme_mods saved already, which would
-  incorrectly flip search back on for a genuinely new fork too). Whoever
-  runs a client's next sync must explicitly re-enable this in Customizer
-  (or set `set_theme_mod("{prefix}_enable_search", true)` once) as part of
-  that sync if the client depends on search being on.
+  **Only affects the platform's stock search UI.** A client fork that has
+  built its own search trigger (a custom header variant, e.g. Roxder's
+  `header-roxder.blade.php`) or overridden `sobe/search/overlay_view` with
+  its own drawer (e.g. Roxder's `roxder-search-drawer`, via
+  `app/roxder-search.php`) is untouched either way — the overlay `@include`
+  in `layouts/app.blade.php` only checks the new toggle when a client is
+  still using the platform's default `partials.search-overlay`; a
+  client-overridden overlay always renders, independent of the toggle. No
+  action needed on sync for a client that has already customized search.
 - `npm run client:identify` now automatically adds the `upstream` git remote
   (pointing at this platform repo) when it is not already configured, instead
   of that being a manual step in the fork guide someone could forget. It also
