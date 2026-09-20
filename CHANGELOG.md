@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### Changed
+
+- `npm run client:identify` now automatically adds the `upstream` git remote
+  (pointing at this platform repo) when it is not already configured, instead
+  of that being a manual step in the fork guide someone could forget. It also
+  warns (without overwriting) if `upstream` already exists but points at the
+  demo repo instead.
+- `npm run check:upstream` now fails (exit 1) when no `upstream` remote is
+  configured, instead of silently passing — it previously logged a message
+  and exited 0 either way, so it never actually caught a missing remote.
+
 ### Fixed
 
 - Blocks/Customizer: the 7 `sobe-woocommerce`-category blocks (product
