@@ -4,6 +4,23 @@
 
 ### Changed
 
+- Header search is now off by default, controlled by a new Customizer
+  toggle ("Header: Search" under Header Options) — the platform's stock
+  search button (`header-1`/`header-2`/`header-3`) and its stock overlay
+  (`partials.search-overlay`) only render once it's enabled. Previously it
+  rendered unconditionally with no way to turn it off, which reads oddly on
+  a fresh site with only a handful of pages indexed. Clients opt in once
+  they have enough content for search to be useful.
+
+  **Only affects the platform's stock search UI.** A client fork that has
+  built its own search trigger (a custom header variant, e.g. Roxder's
+  `header-roxder.blade.php`) or overridden `sobe/search/overlay_view` with
+  its own drawer (e.g. Roxder's `roxder-search-drawer`, via
+  `app/roxder-search.php`) is untouched either way — the overlay `@include`
+  in `layouts/app.blade.php` only checks the new toggle when a client is
+  still using the platform's default `partials.search-overlay`; a
+  client-overridden overlay always renders, independent of the toggle. No
+  action needed on sync for a client that has already customized search.
 - `npm run client:identify` now automatically adds the `upstream` git remote
   (pointing at this platform repo) when it is not already configured, instead
   of that being a manual step in the fork guide someone could forget. It also

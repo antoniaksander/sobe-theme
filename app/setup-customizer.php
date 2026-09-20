@@ -54,6 +54,23 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'type' => 'checkbox',
     ]);
 
+    // Off by default — a site without meaningful indexed content (a handful
+    // of pages) doesn't need a search UI, and an empty-feeling search box is
+    // worse than no search box. Clients opt in once they have enough content
+    // to make search useful.
+    $wp_customize->add_setting("{$pfx}_enable_search", [
+        'default' => false,
+        'sanitize_callback' => 'rest_sanitize_boolean',
+        'transport' => 'refresh',
+    ]);
+
+    $wp_customize->add_control("{$pfx}_enable_search", [
+        'label' => __('Header: Search', 'sobe'),
+        'description' => __('Shows a search button in the site header and enables the search overlay.', 'sobe'),
+        'section' => "{$pfx}_header_options",
+        'type' => 'checkbox',
+    ]);
+
     // Side cart and wishlist are WooCommerce-dependent (the header templates
     // already gate their render on class_exists('WooCommerce') / a wishlist
     // provider), so keep the dead toggles out of the Customizer entirely on

@@ -442,10 +442,18 @@ work. Do not merge upstream directly into client `main`.
 3. Create a sync branch from client `main`.
 4. Merge `upstream/main` into that sync branch.
 5. Resolve conflicts deliberately.
-6. Run automated validation and a Local browser pass.
-7. Open a PR from the sync branch into client `main`.
-8. Review the PR like any other production change.
-9. Merge the PR after validation passes.
+6. Read the merged `CHANGELOG.md` entries for anything marked **"Action
+   required"** — a default-value or opt-in/opt-out change to an existing
+   feature (e.g. a Customizer toggle that used to have no off-switch) can
+   change a live client's behavior in production without producing a single
+   git conflict, since `get_theme_mod()` silently falls back to whatever new
+   default the platform ships whenever a site has never explicitly saved
+   that setting. A clean merge is not the same as a no-op merge — do this
+   step even when step 5 found nothing to resolve.
+7. Run automated validation and a Local browser pass.
+8. Open a PR from the sync branch into client `main`.
+9. Review the PR like any other production change.
+10. Merge the PR after validation passes.
 
 ```bash
 git checkout main
