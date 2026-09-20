@@ -10,31 +10,38 @@ over editing platform-owned behavior in place.
 ## Initial Setup
 
 1. Fork or clone this repo into the client project.
-2. Add the public boilerplate remote as `upstream`.
-3. Create the client theme folder name. The folder name matters because built
+2. Create the client theme folder name. The folder name matters because built
    asset URLs include it.
-4. Update the theme identity checklist below before configuring the site in the
-   WordPress admin.
-5. Install dependencies and run validation.
+3. Run `npm run client:identify` (see Identity Checklist below) — this also
+   adds the public boilerplate remote as `upstream` automatically if it is
+   not already configured, so every client fork tracks the platform from day
+   one without that being a step someone has to remember.
+4. Install dependencies and run validation.
 
 ```bash
 npm install
 composer install
 npm test
 npm run check:patterns
+npm run check:upstream
 npm run build
 composer analyse
 ```
+
+`npm run check:upstream` fails if the `upstream` remote is missing or points
+at the wrong repo — run it any time to confirm a client fork can still sync
+platform updates.
 
 ### Identity Checklist
 
 Run `npm run client:identify` to apply the mechanical edits below
 interactively (`style.css`, `config/theme.php` prefix, `composer.json`,
-`package.json`). It prompts for theme name, prefix, and other identity
-fields, then prints the remaining manual steps. Review the diff before
-committing. It does not touch `README.md`, `LICENSE.md`, `CONTRIBUTING.md`, or
-`CHANGELOG.md` — those are judgment calls and stay manual (see the table
-below).
+`package.json`). It also adds the `upstream` git remote automatically if one
+is not already configured. It prompts for theme name, prefix, and other
+identity fields, then prints the remaining manual steps. Review the diff
+before committing. It does not touch `README.md`, `LICENSE.md`,
+`CONTRIBUTING.md`, or `CHANGELOG.md` — those are judgment calls and stay
+manual (see the table below).
 
 Update these files before the first client build:
 

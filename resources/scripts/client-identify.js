@@ -10,6 +10,11 @@
  *   composer.json     name, description
  *   package.json      name
  *
+ * Also ensures the `upstream` git remote (this platform repo) is configured,
+ * so every client fork can sync platform updates from day one rather than
+ * that being a manual step someone has to remember (see
+ * docs/client-fork-guide.md, "Initial Setup").
+ *
  * Does NOT run `composer update` or `npm install` automatically here — those
  * are printed as next steps so the user can review the diff first.
  *
@@ -20,11 +25,50 @@
 import { createInterface } from 'node:readline';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const STYLE_CSS   = resolve('style.css');
 const THEME_PHP   = resolve('config/theme.php');
 const COMPOSER    = resolve('composer.json');
 const PACKAGE     = resolve('package.json');
+const UPSTREAM_URL = 'https://github.com/antoniaksander/sobe-theme.git';
+
+function ensureUpstreamRemote() {
+  let existing = '';
+  try {
+    existing = execSync('git remote get-url upstream', {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    }).trim();
+  } catch {
+    // No upstream remote yet — expected on a fresh fork, fall through to add it.
+  }
+
+  if (existing) {
+    if (/WP-boilerplate-demo/i.test(existing)) {
+      console.log(
+        `⚠️  upstream points at the demo repo (${existing}) — client forks should track\n` +
+          `   ${UPSTREAM_URL} instead. Fix with:\n` +
+          `   git remote set-url upstream ${UPSTREAM_URL}\n`,
+      );
+    } else {
+      console.log(`✅ upstream remote already configured -> ${existing}\n`);
+    }
+    return;
+  }
+
+  try {
+    execSync(`git remote add upstream ${UPSTREAM_URL}`);
+    console.log(`✅ Added upstream remote -> ${UPSTREAM_URL}\n`);
+  } catch (err) {
+    console.log(
+      `⚠️  Could not add the upstream remote automatically (${err.message}).\n` +
+        `   Add it manually: git remote add upstream ${UPSTREAM_URL}\n`,
+    );
+  }
+}
+
+ensureUpstreamRemote();
 
 // Plain readline.question() auto-closes the interface once its input stream
 // hits EOF (e.g. piped/non-interactive input), which silently breaks every
@@ -160,5 +204,6 @@ Next steps:
   npm install
   npm test
   npm run check:patterns
+  npm run check:upstream
   npm run build
 `);

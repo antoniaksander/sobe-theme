@@ -14,8 +14,14 @@ function getUpstreamUrl() {
 const upstream = getUpstreamUrl();
 
 if (!upstream) {
-  console.log('No upstream remote configured.');
-  process.exit(0);
+  console.error(
+    'No upstream remote configured.\n' +
+      'Every client fork must track the platform as `upstream` so platform ' +
+      'fixes and features can be synced in later — see docs/client-fork-guide.md.\n' +
+      'Run `npm run client:identify` (adds it automatically), or manually:\n' +
+      '  git remote add upstream https://github.com/antoniaksander/sobe-theme.git',
+  );
+  process.exit(1);
 }
 
 if (/WP-boilerplate-demo/i.test(upstream)) {
