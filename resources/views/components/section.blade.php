@@ -17,6 +17,7 @@
 
   $widthMap = [
       'reading'  => 'max-w-reading',
+      'content'  => 'max-w-content',
       'standard' => 'max-w-standard',
       'grid'     => 'max-w-grid',
   ];

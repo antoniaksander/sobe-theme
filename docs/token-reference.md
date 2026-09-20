@@ -218,6 +218,14 @@ Dark WooCommerce defaults:
 | `--layout-grid` | Full product grid outer width | `96rem` |
 | `--cq-product-card-compact` | Product card compact container-query width | `180px` |
 
+Usable in templates as Tailwind utilities (`max-w-reading`, `max-w-content`,
+`max-w-standard`, `max-w-grid`) or via `<x-section width="…">`
+(`reading` | `content` | `standard` | `grid`). `--layout-content` (`72rem`)
+is also what WordPress core blocks use automatically for the unconstrained
+"none" alignment, via `theme.json`'s `settings.layout.contentSize` — the
+`content` Tailwind/`x-section` option gives custom blocks and templates the
+same width without hardcoding the value.
+
 ## Spacing
 
 | Token | Controls | Platform default |
