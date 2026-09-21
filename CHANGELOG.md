@@ -2,6 +2,51 @@
 
 ## Unreleased
 
+### Fixed
+
+- **Guest checkout and Contact Form 7 submissions no longer 401.** The REST
+  hardening in `app/security.php` allowed only `/wc/store/v1/cart`,
+  `/wc/store/v1/cart/add-item`, `/wc/store/v1/cart/items/{key}` and the theme
+  search endpoint for logged-out visitors. Everything else returned
+  `rest_not_logged_in` (401).
+
+  That broke two things on every commerce fork:
+
+  - The blocks-based **Checkout** also calls `/wc/store/v1/checkout`,
+    `/cart/update-customer`, `/cart/select-shipping-rate`, `/cart/apply-coupon`
+    and `/batch`. All were blocked, so a logged-out customer could add to cart
+    but never complete an order. This directly contradicted the platform's own
+    `wp sobe migrate:checkout-page` command, whose purpose is moving a client
+    onto that Checkout block.
+  - **Contact Form 7** submits through
+    `/contact-form-7/v1/contact-forms/{id}/feedback`. Blocked, so no CF7 form
+    anywhere on the site could be submitted by a logged-out visitor.
+
+  The allowlist now covers, each gated on the relevant plugin being active:
+
+  | Plugin | Allowed |
+  | --- | --- |
+  | WooCommerce | the whole `/wc/store/v1/` namespace |
+  | Contact Form 7 | `/contact-forms/{id}/feedback`, `.../feedback/schema`, `.../refill` |
+  | YITH WooCommerce Wishlist | the `/yith/wishlist/v1/` namespace |
+
+  The Store API is designed to be reachable by logged-out visitors and carries
+  its own Cart-Token / Nonce protection, so opening the namespace restores the
+  intended behaviour rather than widening it beyond what WooCommerce expects.
+  CF7's management routes (`/contact-forms`, `/contact-forms/{id}`) are *not*
+  allowed — they stay behind CF7's own capability checks. YITH registers its
+  own permission callbacks, so the plugin decides what a guest may do.
+
+  Nothing else changes: core namespaces (`/wp/v2/*`), the WooCommerce admin
+  REST API (`/wc/v3/*`, `/wc-admin/*`) and everything unrecognised remain
+  blocked for guests.
+
+  Forks that worked around this with their own `sobe/security/public_routes`
+  filter (Roxder's `app/roxder-security.php`) can drop the override — the
+  filter still exists and still takes precedence, so leaving it in place is
+  harmless.
+
+
 ### Added
 
 - Config-driven client extension points in `config/theme.php`, so a fork no
