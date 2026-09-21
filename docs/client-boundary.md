@@ -2,14 +2,15 @@
 
 | File/Area | Platform Owns | Client Owns |
 |-----------|----------------|--------------|
-| `config/theme.php` | Default `sobe` prefix, `sobe` textdomain, neutral config defaults | Client prefix and client-specific config values |
+| `config/theme.php` | Default `sobe` prefix, `sobe` textdomain, neutral config defaults | Client prefix, `client_modules`, `disabled_modules`, `block_categories`, and client-specific config values. This is the primary fork-owned file. |
 | `resources/css/tokens.css` | Token names, scales, neutral defaults, dark-mode contract | No client edits. Brand colors and optional brand font token overrides belong in `resources/css/client-tokens.css`. |
 | `resources/js/app.js` | Alpine app shell, event names, dark mode, nav, search, side-cart, toasts | Client scripts that consume documented events |
 | `resources/js/sobe-reinit.js`, `resources/js/dom-params.js`, `resources/js/body-class-merge.js` | Lifecycle registry, page-local params reader, and body-class merge infrastructure | No client overrides. Extend through `registerReinit`, Strategy C params, and documented PHP filters. |
 | `resources/js/sobe-page-transitions.js` | Swup engine and lifecycle integration contract | Filter-based customization through `sobe/page_transitions/*`; fork-owned validation before enabling transitions. |
 | `resources/views/layouts/app.blade.php` | Platform layout shell, app wrapper, SEO baseline, overlays | Rare structural overrides in client repo |
 | `resources/blocks/sobe/*` | Universal production blocks and examples | Client copies under client namespace |
-| `app/blocks.php` | Manifest registration, categories, allowlist hook | Client manifest entries for client blocks |
+| `functions.php` | The platform module list and the bootstrap. No client edits. | Fork-owned modules through `config/theme.php` `client_modules`; a replaced platform module through `disabled_modules`. |
+| `app/blocks.php` | Manifest registration, platform categories, allowlist hook. No client edits. | Client manifest entries for client blocks; client editor categories through `config/theme.php` `block_categories`. |
 | `app/setup-customizer.php` | Generic platform settings | Client-specific settings in client repo |
 | `app/setup-patterns.php` | Hidden layout patterns, `product_brand` registration contract | Client pattern additions |
 | `app/setup-search.php` | Search endpoint, params, result hooks | Search result tuning via hooks |
