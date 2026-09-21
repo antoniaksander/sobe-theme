@@ -104,14 +104,45 @@ it('ignores malformed client category entries rather than emitting broken ones',
     expect($slugs)->toBe(array_merge(['valid'], expectedPlatformSlugs()));
 });
 
-it('declares every client extension point in config/theme.php, defaulting to empty', function () {
+it('declares every client extension point in config/theme.php', function () {
     $config = require dirname(__DIR__, 2).'/config/theme.php';
 
     foreach (['client_modules', 'disabled_modules', 'block_categories'] as $key) {
-        expect($config)->toHaveKey($key)
-            ->and($config[$key])->toBeArray()
-            // The platform ships these inert; a non-empty default would mean
-            // the platform had started using a client-owned extension point.
-            ->and($config[$key])->toBeEmpty();
+        expect($config)->toHaveKey($key)->and($config[$key])->toBeArray();
+    }
+});
+
+/**
+ * Runs in forks too, where it is the assertion that earns its keep: a typo in
+ * a fork's module list would otherwise surface as a wp_die() at boot rather
+ * than a failing test. The platform's own lists are empty, so this passes
+ * vacuously upstream.
+ */
+it('resolves every declared client module to a file that exists', function () {
+    $root = dirname(__DIR__, 2);
+    $config = require $root.'/config/theme.php';
+
+    expect($config['client_modules'])->toBeArray();
+
+    foreach ($config['client_modules'] as $module) {
+        expect($module)->toBeString()->not->toBeEmpty()
+            ->and($root.'/app/'.$module.'.php')->toBeFile();
+    }
+});
+
+it('declares well-formed disabled modules and block categories', function () {
+    $config = require dirname(__DIR__, 2).'/config/theme.php';
+
+    expect($config['disabled_modules'])->toBeArray()
+        ->and($config['block_categories'])->toBeArray();
+
+    foreach ($config['disabled_modules'] as $module) {
+        expect($module)->toBeString()->not->toBeEmpty();
+    }
+
+    foreach ($config['block_categories'] as $category) {
+        expect($category)->toBeArray()
+            ->and($category)->toHaveKeys(['slug', 'title'])
+            ->and($category['slug'])->toBeString()->not->toBeEmpty();
     }
 });
