@@ -45,8 +45,13 @@ Application::configure()
 |
 | Out of the box, Sage ships with categorically named theme files
 | containing common functionality and setup to be bootstrapped with your
-| theme. Simply add (or remove) files from the array below to change what
-| is registered alongside Sage.
+| theme. The array below is the PLATFORM module list and is upstream-owned.
+|
+| Client forks must not edit it. Add fork-owned modules with
+| 'client_modules' in config/theme.php, and drop a platform module a fork
+| replaces outright with 'disabled_modules' there. Editing this list in a
+| fork was previously a guaranteed merge conflict on every upstream sync.
+| See docs/client-fork-guide.md.
 |
 */
 
@@ -75,6 +80,8 @@ collect([
     'wishlist',
     'Helpers/notice-helpers',
 ])
+    ->reject(fn (string $file): bool => in_array($file, (array) config('theme.disabled_modules', []), true))
+    ->merge((array) config('theme.client_modules', []))
     ->each(function ($file) {
         if (! locate_template($file = "app/{$file}.php", true, true)) {
             wp_die(

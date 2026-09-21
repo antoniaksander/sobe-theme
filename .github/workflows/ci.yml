@@ -65,3 +65,9 @@ jobs:
 
       - name: Pattern allowlist
         run: npm run check:patterns
+
+      # Verifies the upstream declared in package.json. The `upstream` git
+      # remote itself is only checked on a developer machine — remotes live in
+      # .git/config and are never committed, so a CI checkout has only `origin`.
+      - name: Upstream declaration
+        run: npm run check:upstream

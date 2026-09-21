@@ -278,28 +278,63 @@ WordPress will register the wrong block identity.
 
 ### Register A Client Block Category
 
-The platform registers its categories in `app/blocks.php` with the
-`block_categories_all` filter:
+The platform registers its own categories in `app/blocks.php`:
 
 - `sobe-general`
-- `sobe-woocommerce`
+- `sobe-woocommerce` (only when WooCommerce is active)
 - `sobe-content`
 - `sobe-layout`
 
-Client forks can register a separate category, for example `roxder`, so private
-blocks group separately from `sobe/*` blocks in the inserter. Add the category
-in the client fork using the same filter pattern and leave the platform
-categories intact.
-
-Example category shape:
+Client forks declare their own categories in `config/theme.php` instead of
+editing `app/blocks.php`, so private blocks group separately from `sobe/*`
+blocks in the inserter:
 
 ```php
-[
-    'slug' => 'roxder',
-    'title' => __('Roxder', 'sobe'),
-    'icon' => 'layout',
-]
+'block_categories' => [
+    ['slug' => 'roxder', 'title' => 'Roxder', 'icon' => 'megaphone'],
+],
 ```
+
+Client categories are prepended to the platform's, so a fork's own blocks sit
+at the top of the inserter. The platform categories stay registered; a fork
+never needs to restate them.
+
+Titles are used verbatim and are **not** passed through the translation
+extractor, since `config/theme.php` is plain data. Brand names generally do not
+need translating; a fork that does need translated category titles should add
+them with its own `block_categories_all` filter from a client module.
+
+### Add A Client PHP Module
+
+The module list in `functions.php` is platform-owned. Declare fork-owned
+modules in `config/theme.php` instead:
+
+```php
+'client_modules' => [
+    'client/gallery',   // app/client/gallery.php
+    'roxder-quick-view' // app/roxder-quick-view.php
+],
+```
+
+Entries are paths relative to `app/` without the `.php` extension, so a
+subdirectory such as `app/client/` works as well as the flat `app/` layout —
+the same form the platform's own `Helpers/notice-helpers` entry already uses.
+Client modules load after every platform module, so platform hooks are already
+registered by the time they run.
+
+If a fork replaces a platform module outright, drop the platform one rather
+than loading both:
+
+```php
+'disabled_modules' => ['wishlist'],
+```
+
+Prefer the documented hooks over disabling a platform module — a disabled
+module stops receiving upstream fixes.
+
+Both of these exist so a fork never edits `functions.php` or `app/blocks.php`.
+Those edits were previously a guaranteed merge conflict on every upstream sync,
+for every client.
 
 ### Blocks Manifest
 
@@ -491,7 +526,9 @@ Do not pick one side wholesale unless the rule is genuinely obsolete. For
 | `.gitignore` | Both platform and client add local tooling or generated-output rules. | Keep the union. Remove only duplicates or rules that are clearly wrong. |
 | `resources/css/client-tokens.css` | Clients override brand token values while upstream evolves the platform token contract in `resources/css/tokens.css`. | Keep client overrides in `client-tokens.css`. Preserve upstream `tokens.css` unless resolving an intentional platform token change. |
 | `resources/blocks/blocks-manifest.json` | Upstream adds platform blocks while clients add private blocks. | Keep both platform and client entries. Ensure each entry's folder exists and `category` matches `block.json`. |
-| `app/blocks.php` | Upstream may evolve category, registration, or allowed-block behavior while clients add categories. | Preserve upstream registration logic and re-apply client categories or filters around it. Keep `sobe/*` hooks intact. |
+| `app/blocks.php` | Upstream evolves registration and allowed-block behavior. Should no longer conflict over categories — declare those in `config/theme.php` `block_categories` instead. | Take upstream wholesale. If the fork still registers categories inside this file, move them to `config/theme.php` as part of the resolution. |
+| `functions.php` | Upstream adds or renames platform modules. Should no longer conflict over client modules — declare those in `config/theme.php` `client_modules` instead. | Take upstream wholesale. If the fork still lists its own modules here, move them to `config/theme.php` as part of the resolution. |
+| `config/theme.php` | Both platform and client add keys — this is now where fork-owned configuration is supposed to live. | Keep the union: upstream's new platform keys plus the fork's `client_modules`, `disabled_modules`, `block_categories` and prefix. |
 | Client-modified tests | Upstream may broaden tests while clients adapt them for private blocks or local behavior. | Keep upstream coverage improvements and re-apply client-specific expectations narrowly. Run the full test suite after resolving. |
 
 After resolving conflicts, inspect the diff before committing. A sync PR should

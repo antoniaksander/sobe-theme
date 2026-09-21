@@ -132,6 +132,15 @@ add_filter('allowed_block_types_all', function ($allowedBlocks) {
 });
 
 add_filter('block_categories_all', function ($categories) {
+    // Client-owned categories come first so a fork's own blocks sit at the top
+    // of the inserter. Forks declare them with 'block_categories' in
+    // config/theme.php rather than editing this platform file — see
+    // docs/client-fork-guide.md.
+    $clientCategories = array_values(array_filter(
+        (array) config('theme.block_categories', []),
+        fn ($category): bool => is_array($category) && ! empty($category['slug']),
+    ));
+
     $sobeCategories = [
         ['slug' => 'sobe-general', 'title' => __('Sobe General', config('theme.textdomain')), 'icon' => 'layout'],
     ];
@@ -143,5 +152,5 @@ add_filter('block_categories_all', function ($categories) {
     $sobeCategories[] = ['slug' => 'sobe-content', 'title' => __('Sobe Content', config('theme.textdomain')), 'icon' => 'text'];
     $sobeCategories[] = ['slug' => 'sobe-layout', 'title' => __('Sobe Layout', config('theme.textdomain')), 'icon' => 'layout'];
 
-    return array_merge($sobeCategories, $categories);
+    return array_merge($clientCategories, $sobeCategories, $categories);
 });
