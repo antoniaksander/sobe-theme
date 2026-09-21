@@ -31,7 +31,12 @@ const STYLE_CSS   = resolve('style.css');
 const THEME_PHP   = resolve('config/theme.php');
 const COMPOSER    = resolve('composer.json');
 const PACKAGE     = resolve('package.json');
-const UPSTREAM_URL = 'https://github.com/antoniaksander/sobe-theme.git';
+
+// Single source of truth, shared with check-upstream.js: the platform repo is
+// declared in package.json so it survives a fresh clone and is visible in review.
+const UPSTREAM_URL =
+  JSON.parse(readFileSync(PACKAGE, 'utf8')).wpBoilerplate?.upstream ??
+  'https://github.com/antoniaksander/sobe-theme.git';
 
 function ensureUpstreamRemote() {
   let existing = '';

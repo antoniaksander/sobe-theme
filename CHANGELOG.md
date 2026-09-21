@@ -2,7 +2,54 @@
 
 ## Unreleased
 
+### Added
+
+- Config-driven client extension points in `config/theme.php`, so a fork no
+  longer edits platform files to register its own code:
+
+  - `client_modules` — fork-owned PHP modules, loaded from `app/` after every
+    platform module. Entries are paths relative to `app/` without the `.php`
+    extension, so both `mezza-gallery` and `client/gallery` resolve.
+  - `disabled_modules` — platform modules a fork replaces outright.
+  - `block_categories` — fork-owned editor block categories, prepended to the
+    platform's so a fork's blocks sit at the top of the inserter.
+
+  Previously a fork registered a module by adding a line to the `collect([...])`
+  list in `functions.php`, and a block category by editing the array in
+  `app/blocks.php`. Both files are platform-owned, so both edits conflicted on
+  every upstream sync — the same two hunks, for every client, forever. Roxder
+  and Studio Mezza both carry exactly these edits today.
+
+  **Action for existing forks:** on the next sync, move your module list out of
+  `functions.php` and your categories out of `app/blocks.php` into
+  `config/theme.php`, then take both platform files wholesale. Client modules
+  load after all platform modules; if a fork relied on loading a module *before*
+  a platform one, use hook priorities rather than file order. Category titles in
+  config are used verbatim and are not passed through the translation
+  extractor — a fork needing translated titles should keep its own
+  `block_categories_all` filter in a client module.
+
+- `wpBoilerplate.upstream` in `package.json`, recording the platform repo this
+  fork tracks. Unlike a git remote, it is committed — so it survives a fresh
+  clone, shows up in review, and can be verified in CI.
+
 ### Changed
+
+- `npm run check:upstream` now verifies the declared upstream as well as the
+  `upstream` git remote, and is wired into CI.
+
+  Git remotes live in `.git/config` and are never committed, so a CI checkout
+  only ever has `origin`; running the previous version in CI would have failed
+  every fork's pipeline for something CI cannot fix. The check now distinguishes
+  the three cases: the platform repo itself (origin matches the declaration —
+  passes, nothing to configure), a fork on a developer machine (the `upstream`
+  remote must exist and match the declaration), and a fork under CI (the
+  declaration is verified, the remote check is reported and skipped). URLs are
+  compared by identity, so HTTPS and SSH spellings of the same repo match.
+
+- `npm run client:identify` now reads the upstream URL from
+  `package.json` -> `wpBoilerplate.upstream` instead of a second hardcoded copy,
+  so the platform URL has a single source of truth.
 
 - Header search is now off by default, controlled by a new Customizer
   toggle ("Header: Search" under Header Options) — the platform's stock
