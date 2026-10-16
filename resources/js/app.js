@@ -5,6 +5,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initAnimationBus, initStickyHeader } from './animations.js';
 import './announcement-bar.js';
+import './client.js';
 
 gsap.registerPlugin(ScrollTrigger);
 

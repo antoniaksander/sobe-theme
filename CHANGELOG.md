@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Client JS and CSS entry files.** `resources/js/client.js` (imported by `app.js` before Alpine starts) and `resources/css/client.css` (imported by `app.css` after `client-tokens.css`) ship empty and are client-owned, so forks add scripts, Alpine components and styles without editing `app.js` or `app.css`.
+
 - **Client view overrides.** Views in `resources/views/client/` take precedence over `resources/views/` (Blade names, template hierarchy, WooCommerce templates), so forks override a platform view without editing it.
 
 - **More client filters.** `sobe/side_cart/params`, `sobe/catalog_filters/params` and `sobe/load_more/params` filter the frontend params objects; `sobe/woocommerce/render_blocks` adds client product blocks to the list that loads the WooCommerce stylesheet; `sobe/search/brand_result` filters each brand search result. Forks no longer edit these platform files to extend them.
