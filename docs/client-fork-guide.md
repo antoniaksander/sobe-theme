@@ -467,6 +467,10 @@ add_filter('sobe/product_brand/register', '__return_false');
 Blocks and filters that use brands read the taxonomy through
 `sobe/catalog_filters/brand_taxonomy`.
 
+## Deploying To Production
+
+The platform ships no live deploy. Copy [`docs/examples/deploy.yml`](examples/deploy.yml) into the fork and follow [`docs/deployment.md`](deployment.md) for secrets, the first dry run, the branch flow and the launch checklist.
+
 ## Upstream Sync
 
 Sync platform updates through the same branch and PR process used for feature
