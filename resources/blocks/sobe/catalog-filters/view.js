@@ -391,7 +391,14 @@ function initCatalogFilters(instance, params) {
         btn.dataset.removeFilter = key;
         btn.dataset.removeValue = value;
         btn.setAttribute('aria-label', `${params.removeLabel} ${value}`);
-        btn.innerHTML = `${value} <span class="sobe-filter-chip__remove" aria-hidden="true">${params.removeSymbol}</span>`;
+        // Build with textContent: the value can come from the URL/query string,
+        // so it must never be parsed as markup.
+        btn.append(document.createTextNode(`${value} `));
+        const remove = document.createElement('span');
+        remove.className = 'sobe-filter-chip__remove';
+        remove.setAttribute('aria-hidden', 'true');
+        remove.textContent = params.removeSymbol;
+        btn.appendChild(remove);
         zone.appendChild(btn);
       });
     }
