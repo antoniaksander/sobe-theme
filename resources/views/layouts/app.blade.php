@@ -91,7 +91,7 @@
     @if (function_exists('is_checkout') && is_checkout())
       @include('sections.checkout-header')
     @else
-      {!! \App\sobe_render_layout_pattern('header', get_theme_mod(config('theme.prefix') . '_header_layout', 'header-1')) !!}
+      {!! \App\sobe_render_layout_pattern('header', \App\sobe_current_layout('header')) !!}
     @endif
 
     <main id="main" class="relative z-10">

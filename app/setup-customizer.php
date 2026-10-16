@@ -21,11 +21,11 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
 
     // ── Header ─────────────────────────────────────────────────────────────
     $wp_customize->add_setting("{$pfx}_header_layout", [
-        'default' => 'header-1',
+        'default' => sobe_default_layout('header'),
         'sanitize_callback' => function ($value) {
-            $allowed = ['header-1', 'header-2', 'header-3'];
-
-            return in_array($value, $allowed, true) ? $value : 'header-1';
+            return is_string($value) && array_key_exists($value, sobe_layout_choices('header'))
+                ? $value
+                : sobe_default_layout('header');
         },
         'transport' => 'refresh',
     ]);
@@ -34,11 +34,7 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'label' => __('Header: Layout', 'sobe'),
         'section' => "{$pfx}_header_options",
         'type' => 'select',
-        'choices' => [
-            'header-1' => __('Header 1 (Default)', 'sobe'),
-            'header-2' => __('Header 2', 'sobe'),
-            'header-3' => __('Header 3', 'sobe'),
-        ],
+        'choices' => sobe_layout_choices('header'),
     ]);
 
     $wp_customize->add_setting("{$pfx}_enable_dark_toggle", [
@@ -137,11 +133,11 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
     ]);
 
     $wp_customize->add_setting("{$pfx}_footer_layout", [
-        'default' => 'layout-2',
+        'default' => sobe_default_layout('footer'),
         'sanitize_callback' => function ($value) {
-            $allowed = ['layout-2', 'none'];
-
-            return in_array($value, $allowed, true) ? $value : 'layout-2';
+            return is_string($value) && array_key_exists($value, sobe_layout_choices('footer'))
+                ? $value
+                : sobe_default_layout('footer');
         },
         'transport' => 'refresh',
     ]);
@@ -150,10 +146,7 @@ add_action('customize_register', function (\WP_Customize_Manager $wp_customize) 
         'label' => __('Footer: Layout', 'sobe'),
         'section' => "{$pfx}_footer_options",
         'type' => 'select',
-        'choices' => [
-            'layout-2' => __('Minimal (Brand + Widgets)', 'sobe'),
-            'none' => __('None (Hidden)', 'sobe'),
-        ],
+        'choices' => sobe_layout_choices('footer'),
     ]);
 
     $wp_customize->add_setting("{$pfx}_product_card_hover", [

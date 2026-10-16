@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Client header and footer layouts from config.** `client_header_layouts`, `client_footer_layouts`, `default_header_layout` and `default_footer_layout` in `config/theme.php` add a fork's own layouts to the Customizer and set the default, so forks no longer edit `app/setup-customizer.php`, `layouts/app.blade.php` or `sections/footer.blade.php` for this. New helpers `sobe_layout_choices()`, `sobe_default_layout()` and `sobe_current_layout()` (unknown stored values fall back to the default).
+
 - **Deploy template for client forks.** `docs/examples/deploy.yml` (CI-gated, secrets-only configuration, `dry_run` input, pinned SSH host key, `vendor/` and `public/build/` protected from `rsync --delete`, skips cleanly without secrets) and `docs/deployment.md` (setup, branch flow, lockfile, launch checklist, pitfalls). `ci.yml` gains `workflow_call:` so a deploy can require the same checks. The platform itself still deploys nothing.
 
 - `--layout-content` (`72rem`) is now exposed as a `max-w-content` Tailwind
