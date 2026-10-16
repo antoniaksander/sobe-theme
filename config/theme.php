@@ -46,6 +46,25 @@ return [
      */
     'block_categories' => [],
 
+    /*
+     * Client-owned header and footer layouts, as 'slug' => 'Customizer label'.
+     *
+     * Client layouts are listed first in the Customizer's layout select and
+     * accepted by its sanitizer, so a fork adds its own header/footer without
+     * editing app/setup-customizer.php. A layout slug renders through the
+     * sobe/site-header or sobe/site-footer block with that slug as `variant`
+     * (header slugs resolve to resources/views/sections/{slug}.blade.php).
+     */
+    'client_header_layouts' => [],
+    'client_footer_layouts' => [],
+
+    /*
+     * Layout used until one is chosen in the Customizer, and the fallback for
+     * an unknown stored value. Must be a platform layout or one declared above.
+     */
+    'default_header_layout' => 'header-1',
+    'default_footer_layout' => 'layout-2',
+
     'color_mode' => [
         // Allowed values: 'light', 'dark', or 'system' (follows OS preference).
         // Used as the site default when the dark-mode toggle is disabled,

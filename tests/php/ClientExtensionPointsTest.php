@@ -107,9 +107,60 @@ it('ignores malformed client category entries rather than emitting broken ones',
 it('declares every client extension point in config/theme.php', function () {
     $config = require dirname(__DIR__, 2).'/config/theme.php';
 
-    foreach (['client_modules', 'disabled_modules', 'block_categories'] as $key) {
+    foreach (['client_modules', 'disabled_modules', 'block_categories', 'client_header_layouts', 'client_footer_layouts'] as $key) {
         expect($config)->toHaveKey($key)->and($config[$key])->toBeArray();
     }
+
+    foreach (['default_header_layout', 'default_footer_layout'] as $key) {
+        expect($config)->toHaveKey($key)->and($config[$key])->toBeString()->not->toBeEmpty();
+    }
+});
+
+/**
+ * app/helpers.php only declares functions, so it is safe to load once here.
+ */
+function mockLayoutConfig(array $overrides = []): void
+{
+    require_once dirname(__DIR__, 2).'/app/helpers.php';
+
+    Functions\when('__')->returnArg();
+    Functions\when('config')->alias(function (string $key, $default = null) use ($overrides) {
+        return array_key_exists($key, $overrides) ? $overrides[$key] : match ($key) {
+            'theme.prefix' => 'sobe',
+            default => $default,
+        };
+    });
+}
+
+it('lists client layouts first and marks the configured default', function () {
+    mockLayoutConfig([
+        'theme.client_header_layouts' => ['header-client' => 'Client header'],
+        'theme.default_header_layout' => 'header-client',
+    ]);
+
+    $choices = \App\sobe_layout_choices('header');
+
+    expect(array_keys($choices))->toBe(['header-client', 'header-1', 'header-2', 'header-3'])
+        ->and($choices['header-client'])->toBe('Client header (Default)')
+        ->and(\App\sobe_default_layout('header'))->toBe('header-client');
+});
+
+it('keeps the platform layouts and defaults when a fork declares none', function () {
+    mockLayoutConfig();
+
+    expect(array_keys(\App\sobe_layout_choices('footer')))->toBe(['layout-2', 'none'])
+        ->and(\App\sobe_default_layout('header'))->toBe('header-1')
+        ->and(\App\sobe_default_layout('footer'))->toBe('layout-2');
+});
+
+it('falls back to the default for a stored layout that no longer exists', function () {
+    mockLayoutConfig(['theme.client_footer_layouts' => ['footer-client' => 'Client footer']]);
+
+    Functions\when('get_theme_mod')->justReturn('removed-layout');
+    expect(\App\sobe_current_layout('footer'))->toBe('layout-2');
+
+    Functions\when('get_theme_mod')->justReturn('footer-client');
+    expect(\App\sobe_current_layout('footer'))->toBe('footer-client');
 });
 
 /**

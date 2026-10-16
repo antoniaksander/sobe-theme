@@ -156,6 +156,24 @@ Menus` to assign footer navigation, or `Appearance -> Widgets` to add blocks or
 widgets to `Footer`. The default footer also uses the site name, tagline, and
 current year.
 
+#### Client header and footer layouts
+
+A fork adds its own header or footer layout in `config/theme.php`, never by
+editing `app/setup-customizer.php`:
+
+```php
+'client_header_layouts' => ['header-acme' => 'Acme header'],
+'client_footer_layouts' => ['acme' => 'Acme footer'],
+'default_header_layout' => 'header-acme',
+'default_footer_layout' => 'acme',
+```
+
+Client layouts are listed first in the Customizer select and accepted by its
+sanitizer; the default is marked "(Default)" and is used until a layout is
+chosen, or when the stored value no longer exists. A header slug renders
+`resources/views/sections/{slug}.blade.php` through the `sobe/site-header`
+block; a footer slug reaches the `sobe/site-footer` block as its `variant`.
+
 ### 4. Set A Homepage
 
 1. Create a page for the homepage.
