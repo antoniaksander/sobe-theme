@@ -4,6 +4,7 @@
 |-----------|----------------|--------------|
 | `config/theme.php` | Default `sobe` prefix, `sobe` textdomain, neutral config defaults | Client prefix, `client_modules`, `disabled_modules`, `block_categories`, and client-specific config values. This is the primary fork-owned file. |
 | `resources/css/tokens.css` | Token names, scales, neutral defaults, dark-mode contract | No client edits. Brand colors and optional brand font token overrides belong in `resources/css/client-tokens.css`. |
+| `resources/js/app.js`, `resources/css/app.css` | Platform entry files | No client edits. Client scripts, Alpine components and styles go in `resources/js/client.js` and `resources/css/client.css` (client-owned, shipped empty). |
 | `resources/js/app.js` | Alpine app shell, event names, dark mode, nav, search, side-cart, toasts | Client scripts that consume documented events |
 | `resources/js/sobe-reinit.js`, `resources/js/dom-params.js`, `resources/js/body-class-merge.js` | Lifecycle registry, page-local params reader, and body-class merge infrastructure | No client overrides. Extend through `registerReinit`, Strategy C params, and documented PHP filters. |
 | `resources/js/sobe-page-transitions.js` | Swup engine and lifecycle integration contract | Filter-based customization through `sobe/page_transitions/*`; fork-owned validation before enabling transitions. |

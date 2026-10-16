@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import './tokens.css';
 @import './client-tokens.css';
+@import './client.css';
 /* Swiper: import only the modules used theme-wide (Navigation, Pagination,
    Thumbs, FreeMode) instead of the full bundle, to cut global CSS weight. */
 @import 'swiper/css';
