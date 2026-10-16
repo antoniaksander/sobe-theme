@@ -1,0 +1,146 @@
+# Example production deploy for a Sobe client fork.
+#
+# Copy to .github/workflows/deploy.yml in the client repo. Everything
+# site-specific comes from secrets on the `production` environment, so the
+# file itself should not need editing. See docs/deployment.md.
+#
+# Required secrets: SSH_HOST, SSH_PORT, SSH_USER, DEPLOY_SSH_KEY,
+# SSH_KNOWN_HOSTS, DEPLOY_PATH (theme folder on the server, trailing slash),
+# WP_ROOT (WordPress root on the server, for WP-CLI).
+
+name: Deploy to production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Show what rsync would change without changing anything'
+        type: boolean
+        default: true
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    name: CI
+    uses: ./.github/workflows/ci.yml
+
+  deploy:
+    name: Build and deploy
+    needs: checks
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+
+    steps:
+      - name: Skip when the deploy secrets are not configured
+        id: gate
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          if [ -z "$SSH_HOST" ]; then
+            echo "::notice::No deploy secrets on this repo; skipping deploy."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.gate.outputs.configured == 'true'
+        uses: actions/checkout@v7
+
+      - name: Setup PHP 8.4
+        if: steps.gate.outputs.configured == 'true'
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node.js 22
+        if: steps.gate.outputs.configured == 'true'
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Pin npm to the version package-lock.json was generated with
+        if: steps.gate.outputs.configured == 'true'
+        run: npm install -g npm@$(jq -r '.npm' .site-requirements.json)
+
+      - name: Install PHP dependencies (production only)
+        # vendor/ is gitignored, so a fresh checkout has none. Without this
+        # step rsync --delete would remove the server's vendor/ and the site
+        # fails with "Error locating autoloader".
+        if: steps.gate.outputs.configured == 'true'
+        run: composer install --no-dev --optimize-autoloader --prefer-dist --no-progress --no-interaction
+
+      - name: Install Node dependencies
+        if: steps.gate.outputs.configured == 'true'
+        run: npm ci
+
+      - name: Build assets
+        if: steps.gate.outputs.configured == 'true'
+        run: |
+          npm run build
+          test -f public/build/manifest.json || { echo "::error::public/build/manifest.json missing after build"; exit 1; }
+
+      - name: Configure SSH (pinned host key)
+        if: steps.gate.outputs.configured == 'true'
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Rsync theme to production
+        # The protect filters are defense in depth: if a future edit ever
+        # skips the install/build steps, --delete leaves the server's copy
+        # stale instead of wiping it.
+        if: steps.gate.outputs.configured == 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          FLAGS="-avz --delete"
+          if [ "$DRY_RUN" = "true" ]; then FLAGS="$FLAGS --dry-run --itemize-changes"; fi
+          rsync $FLAGS \
+            --filter='protect /public/build/***' \
+            --filter='protect /vendor/***' \
+            --exclude '.git' --exclude '.github' --exclude 'node_modules' \
+            --exclude 'tests' --exclude 'docs' --exclude 'public/hot' \
+            --exclude '.phpunit.cache' --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/deploy_key -p $SSH_PORT" ./ \
+            "$SSH_USER@$SSH_HOST:$DEPLOY_PATH"
+
+      - name: Clear Acorn compiled cache
+        if: steps.gate.outputs.configured == 'true' && env.DRY_RUN != 'true'
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          WP_ROOT: ${{ secrets.WP_ROOT }}
+        run: ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd '$WP_ROOT' && wp acorn optimize:clear"
+
+      - name: Purge page cache (best effort)
+        # Files are already live; a failed purge must not fail the deploy.
+        # Replace with your caching plugin's WP-CLI command if not LiteSpeed.
+        if: steps.gate.outputs.configured == 'true' && env.DRY_RUN != 'true'
+        continue-on-error: true
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          WP_ROOT: ${{ secrets.WP_ROOT }}
+        run: ssh -i ~/.ssh/deploy_key -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd '$WP_ROOT' && wp litespeed-purge all" || echo "::warning::Cache purge failed; purge manually."

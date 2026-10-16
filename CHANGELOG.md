@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Deploy template for client forks.** `docs/examples/deploy.yml` (CI-gated, secrets-only configuration, `dry_run` input, pinned SSH host key, `vendor/` and `public/build/` protected from `rsync --delete`, skips cleanly without secrets) and `docs/deployment.md` (setup, branch flow, lockfile, launch checklist, pitfalls). `ci.yml` gains `workflow_call:` so a deploy can require the same checks. The platform itself still deploys nothing.
+
 - `--layout-content` (`72rem`) is now exposed as a `max-w-content` Tailwind
   utility and an `<x-section width="content">` option, matching the
   existing `reading`/`standard`/`grid` widths. It was already wired into
