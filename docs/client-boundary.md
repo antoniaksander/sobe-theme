@@ -15,7 +15,7 @@
 | `app/setup-patterns.php` | Hidden layout patterns, `product_brand` registration contract | Client pattern additions |
 | `app/setup-search.php` | Search endpoint, params, result hooks | Search result tuning via hooks |
 | `app/woocommerce*.php` | Shared WC catalog, PDP, filters, side-cart, hook contracts | Hook callbacks and rare template overrides |
-| `resources/views/woocommerce/` | Platform WC templates | Client overrides only for structural changes |
+| `resources/views/woocommerce/` | Platform WC templates | Client overrides only for structural changes, as copies under `resources/views/client/` |
 | `resources/views/components/` | Generic components and WC/search shells | Client-only components |
 | `resources/patterns/` | Hidden platform layout patterns | Client-owned patterns in client repo |
 | `resources/config/core-allowed-blocks.json` | Core/WC allowlist baseline | Client extensions through hook/config |

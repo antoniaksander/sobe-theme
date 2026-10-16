@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Client view overrides.** Views in `resources/views/client/` take precedence over `resources/views/` (Blade names, template hierarchy, WooCommerce templates), so forks override a platform view without editing it.
+
 - **More client filters.** `sobe/side_cart/params`, `sobe/catalog_filters/params` and `sobe/load_more/params` filter the frontend params objects; `sobe/woocommerce/render_blocks` adds client product blocks to the list that loads the WooCommerce stylesheet; `sobe/search/brand_result` filters each brand search result. Forks no longer edit these platform files to extend them.
 
 - **Client header and footer layouts from config.** `client_header_layouts`, `client_footer_layouts`, `default_header_layout` and `default_footer_layout` in `config/theme.php` add a fork's own layouts to the Customizer and set the default, so forks no longer edit `app/setup-customizer.php`, `layouts/app.blade.php` or `sections/footer.blade.php` for this. New helpers `sobe_layout_choices()`, `sobe_default_layout()` and `sobe_current_layout()` (unknown stored values fall back to the default).
