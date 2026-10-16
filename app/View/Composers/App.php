@@ -32,7 +32,7 @@ class App extends Composer
         if (! $logoId) {
             return null;
         }
-        $url = wp_get_attachment_image_url($logoId, 'full');
+        $url = wp_get_attachment_image_url($logoId, 'full') ?: wp_get_attachment_url($logoId);
 
         return $url ?: null;
     }
@@ -46,7 +46,7 @@ class App extends Composer
         if (! $logoId) {
             return null;
         }
-        $url = wp_get_attachment_image_url($logoId, 'full');
+        $url = wp_get_attachment_image_url($logoId, 'full') ?: wp_get_attachment_url($logoId);
 
         return $url ?: null;
     }

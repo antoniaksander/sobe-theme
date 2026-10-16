@@ -166,7 +166,7 @@ function sobe_search_brand_results(string $q): array
             'no_found_rows' => false,
         ]))->found_posts;
 
-        $results[] = [
+        $result = [
             'id' => 'brand-'.$term->term_id,
             'title' => html_entity_decode($term->name, ENT_QUOTES, 'UTF-8'),
             'url' => (string) $link,
@@ -176,6 +176,8 @@ function sobe_search_brand_results(string $q): array
             'type_label' => __('Brand', 'sobe'),
             'excerpt' => sprintf(_n('%d product', '%d products', $productCount, 'sobe'), $productCount),
         ];
+
+        $results[] = apply_filters('sobe/search/brand_result', $result, $term);
     }
 
     return $results;

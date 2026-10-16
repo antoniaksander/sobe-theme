@@ -103,6 +103,8 @@ add_filter('sobe/hero/data', function (array $data): array {
 | `sobe/shop_loop/product_card_data` | filter | `array $data, WC_Product $product` | Product card data |
 | `sobe/shop_loop/before_product_card` | action | `WC_Product $product, array $context` | None |
 | `sobe/shop_loop/after_product_card` | action | `WC_Product $product, array $context` | None |
+| `sobe/load_more/params` | filter | `array $params` | Load-more frontend params |
+| `sobe/woocommerce/render_blocks` | filter | `array $blockNames` | Blocks that load the WooCommerce stylesheet outside shop pages |
 
 Example:
 
@@ -118,6 +120,7 @@ add_filter('sobe/shop_loop/per_page', function (int $perPage, array $context): i
 |------|------|------------|--------|
 | `sobe/catalog_filters/data` | filter | `array $data, array $attrs` | Filter block data |
 | `sobe/catalog_filters/state` | filter | `array $state, array $source` | Active filter state |
+| `sobe/catalog_filters/params` | filter | `array $params` | Frontend params (`window.sobeCatalogParams`) |
 | `sobe/catalog_filters/query_args` | filter | `array $queryArgs, array $state` | Product query args |
 | `sobe/catalog_filters/results_html` | filter | `string $html, WP_Query $query, array $state` | Product results HTML |
 | `sobe/catalog_filters/pagination_html` | filter | `string $html, WP_Query $query, array $state` | Pagination HTML |
@@ -187,6 +190,7 @@ add_filter('sobe/pdp_tabs/tabs', function (array $tabs): array {
 | `sobe/side_cart/fragments` | filter | `array $fragments, ?WC_Cart $cart` | Woo fragments |
 | `sobe/side_cart/open_detail` | filter | `array $detail, string $source` | Browser event detail |
 | `sobe/side_cart/close_detail` | filter | `array $detail` | Browser event detail |
+| `sobe/side_cart/params` | filter | `array $params` | Frontend params (`window.themeCartParams`) |
 | `sobe/side_cart/refresh_html` | filter | `string $html, WC_Cart $cart` | AJAX refresh HTML |
 | `sobe/side_cart/refreshed` | action | `WC_Cart $cart, array $context` | None |
 | `sobe/mini_cart/count` | filter | `int $count, ?WC_Cart $cart` | Cart count |
@@ -206,6 +210,7 @@ add_filter('sobe/side_cart/enabled', fn (bool $enabled): bool => is_checkout() ?
 | `sobe/search/post_types` | filter | `array $postTypes, WP_REST_Request $request` | Post types |
 | `sobe/search/query_args` | filter | `array $args, string $query, int $limit, WP_REST_Request $request` | `WP_Query` args |
 | `sobe/search/result` | filter | `array $result, WP_Post $post` | Single result |
+| `sobe/search/brand_result` | filter | `array $result, WP_Term $term` | Single brand result |
 | `sobe/search/results` | filter | `array $results, WP_REST_Request $request` | Result list |
 | `sobe/search/params` | filter | `array $params` | Frontend params |
 | `sobe/search/overlay_view` | filter | `string $view` | Overlay Blade view |

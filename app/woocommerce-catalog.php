@@ -111,7 +111,7 @@ if (! function_exists('App\sobe_load_more_params')) {
             $params['queriedObjectId'] = (int) ($queried->term_id ?? 0);
         }
 
-        return $params;
+        return (array) apply_filters('sobe/load_more/params', $params);
     }
 }
 

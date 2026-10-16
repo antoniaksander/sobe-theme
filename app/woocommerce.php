@@ -70,6 +70,10 @@ if (! function_exists('App\sobe_has_woocommerce_render_content')) {
             'woocommerce/product-results-count',
         ];
 
+        // Client blocks that render products (and so need the WooCommerce
+        // stylesheet) can be added here instead of editing this list.
+        $woocommerceBlocks = (array) apply_filters('sobe/woocommerce/render_blocks', $woocommerceBlocks);
+
         foreach ($woocommerceBlocks as $block) {
             if (has_block($block)) {
                 return true;
