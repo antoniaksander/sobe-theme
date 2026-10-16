@@ -295,7 +295,7 @@ function sobe_catalog_filter_params(): array
         'contextUrl' => sobe_current_request_url(),
         'contextType' => $contextType,
         'removeLabel' => __('Remove filter', 'sobe'),
-        'removeSymbol' => '&times;',
+        'removeSymbol' => '×',
         'errorText' => __('Something went wrong. Please refresh the page and try again.', 'sobe'),
     ];
     if (is_product_taxonomy() && isset($queried->taxonomy, $queried->slug)) {

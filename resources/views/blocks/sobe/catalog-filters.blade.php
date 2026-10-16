@@ -51,15 +51,19 @@
   {{-- Active filter chips --}}
   <div class="sobe-filter-chips" data-filter-chips aria-label="{{ __('Active filters', 'sobe') }}">
     @if ($activeCatSlug)
-      @php $catTerm = get_term_by('slug', $activeCatSlug, 'product_cat'); @endphp
+      @php
+        $catTerm = get_term_by('slug', $activeCatSlug, 'product_cat');
+        // Term names are stored HTML-encoded ("Hats &amp; Caps"); decode so {{ }} escapes once.
+        $catTermName = $catTerm ? wp_specialchars_decode($catTerm->name, ENT_QUOTES) : '';
+      @endphp
       @if ($catTerm)
         <button
           class="sobe-filter-chip"
           data-remove-filter="product_cat"
           data-remove-value="{!! esc_attr($activeCatSlug) !!}"
-          aria-label="{{ __('Remove', 'sobe') }} {{ $catTerm->name }}"
+          aria-label="{{ __('Remove', 'sobe') }} {{ $catTermName }}"
         >
-          {{ $catTerm->name }}
+          {{ $catTermName }}
           <span class="sobe-filter-chip__remove" aria-hidden="true">×</span>
         </button>
       @endif

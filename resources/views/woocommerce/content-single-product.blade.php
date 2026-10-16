@@ -85,7 +85,8 @@ Template for displaying a single product.
     @endphp
     @if ($brands && ! is_wp_error($brands))
       <p class="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">
-        {{ $brands[0]->name }}
+        {{-- Term names are stored HTML-encoded; decode so Blade escapes them only once. --}}
+        {{ wp_specialchars_decode($brands[0]->name, ENT_QUOTES) }}
       </p>
     @endif
 
