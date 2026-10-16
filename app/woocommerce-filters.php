@@ -304,7 +304,7 @@ function sobe_catalog_filter_params(): array
         $params['queriedObjectId'] = (int) ($queried->term_id ?? 0);
     }
 
-    return $params;
+    return (array) apply_filters('sobe/catalog_filters/params', $params);
 }
 
 // Inline sobeCatalogParams on shop/taxonomy pages

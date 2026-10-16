@@ -161,6 +161,7 @@ add_action('wp_head', function () {
         ];
         $params['openDetail'] = apply_filters('sobe/side_cart/open_detail', ['source' => 'woocommerce'], 'woocommerce');
         $params['closeDetail'] = apply_filters('sobe/side_cart/close_detail', []);
+        $params = (array) apply_filters('sobe/side_cart/params', $params);
         echo '<script>window.themeCartParams = '.\wp_json_encode($params).';</script>';
     }
 }, 5);

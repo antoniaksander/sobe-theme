@@ -35,7 +35,7 @@ add_action('init', function (): void {
         wp_register_script(
             "{$pfx}-{$blockHandle}",
             $assetUri,
-            ['wp-blocks', 'wp-element', 'wp-components', 'wp-i18n', 'wp-block-editor'],
+            ['wp-blocks', 'wp-element', 'wp-components', 'wp-i18n', 'wp-block-editor', 'wp-data'],
             null,
             true
         );

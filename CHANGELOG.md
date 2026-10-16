@@ -4,6 +4,8 @@
 
 ### Added
 
+- **More client filters.** `sobe/side_cart/params`, `sobe/catalog_filters/params` and `sobe/load_more/params` filter the frontend params objects; `sobe/woocommerce/render_blocks` adds client product blocks to the list that loads the WooCommerce stylesheet; `sobe/search/brand_result` filters each brand search result. Forks no longer edit these platform files to extend them.
+
 - **Client header and footer layouts from config.** `client_header_layouts`, `client_footer_layouts`, `default_header_layout` and `default_footer_layout` in `config/theme.php` add a fork's own layouts to the Customizer and set the default, so forks no longer edit `app/setup-customizer.php`, `layouts/app.blade.php` or `sections/footer.blade.php` for this. New helpers `sobe_layout_choices()`, `sobe_default_layout()` and `sobe_current_layout()` (unknown stored values fall back to the default).
 
 - **Deploy template for client forks.** `docs/examples/deploy.yml` (CI-gated, secrets-only configuration, `dry_run` input, pinned SSH host key, `vendor/` and `public/build/` protected from `rsync --delete`, skips cleanly without secrets) and `docs/deployment.md` (setup, branch flow, lockfile, launch checklist, pitfalls). `ci.yml` gains `workflow_call:` so a deploy can require the same checks. The platform itself still deploys nothing.
@@ -16,6 +18,9 @@
   hardcoding `72rem` directly.
 
 ### Fixed
+
+- Logo URLs fall back to `wp_get_attachment_url()` when an attachment has no image sizes (e.g. SVG logos).
+- Editor block scripts now depend on `wp-data`, so blocks using `wp.data` load in the right order.
 
 - **Guest checkout and Contact Form 7 submissions no longer 401.** The REST
   hardening in `app/security.php` allowed only `/wc/store/v1/cart`,
