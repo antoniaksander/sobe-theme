@@ -407,6 +407,14 @@ Use hooks for:
 
 Only override Blade templates when the required change is structural.
 
+To override a platform view, copy it to the same relative path under
+`resources/views/client/` (for example
+`resources/views/client/woocommerce/content-single-product.blade.php`) and edit
+the copy. That folder is searched first for Blade view names, the WordPress
+template hierarchy and WooCommerce templates, so the platform file stays
+identical to upstream and never conflicts on sync. Compare your copy with the
+platform file after each sync to pick up upstream fixes.
+
 The supported production placement for `sobe/catalog-filters` is one block in
 the Shop Sidebar widget area. The block owns its mobile filter trigger and
 drawer, so it is no longer coupled to archive-owned drawer markup and can also
