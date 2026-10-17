@@ -17,6 +17,14 @@ remove_action('wp_head', 'wp_shortlink_wp_head');   // ?p= shortlink
 add_filter('the_generator', '__return_empty_string');   // WP version in feeds
 add_filter('acorn/powered_by', '__return_false');        // X-Powered-By: Acorn x (Laravel y)
 
+// PHP's own X-Powered-By: PHP/x.y.z (expose_php), which shows once Acorn's
+// header is gone.
+add_action('send_headers', function (): void {
+    if (! headers_sent()) {
+        header_remove('X-Powered-By');
+    }
+});
+
 // ── Security headers ─────────────────────────────────────────────────────────
 
 /**

@@ -4,7 +4,7 @@
 
 ### Added
 
-- **Security baseline.** Front-end responses get `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy` and (over HTTPS) `Strict-Transport-Security`, adjustable with `sobe/security/headers`. Acorn's `X-Powered-By` version header and the WordPress version in feeds are off. Logged-out `?author=N` requests redirect home instead of revealing usernames (`sobe/security/block_author_enumeration`).
+- **Security baseline.** Front-end responses get `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy` and (over HTTPS) `Strict-Transport-Security`, adjustable with `sobe/security/headers`. Acorn's and PHP's `X-Powered-By` version headers and the WordPress version in feeds are off. Logged-out `?author=N` requests redirect home instead of revealing usernames (`sobe/security/block_author_enumeration`).
 
 - **Client styles load last.** `app.css` and `woocommerce.css` are now import-only entry files: the platform rules moved unchanged to `platform.css` and `woocommerce-platform.css`, followed by the client-owned `client.css` and new `client-woocommerce.css`. Client rules now follow the platform's in source order, so they win ties inside a layer or unlayered. Built CSS for the platform is unchanged.
 
