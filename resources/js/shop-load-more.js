@@ -40,6 +40,15 @@ function makeObserver(state) {
   );
 }
 
+// Newly appended product cards need the animation bus (reveal presets) and
+// fresh ScrollTrigger positions, like the first page got on load.
+function refreshAnimations(grid) {
+  if (!grid) return;
+
+  window.initAnimationBus?.(grid);
+  window.ScrollTrigger?.refresh();
+}
+
 async function fetchJson(state, body) {
   state.fetchController?.abort();
   state.fetchController = new AbortController();
@@ -70,6 +79,10 @@ async function loadMore(state) {
 
   try {
     if (hasActiveFilters(filterState)) {
+      if (!filterAction || !filterNonce) {
+        throw new Error('Missing active filter request parameters.');
+      }
+
       // Must match catalog-filters/view.js's applyFilters() body exactly:
       // FilterHandler::process() only re-applies the immutable archive/search
       // context (via applyArchiveIntersection()) when filter_context is
@@ -88,7 +101,10 @@ async function loadMore(state) {
       const data = await fetchJson(state, body);
       if (!data) return;
 
-      if (data.html && grid) grid.insertAdjacentHTML('beforeend', data.html);
+      if (data.html && grid) {
+        grid.insertAdjacentHTML('beforeend', data.html);
+        refreshAnimations(grid);
+      }
 
       if (paginationZone && data.pagination_html !== undefined) {
         paginationZone.innerHTML = data.pagination_html;
@@ -113,7 +129,10 @@ async function loadMore(state) {
     const data = await fetchJson(state, body);
     if (!data) return;
 
-    if (data.html && grid) grid.insertAdjacentHTML('beforeend', data.html);
+    if (data.html && grid) {
+      grid.insertAdjacentHTML('beforeend', data.html);
+      refreshAnimations(grid);
+    }
 
     if (data.has_more) {
       sentinel.dataset.page = data.next_page;
