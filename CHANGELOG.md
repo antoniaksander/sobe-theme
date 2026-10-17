@@ -29,6 +29,7 @@
 
 ### Fixed
 
+- Swiper 12 → 14 (no API changes; supported browsers are now Chrome/Edge/Firefox 110+ and Safari/iOS 16.4+).
 - Removed the unused `@wordpress/scripts` dev dependency (no script or config used it; it pulled in ~1,150 packages, including the ones Dependabot kept flagging). `jest-environment-jsdom`, which a test suite needed but only got through it, is now a direct dev dependency. Built assets are unchanged.
 - Elements below pinned blocks no longer reveal before they are scrolled to (animation scan deferred a frame, plus a refresh on `load`).
 - `initStickyHeader()` is no longer called eagerly, so app.js's idle-deferred call takes effect.
