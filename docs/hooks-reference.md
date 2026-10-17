@@ -273,3 +273,13 @@ Hyphenated hooks are preferred. Underscore hooks remain as compatibility shims f
 |------|------|------------|--------|
 | `sobe/seo/disable_baseline` | filter | `bool $disabled` | Disable baseline SEO output |
 | `sobe/security/public_routes` | filter | `array $routes` | Public REST route allowlist. `['exact' => string[], 'patterns' => string[]]`; patterns are full preg expressions matched against the resolved route. Defaults cover the WooCommerce Store API, Contact Form 7's public endpoints and YITH wishlist, each only while that plugin is active. |
+
+## Client JavaScript
+
+| API | Type | Notes |
+|-----|------|-------|
+| `window.sobeCart` | object | `storeApiFetch(url, options)` (nonce-refreshing Store API fetch), `fetchFreshCart()` (`{ items, count }`), `getCartCount(cart)`, `getStoreApiCartUrl()`. Read it at event time: `client.js` modules run before `app.js`'s body. |
+| `window.initSingleProductAddToCart()` | function | Binds the product-page Store API add-to-cart; safe to call again after a page transition. |
+| `themeCartParams.refreshWcFragments` | param | `false` skips WooCommerce's `wc_fragment_refresh` after Store API cart changes. Set it through `sobe/side_cart/params`. |
+| `resources/js/scroll-lock.js` | module | `lockScroll()` / `unlockScroll()`: ref-counted Lenis pause for overlays that can be open at once. |
+| `cart-updated` | window event | `detail: { items, count }` after every cart change. |
