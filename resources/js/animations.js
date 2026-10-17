@@ -22,22 +22,46 @@ function getScopedElements(root, selector) {
   return elements;
 }
 
+// Client-registered animation types (registerAnimation). Checked before the
+// built-in types, so a client can add its own data-animate="…" values.
+const customAnimations = new Map();
+
+/**
+ * Register a handler for elements with data-animate="{type}". The handler
+ * runs inside the animation bus's gsap context (so it is reverted with it)
+ * and receives (el, { gsap, ScrollTrigger }).
+ */
+function registerAnimation(type, handler) {
+  if (typeof type === 'string' && typeof handler === 'function') {
+    customAnimations.set(type, handler);
+  }
+}
+
 // Query only elements not yet processed — makes this function safe to call
 // repeatedly after WooCommerce AJAX updates without duplicating animations.
+//
+// The actual scan/ScrollTrigger creation is deferred one frame. Block view
+// scripts load in the footer, after this module's own DOMContentLoaded
+// listener, so a block that pins content (inflating document height via a
+// pin-spacer) hasn't run yet when this fires synchronously. Anything below
+// such a block gets measured against a too-short document, and if that puts
+// it within the initial viewport's "already entered" range, ScrollTrigger
+// fires its reveal immediately instead of waiting for the user to scroll
+// there. Deferring by a frame lets footer scripts finish their initial
+// layout-affecting setup first.
 function initAnimationBus(root = document) {
   if (!pageContext) {
-    pageContext = gsap.context(() => {
-      initPageAnimations(root);
-    }, root);
-    return;
+    pageContext = gsap.context(() => {}, root);
   }
 
-  // Add to existing context. Note: the context's SCOPE was set when first created;
-  // pageContext.add() does not re-scope. Callers needing a different root scope must
-  // call destroyAnimationBus() first, then initAnimationBus(newRoot). This is the
+  // Note: the context's SCOPE was set when first created; pageContext.add()
+  // does not re-scope. Callers needing a different root scope must call
+  // destroyAnimationBus() first, then initAnimationBus(newRoot). This is the
   // explicit lifecycle pattern used by the registry and by AJAX refresh handlers.
-  pageContext.add(() => {
-    initPageAnimations(root);
+  requestAnimationFrame(() => {
+    pageContext.add(() => {
+      initPageAnimations(root);
+    });
   });
 }
 
@@ -72,11 +96,18 @@ function initPageAnimations(root = document) {
 
       const type = el.dataset.animate;
 
+      const custom = customAnimations.get(type);
+      if (custom) {
+        custom(el, { gsap, ScrollTrigger });
+        return;
+      }
+
       if (type === 'hero-content') {
         // fromTo with explicit opacity:1 target — avoids GSAP misreading computed
         // opacity:0 when the WebGL canvas mix-blend-mode compositing group is active.
+        // data-animate-targets narrows which children animate.
         gsap.fromTo(
-          el.querySelectorAll('h1, h2, p, a, button'),
+          el.querySelectorAll(el.dataset.animateTargets || 'h1, h2, p, a, button'),
           { y: 50, opacity: 0 },
           {
             y: 0,
@@ -225,7 +256,15 @@ window.addEventListener('resize', () => {
   _refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 150);
 });
 
-initStickyHeader();
+// One more refresh on window 'load' (fires after every script, including
+// footer-loaded block view scripts, has run its own rAF-chained setup) as a
+// safety net beyond initAnimationBus()'s one-frame defer: a block that pins
+// content may schedule its pin-spacer refresh in the same frame, after ours.
+window.addEventListener('load', () => ScrollTrigger.refresh());
+
+// Not called eagerly here: app.js's scheduleIdle(() => initStickyHeader())
+// is the intended, deferred caller. An eager call here ran first and set
+// initStickyHeader's own guard, turning the idle deferral into a no-op.
 
 registerReinit('animation-bus', {
   init: initAnimationBus,
@@ -249,6 +288,7 @@ window.ScrollTrigger = ScrollTrigger;
 window.initAnimationBus = initAnimationBus;
 
 export {
+  registerAnimation,
   initAnimationBus,
   destroyAnimationBus,
   resetAnimationMarks,

@@ -283,3 +283,5 @@ Hyphenated hooks are preferred. Underscore hooks remain as compatibility shims f
 | `themeCartParams.refreshWcFragments` | param | `false` skips WooCommerce's `wc_fragment_refresh` after Store API cart changes. Set it through `sobe/side_cart/params`. |
 | `resources/js/scroll-lock.js` | module | `lockScroll()` / `unlockScroll()`: ref-counted Lenis pause for overlays that can be open at once. |
 | `cart-updated` | window event | `detail: { items, count }` after every cart change. |
+| `registerAnimation(type, handler)` | `animations.js` export | Adds a `data-animate="{type}"` handler, run inside the animation bus's gsap context with `(el, { gsap, ScrollTrigger })`. |
+| `data-animate-targets` | attribute | On a `data-animate="hero-content"` element: CSS selector for the children to reveal (default `h1, h2, p, a, button`). |

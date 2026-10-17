@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Animation extension points.** `registerAnimation(type, handler)` (exported from `animations.js`) adds client `data-animate` types; `data-animate-targets` narrows which children a `hero-content` animation reveals.
+
 - **Cart JS extension points.** `window.sobeCart` (`storeApiFetch`, `fetchFreshCart`, `getCartCount`, `getStoreApiCartUrl`) for client code; `themeCartParams.refreshWcFragments = false` (via `sobe/side_cart/params`) skips WooCommerce's fragment refresh after Store API cart changes; `window.initSingleProductAddToCart` for re-running product-page add-to-cart after page transitions; `resources/js/scroll-lock.js` ref-counted Lenis lock, used by the side cart.
 
 - **Client JS and CSS entry files.** `resources/js/client.js` (imported by `app.js` before Alpine starts) and `resources/css/client.css` (imported by `app.css` after `client-tokens.css`) ship empty and are client-owned, so forks add scripts, Alpine components and styles without editing `app.js` or `app.css`.
@@ -25,6 +27,9 @@
 
 ### Fixed
 
+- Elements below pinned blocks no longer reveal before they are scrolled to (animation scan deferred a frame, plus a refresh on `load`).
+- `initStickyHeader()` is no longer called eagerly, so app.js's idle-deferred call takes effect.
+- Load-more re-runs the animation bus and refreshes ScrollTrigger for appended products; a filtered load-more without filter params fails loudly instead of sending a broken request.
 - Product-page add-to-cart no longer binds a second submit handler when re-initialised.
 - Native AJAX add-to-cart passes the button element (not WooCommerce's jQuery wrapper) as the side cart's focus-return trigger.
 - Logo URLs fall back to `wp_get_attachment_url()` when an attachment has no image sizes (e.g. SVG logos).
