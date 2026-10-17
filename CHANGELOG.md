@@ -4,6 +4,8 @@
 
 ### Added
 
+- A `.site-header` with `data-hide-on-scroll="false"` stays visible instead of hiding on scroll down.
+
 - **Security baseline.** Front-end responses get `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy` and (over HTTPS) `Strict-Transport-Security`, adjustable with `sobe/security/headers`. Acorn's and PHP's `X-Powered-By` version headers and the WordPress version in feeds are off. Logged-out `?author=N` requests redirect home instead of revealing usernames (`sobe/security/block_author_enumeration`).
 
 - **Client styles load last.** `app.css` and `woocommerce.css` are now import-only entry files: the platform rules moved unchanged to `platform.css` and `woocommerce-platform.css`, followed by the client-owned `client.css` and new `client-woocommerce.css`. Client rules now follow the platform's in source order, so they win ties inside a layer or unlayered. Built CSS for the platform is unchanged.
@@ -30,6 +32,8 @@
   hardcoding `72rem` directly.
 
 ### Fixed
+
+- An animated `window.lenis.scrollTo()` started while Lenis was idle (e.g. the our-brands letter links) never moved; it now starts the Lenis ticker.
 
 - Swiper 12 → 14 (no API changes; supported browsers are now Chrome/Edge/Firefox 110+ and Safari/iOS 16.4+).
 - Removed the unused `@wordpress/scripts` dev dependency (no script or config used it; it pulled in ~1,150 packages, including the ones Dependabot kept flagging). `jest-environment-jsdom`, which a test suite needed but only got through it, is now a direct dev dependency. Built assets are unchanged.

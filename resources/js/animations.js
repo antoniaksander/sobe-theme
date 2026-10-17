@@ -224,6 +224,10 @@ function initStickyHeader() {
   // Always defined so cart drawer can call it safely regardless of motion preference
   window.showSiteHeader = () => {};
 
+  // A header layout that must stay visible (e.g. a fixed, transparent one)
+  // opts out of hide-on-scroll with data-hide-on-scroll="false".
+  if (header.dataset.hideOnScroll === 'false') return;
+
   gsap.matchMedia().add('(prefers-reduced-motion: no-preference)', () => {
     const headerAnim = gsap.to(header, {
       yPercent: -100,
