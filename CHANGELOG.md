@@ -29,6 +29,7 @@
 
 ### Fixed
 
+- Removed the unused `@wordpress/scripts` dev dependency (no script or config used it; it pulled in ~1,150 packages, including the ones Dependabot kept flagging). `jest-environment-jsdom`, which a test suite needed but only got through it, is now a direct dev dependency. Built assets are unchanged.
 - Elements below pinned blocks no longer reveal before they are scrolled to (animation scan deferred a frame, plus a refresh on `load`).
 - `initStickyHeader()` is no longer called eagerly, so app.js's idle-deferred call takes effect.
 - Load-more re-runs the animation bus and refreshes ScrollTrigger for appended products; a filtered load-more without filter params fails loudly instead of sending a broken request.
