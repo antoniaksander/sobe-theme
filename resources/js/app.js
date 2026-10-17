@@ -4,7 +4,7 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initAnimationBus, initStickyHeader } from './animations.js';
-import { lockScroll, unlockScroll } from './scroll-lock.js';
+import { isScrollLocked, lockScroll, unlockScroll } from './scroll-lock.js';
 import './announcement-bar.js';
 import './client.js';
 
@@ -509,7 +509,8 @@ Alpine.data('app', () => ({
       );
 
       jQuery(document.body).on('removed_from_cart', () => {
-        lenis?.start();
+        // Not while an overlay (side cart, image viewer) holds the scroll lock.
+        if (!isScrollLocked()) lenis?.start();
         initAnimationBus();
         gsap.delayedCall(0.15, () => ScrollTrigger.refresh());
       });

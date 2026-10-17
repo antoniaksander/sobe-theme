@@ -33,6 +33,12 @@
 
 ### Fixed
 
+- WordPress's users sitemap (`wp-sitemap-users-1.xml`) no longer lists `/author/{username}/` URLs (same `sobe/security/block_author_enumeration` switch as the `?author=` redirect).
+
+- A page transition or AJAX refresh right after `initAnimationBus()` could throw (`pageContext` null) or add a stale root to the next page's context.
+
+- Removing an item through WooCommerce's classic cart no longer restarts smooth scroll behind an open side cart or image viewer (`isScrollLocked()` in `scroll-lock.js`).
+
 - An animated `window.lenis.scrollTo()` started while Lenis was idle (e.g. the our-brands letter links) never moved; it now starts the Lenis ticker.
 
 - Swiper 12 → 14 (no API changes; supported browsers are now Chrome/Edge/Firefox 110+ and Safari/iOS 16.4+).

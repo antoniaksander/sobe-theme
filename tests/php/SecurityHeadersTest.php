@@ -20,6 +20,19 @@ it('sends HSTS only over HTTPS', function () {
     expect(App\sobe_security_headers(false))->not->toHaveKey('Strict-Transport-Security');
 });
 
+it('drops only the users sitemap provider', function () {
+    Functions\when('apply_filters')->returnArg(2);
+
+    expect(App\sobe_sitemap_provider('provider', 'users'))->toBeFalse();
+    expect(App\sobe_sitemap_provider('provider', 'posts'))->toBe('provider');
+});
+
+it('keeps the users sitemap when author enumeration blocking is off', function () {
+    Functions\when('apply_filters')->justReturn(false);
+
+    expect(App\sobe_sitemap_provider('provider', 'users'))->toBe('provider');
+});
+
 it('sets the baseline headers without includeSubDomains', function () {
     $headers = App\sobe_security_headers(true);
 

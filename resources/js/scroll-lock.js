@@ -12,6 +12,10 @@ export function lockScroll() {
   }
 }
 
+export function isScrollLocked() {
+  return lockCount > 0;
+}
+
 export function unlockScroll() {
   lockCount = Math.max(0, lockCount - 1);
   if (lockCount === 0) {
