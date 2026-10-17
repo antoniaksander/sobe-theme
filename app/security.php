@@ -13,6 +13,60 @@ remove_action('wp_head', 'rsd_link');               // Really Simple Discovery
 remove_action('wp_head', 'wlwmanifest_link');       // Windows Live Writer
 remove_action('wp_head', 'wp_shortlink_wp_head');   // ?p= shortlink
 
+// ── Version disclosure ───────────────────────────────────────────────────────
+add_filter('the_generator', '__return_empty_string');   // WP version in feeds
+add_filter('acorn/powered_by', '__return_false');        // X-Powered-By: Acorn x (Laravel y)
+
+// ── Security headers ─────────────────────────────────────────────────────────
+
+/**
+ * Baseline response headers for front-end pages. HSTS only over HTTPS and
+ * without includeSubDomains, so a subdomain still on plain HTTP isn't locked
+ * out. Adjust or remove any of them with the sobe/security/headers filter
+ * (e.g. a site that must be framed elsewhere drops X-Frame-Options).
+ *
+ * @return array<string, string>
+ */
+function sobe_security_headers(bool $https): array
+{
+    $headers = [
+        'X-Content-Type-Options' => 'nosniff',
+        'X-Frame-Options' => 'SAMEORIGIN',
+        'Referrer-Policy' => 'strict-origin-when-cross-origin',
+        'Permissions-Policy' => 'camera=(), microphone=(), geolocation=()',
+    ];
+
+    if ($https) {
+        $headers['Strict-Transport-Security'] = 'max-age=31536000';
+    }
+
+    return $headers;
+}
+
+add_filter('wp_headers', function ($headers) {
+    $extra = apply_filters('sobe/security/headers', sobe_security_headers(is_ssl()));
+
+    // Headers WordPress or a plugin already set for this response win.
+    return (array) $headers + (is_array($extra) ? $extra : []);
+});
+
+// ── Username enumeration ─────────────────────────────────────────────────────
+// /?author=1 redirects to /author/{login-slug}/, handing out the username for
+// every user ID. Logged-out ?author= requests go to the home page instead,
+// before WordPress's canonical redirect reveals the slug.
+add_action('template_redirect', function (): void {
+    if (! isset($_GET['author']) || is_user_logged_in()) {
+        return;
+    }
+
+    if (! apply_filters('sobe/security/block_author_enumeration', true)) {
+        return;
+    }
+
+    wp_safe_redirect(home_url('/'), 301);
+    exit;
+}, 0);
+
 // ── XML-RPC ──────────────────────────────────────────────────────────────────
 add_filter('xmlrpc_enabled', '__return_false');
 

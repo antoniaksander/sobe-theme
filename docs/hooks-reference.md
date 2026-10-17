@@ -273,6 +273,8 @@ Hyphenated hooks are preferred. Underscore hooks remain as compatibility shims f
 |------|------|------------|--------|
 | `sobe/seo/disable_baseline` | filter | `bool $disabled` | Disable baseline SEO output |
 | `sobe/security/public_routes` | filter | `array $routes` | Public REST route allowlist. `['exact' => string[], 'patterns' => string[]]`; patterns are full preg expressions matched against the resolved route. Defaults cover the WooCommerce Store API, Contact Form 7's public endpoints and YITH wishlist, each only while that plugin is active. |
+| `sobe/security/headers` | filter | `array $headers` | Front-end security headers (name => value) |
+| `sobe/security/block_author_enumeration` | filter | `bool $block` | Redirect logged-out `?author=N` requests home |
 
 ## Client JavaScript
 
