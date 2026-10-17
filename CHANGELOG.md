@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Cart JS extension points.** `window.sobeCart` (`storeApiFetch`, `fetchFreshCart`, `getCartCount`, `getStoreApiCartUrl`) for client code; `themeCartParams.refreshWcFragments = false` (via `sobe/side_cart/params`) skips WooCommerce's fragment refresh after Store API cart changes; `window.initSingleProductAddToCart` for re-running product-page add-to-cart after page transitions; `resources/js/scroll-lock.js` ref-counted Lenis lock, used by the side cart.
+
 - **Client JS and CSS entry files.** `resources/js/client.js` (imported by `app.js` before Alpine starts) and `resources/css/client.css` (imported by `app.css` after `client-tokens.css`) ship empty and are client-owned, so forks add scripts, Alpine components and styles without editing `app.js` or `app.css`.
 
 - **Client view overrides.** Views in `resources/views/client/` take precedence over `resources/views/` (Blade names, template hierarchy, WooCommerce templates), so forks override a platform view without editing it.
@@ -23,6 +25,8 @@
 
 ### Fixed
 
+- Product-page add-to-cart no longer binds a second submit handler when re-initialised.
+- Native AJAX add-to-cart passes the button element (not WooCommerce's jQuery wrapper) as the side cart's focus-return trigger.
 - Logo URLs fall back to `wp_get_attachment_url()` when an attachment has no image sizes (e.g. SVG logos).
 - Editor block scripts now depend on `wp-data`, so blocks using `wp.data` load in the right order.
 

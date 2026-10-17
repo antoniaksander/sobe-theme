@@ -4,6 +4,7 @@ import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initAnimationBus, initStickyHeader } from './animations.js';
+import { lockScroll, unlockScroll } from './scroll-lock.js';
 import './announcement-bar.js';
 import './client.js';
 
@@ -103,6 +104,27 @@ async function storeApiFetch(url, options = {}) {
   return response;
 }
 
+// WooCommerce's classic cart fragments (mini-cart widgets etc.) are told to
+// refresh after Store API cart changes. A theme that keeps all of its cart UI
+// in sync through the Store API can skip that extra round trip by setting
+// themeCartParams.refreshWcFragments to false (sobe/side_cart/params).
+function triggerWcFragmentRefresh() {
+  if (getThemeCartParams().refreshWcFragments === false) return;
+  if (typeof jQuery !== 'undefined') {
+    jQuery(document.body).trigger('wc_fragment_refresh');
+  }
+}
+
+// WooCommerce passes jQuery-wrapped buttons to its added_to_cart handlers;
+// focus return and other DOM consumers need the element itself.
+function toElement(target) {
+  if (target instanceof Element) return target;
+  if (target && typeof target === 'object' && target[0] instanceof Element) {
+    return target[0];
+  }
+  return null;
+}
+
 function getCartCount(cart) {
   return (
     cart.items?.reduce(
@@ -159,9 +181,7 @@ async function updateCartQty(itemKey, quantity) {
       );
     }
   } finally {
-    if (typeof jQuery !== 'undefined') {
-      jQuery(document.body).trigger('wc_fragment_refresh');
-    }
+    triggerWcFragmentRefresh();
   }
 
   return confirmedQuantity;
@@ -183,9 +203,7 @@ async function removeFromCart(itemKey) {
       );
     }
   } finally {
-    if (typeof jQuery !== 'undefined') {
-      jQuery(document.body).trigger('wc_fragment_refresh');
-    }
+    triggerWcFragmentRefresh();
   }
 }
 
@@ -357,9 +375,15 @@ async function addSingleProductViaStoreApi(form, trigger) {
   });
 }
 
+// Forms already bound, so a re-run (e.g. after a page transition swaps in a
+// product page) never adds a second submit handler.
+const initializedSingleProductForms = new WeakSet();
+
 function initSingleProductAddToCart() {
   const form = document.querySelector('.single-product form.cart');
   if (!form) return;
+  if (initializedSingleProductForms.has(form)) return;
+  initializedSingleProductForms.add(form);
 
   form.addEventListener('submit', async (event) => {
     if (!shouldHandleWithStoreApi(form)) {
@@ -424,7 +448,7 @@ Alpine.data('app', () => ({
     });
 
     this.$watch('cartOpen', (value) => {
-      value ? window.lenis?.stop() : window.lenis?.start();
+      value ? lockScroll() : unlockScroll();
 
       if (value) {
         this.$nextTick(() => {
@@ -453,8 +477,8 @@ Alpine.data('app', () => ({
         toasts.forEach((toast) => Alpine.store('toastManager').add(toast));
       }
 
-      if (detail.source === 'store-api' && typeof jQuery !== 'undefined') {
-        jQuery(document.body).trigger('wc_fragment_refresh');
+      if (detail.source === 'store-api') {
+        triggerWcFragmentRefresh();
       }
 
       window.showSiteHeader?.();
@@ -476,7 +500,7 @@ Alpine.data('app', () => ({
         (_event, fragments, cartHash, button) => {
           dispatchCartItemAdded({
             source: 'native-ajax',
-            trigger: button || document.activeElement,
+            trigger: toElement(button) || document.activeElement,
             fragments,
             cartHash,
             toasts: parseToastFragmentData(fragments),
@@ -877,6 +901,17 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
 window.gsap = gsap;
 window.ScrollTrigger = ScrollTrigger;
 window.initAnimationBus = initAnimationBus;
+window.initSingleProductAddToCart = initSingleProductAddToCart;
+
+// Cart helpers for client code (resources/js/client.js and its modules).
+// Read lazily (at event time, not import time): client modules are evaluated
+// before this file's body runs.
+window.sobeCart = {
+  storeApiFetch,
+  fetchFreshCart,
+  getCartCount,
+  getStoreApiCartUrl,
+};
 
 initAnimationBus();
 
