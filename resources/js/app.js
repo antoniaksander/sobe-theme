@@ -880,6 +880,15 @@ scheduleIdle(() => gsap.matchMedia().add('(prefers-reduced-motion: no-preference
     lenisTickerActive = true;
   };
 
+  // A programmatic scrollTo() emits neither virtual-scroll nor scroll until
+  // lenis.raf() runs, which needs the ticker already running, so without
+  // this an animated scrollTo() from idle never advances.
+  const lenisScrollTo = lenis.scrollTo.bind(lenis);
+  lenis.scrollTo = (...args) => {
+    startLenisTicker();
+    return lenisScrollTo(...args);
+  };
+
   lenis.on('virtual-scroll', startLenisTicker);
   lenis.on('scroll', () => {
     ScrollTrigger.update();
