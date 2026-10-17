@@ -2,9 +2,9 @@
    Client styles. Client-owned: the platform ships this file empty and never
    changes it, so a fork's CSS here never conflicts on sync.
 
-   Imported near the top of app.css, after client-tokens.css. Platform
-   component styles in app.css sit in @layer base/components/utilities, and
-   unlayered rules always beat layered ones, so plain (unlayered) rules here
-   override the platform regardless of source order. Put brand token values in
+   Imported last by app.css, after platform.css. Rules here follow the
+   platform's in source order: unlayered rules override every platform layer,
+   and rules inside @layer base/components/utilities override the platform's
+   rules of the same layer and specificity. Put brand token values in
    client-tokens.css, not here.
    ========================================================================== */

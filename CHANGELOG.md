@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Client styles load last.** `app.css` and `woocommerce.css` are now import-only entry files: the platform rules moved unchanged to `platform.css` and `woocommerce-platform.css`, followed by the client-owned `client.css` and new `client-woocommerce.css`. Client rules now follow the platform's in source order, so they win ties inside a layer or unlayered. Built CSS for the platform is unchanged.
+
 - **Animation extension points.** `registerAnimation(type, handler)` (exported from `animations.js`) adds client `data-animate` types; `data-animate-targets` narrows which children a `hero-content` animation reveals.
 
 - **Cart JS extension points.** `window.sobeCart` (`storeApiFetch`, `fetchFreshCart`, `getCartCount`, `getStoreApiCartUrl`) for client code; `themeCartParams.refreshWcFragments = false` (via `sobe/side_cart/params`) skips WooCommerce's fragment refresh after Store API cart changes; `window.initSingleProductAddToCart` for re-running product-page add-to-cart after page transitions; `resources/js/scroll-lock.js` ref-counted Lenis lock, used by the side cart.
