@@ -75,6 +75,25 @@ add_action('template_redirect', function (): void {
     exit;
 }, 0);
 
+/**
+ * WordPress's own users sitemap (wp-sitemap-users-1.xml) lists
+ * /author/{login-slug}/ for every author, handing out the same usernames.
+ * Dropped together with the ?author= lookup above.
+ *
+ * @param  \WP_Sitemaps_Provider|false  $provider
+ * @return \WP_Sitemaps_Provider|false
+ */
+function sobe_sitemap_provider($provider, string $name)
+{
+    if ($name === 'users' && apply_filters('sobe/security/block_author_enumeration', true)) {
+        return false;
+    }
+
+    return $provider;
+}
+
+add_filter('wp_sitemaps_add_provider', __NAMESPACE__.'\\sobe_sitemap_provider', 10, 2);
+
 // ── XML-RPC ──────────────────────────────────────────────────────────────────
 add_filter('xmlrpc_enabled', '__return_false');
 

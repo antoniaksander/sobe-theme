@@ -283,6 +283,20 @@ function sobe_get_filtered_price_range(array $base_query_args): array
 
 (new FilterHandler(config('theme.prefix')))->register();
 
+/**
+ * Availability filter options (stock_status value => label), the same
+ * statuses FilterStateParser accepts.
+ *
+ * @return array<string, string>
+ */
+function sobe_catalog_stock_status_labels(): array
+{
+    return [
+        'instock' => __('In stock', 'woocommerce'),
+        'outofstock' => __('Out of stock', 'woocommerce'),
+    ];
+}
+
 function sobe_catalog_filter_params(): array
 {
     $pfx = config('theme.prefix');
@@ -295,6 +309,7 @@ function sobe_catalog_filter_params(): array
         'contextUrl' => sobe_current_request_url(),
         'contextType' => $contextType,
         'removeLabel' => __('Remove filter', 'sobe'),
+        'stockStatusLabels' => sobe_catalog_stock_status_labels(),
         'removeSymbol' => '×',
         'errorText' => __('Something went wrong. Please refresh the page and try again.', 'sobe'),
     ];

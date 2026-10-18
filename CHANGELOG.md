@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Availability filter.** The catalog filters block has an "Availability" section (In stock / Out of stock, `showStockStatus`, on by default) with labelled chips; the query side (`stock_status`) already existed.
+
+- **Client editor styles.** `editor.css` is import-only like `app.css`: platform editor rules moved to `editor-platform.css`, and the client-owned `client-editor.css` (shipped empty) is imported last.
+
 - A `.site-header` with `data-hide-on-scroll="false"` stays visible instead of hiding on scroll down.
 
 - **Security baseline.** Front-end responses get `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy` and (over HTTPS) `Strict-Transport-Security`, adjustable with `sobe/security/headers`. Acorn's and PHP's `X-Powered-By` version headers and the WordPress version in feeds are off. Logged-out `?author=N` requests redirect home instead of revealing usernames (`sobe/security/block_author_enumeration`).
@@ -32,6 +36,12 @@
   hardcoding `72rem` directly.
 
 ### Fixed
+
+- WordPress's users sitemap (`wp-sitemap-users-1.xml`) no longer lists `/author/{username}/` URLs (same `sobe/security/block_author_enumeration` switch as the `?author=` redirect).
+
+- A page transition or AJAX refresh right after `initAnimationBus()` could throw (`pageContext` null) or add a stale root to the next page's context.
+
+- Removing an item through WooCommerce's classic cart no longer restarts smooth scroll behind an open side cart or image viewer (`isScrollLocked()` in `scroll-lock.js`).
 
 - An animated `window.lenis.scrollTo()` started while Lenis was idle (e.g. the our-brands letter links) never moved; it now starts the Lenis ticker.
 

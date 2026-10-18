@@ -1,0 +1,7 @@
+/* ==========================================================================
+   Client block editor styles. Client-owned: the platform ships this file
+   empty and never changes it, so a fork's CSS here never conflicts on sync.
+
+   Imported last by editor.css (block editor only), after editor-platform.css,
+   so rules here win ties with the platform's.
+   ========================================================================== */
