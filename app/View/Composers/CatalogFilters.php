@@ -2,6 +2,7 @@
 
 namespace App\View\Composers;
 
+use App\WooCommerce\CatalogFilter\FilterStateParser;
 use App\WooCommerce\CatalogFilter\QueryTransformer;
 use Roots\Acorn\View\Composer;
 
@@ -26,6 +27,8 @@ class CatalogFilters extends Composer
         $showBrands = (bool) ($attrs['showBrands'] ?? true);
         $showAttributes = (bool) ($attrs['showAttributes'] ?? true);
         $showPriceRange = (bool) ($attrs['showPriceRange'] ?? true);
+        $showStockStatus = (bool) ($attrs['showStockStatus'] ?? true);
+        $stockStatusLabels = $showStockStatus ? \App\sobe_catalog_stock_status_labels() : [];
         $collapseByDefault = (bool) ($attrs['collapseByDefault'] ?? true);
 
         $categories = [];
@@ -139,6 +142,8 @@ class CatalogFilters extends Composer
             'showBrands',
             'showAttributes',
             'showPriceRange',
+            'showStockStatus',
+            'stockStatusLabels',
             'collapseByDefault',
             'brandsTaxonomy',
             'brandsOpenByDefault'
@@ -183,6 +188,11 @@ class CatalogFilters extends Composer
         $priceType = sanitize_key($_GET['price_type'] ?? '');
         if (in_array($priceType, ['on_sale', 'full_price'], true)) {
             $active['price_type'] = $priceType;
+        }
+
+        $stockStatuses = FilterStateParser::fromArray($_GET)->stockStatuses;
+        if ($stockStatuses !== []) {
+            $active['stock_status'] = $stockStatuses;
         }
 
         $filtered = apply_filters('sobe/catalog_filters/state', $active, $_GET);

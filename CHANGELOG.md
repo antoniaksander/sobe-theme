@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Availability filter.** The catalog filters block has an "Availability" section (In stock / Out of stock, `showStockStatus`, on by default) with labelled chips; the query side (`stock_status`) already existed.
+
 - **Client editor styles.** `editor.css` is import-only like `app.css`: platform editor rules moved to `editor-platform.css`, and the client-owned `client-editor.css` (shipped empty) is imported last.
 
 - A `.site-header` with `data-hide-on-scroll="false"` stays visible instead of hiding on scroll down.
