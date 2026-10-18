@@ -4,6 +4,8 @@
 
 ### Added
 
+- **Client editor styles.** `editor.css` is import-only like `app.css`: platform editor rules moved to `editor-platform.css`, and the client-owned `client-editor.css` (shipped empty) is imported last.
+
 - A `.site-header` with `data-hide-on-scroll="false"` stays visible instead of hiding on scroll down.
 
 - **Security baseline.** Front-end responses get `X-Content-Type-Options`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy`, `Permissions-Policy` and (over HTTPS) `Strict-Transport-Security`, adjustable with `sobe/security/headers`. Acorn's and PHP's `X-Powered-By` version headers and the WordPress version in feeds are off. Logged-out `?author=N` requests redirect home instead of revealing usernames (`sobe/security/block_author_enumeration`).
