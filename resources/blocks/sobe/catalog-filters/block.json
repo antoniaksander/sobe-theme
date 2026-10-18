@@ -12,6 +12,7 @@
       "showCategories": true,
       "showBrands": true,
       "showAttributes": true,
+      "showStockStatus": true,
       "showPriceRange": true,
       "collapseByDefault": false
     }
@@ -37,6 +38,10 @@
       "default": true
     },
     "showAttributes": {
+      "type": "boolean",
+      "default": true
+    },
+    "showStockStatus": {
       "type": "boolean",
       "default": true
     },

@@ -386,14 +386,15 @@ function initCatalogFilters(instance, params) {
       const values = Array.isArray(val) ? val : [val];
       values.forEach((value) => {
         if (!value) return;
+        const label = (key === 'stock_status' ? params.stockStatusLabels?.[value] : null) ?? value;
         const btn = document.createElement('button');
         btn.className = 'sobe-filter-chip';
         btn.dataset.removeFilter = key;
         btn.dataset.removeValue = value;
-        btn.setAttribute('aria-label', `${params.removeLabel} ${value}`);
+        btn.setAttribute('aria-label', `${params.removeLabel} ${label}`);
         // Build with textContent: the value can come from the URL/query string,
         // so it must never be parsed as markup.
-        btn.append(document.createTextNode(`${value} `));
+        btn.append(document.createTextNode(`${label} `));
         const remove = document.createElement('span');
         remove.className = 'sobe-filter-chip__remove';
         remove.setAttribute('aria-hidden', 'true');
@@ -561,7 +562,11 @@ function initCatalogFilters(instance, params) {
     const radio = root.querySelector(`input[type="radio"][name="${CSS.escape(key)}"][value="${CSS.escape(val)}"]`);
     if (radio) radio.checked = false;
 
-    const checkbox = root.querySelector(`input[type="checkbox"][value="${CSS.escape(val)}"]`);
+    const checkbox = root.querySelector(
+      `input[type="checkbox"][name="${CSS.escape(key + '[]')}"][value="${CSS.escape(val)}"], ` +
+      `input[type="checkbox"][name="${CSS.escape(key)}"][value="${CSS.escape(val)}"], ` +
+      `input[type="checkbox"][value="${CSS.escape(val)}"]`
+    );
     if (checkbox) checkbox.checked = false;
 
     debouncedCheckbox();

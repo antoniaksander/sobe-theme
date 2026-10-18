@@ -3,10 +3,11 @@
   $hasCategories = $showCategories && !empty($categories);
   $hasBrands = $showBrands && !empty($brands);
   $hasAttributes = $showAttributes && !empty($attributeGroups);
+  $hasStockStatus = !empty($showStockStatus) && !empty($stockStatusLabels);
   $hasPriceRange = $showPriceRange
     && isset($priceRange->min, $priceRange->max)
     && (float) $priceRange->max > (float) $priceRange->min;
-  $hasFilterContent = $hasCategories || $hasBrands || $hasAttributes || $hasPriceRange;
+  $hasFilterContent = $hasCategories || $hasBrands || $hasAttributes || $hasStockStatus || $hasPriceRange;
   $instanceId = wp_unique_id('sobe-catalog-filters-');
   $drawerId = "{$instanceId}-drawer";
   $drawerTitleId = "{$instanceId}-drawer-title";
@@ -74,13 +75,14 @@
         @continue
       @endif
       @foreach ((array) $filterVal as $slug)
+        @php $chipLabel = $filterKey === 'stock_status' ? (($stockStatusLabels ?? [])[$slug] ?? $slug) : $slug; @endphp
         <button
           class="sobe-filter-chip"
           data-remove-filter="{!! esc_attr($filterKey) !!}"
           data-remove-value="{!! esc_attr($slug) !!}"
-          aria-label="{{ __('Remove', 'sobe') }} {!! esc_html($slug) !!}"
+          aria-label="{{ __('Remove', 'sobe') }} {!! esc_html($chipLabel) !!}"
         >
-          {!! esc_html($slug) !!}
+          {!! esc_html($chipLabel) !!}
           <span class="sobe-filter-chip__remove" aria-hidden="true">×</span>
         </button>
       @endforeach
@@ -121,6 +123,32 @@
       </ul>
     </div>
   </details>
+
+  {{-- Availability --}}
+  @if ($hasStockStatus)
+  <details class="sobe-accordion" @if (!$collapseByDefault) open @endif>
+    <summary class="sobe-accordion__trigger">{{ __('Availability', 'sobe') }}</summary>
+    <div class="sobe-accordion__panel">
+      <ul class="sobe-filter-list" role="group" aria-label="{{ __('Availability', 'sobe') }}">
+        @php $activeStockStatuses = (array) ($activeFilters['stock_status'] ?? []); @endphp
+        @foreach($stockStatusLabels as $val => $label)
+          <li class="sobe-filter-list__item">
+            <label class="sobe-checkbox">
+              <input
+                type="checkbox"
+                name="stock_status[]"
+                value="{{ $val }}"
+                class="sobe-checkbox__input"
+                @if (in_array($val, $activeStockStatuses, true)) checked @endif
+              >
+              <span class="sobe-checkbox__label">{{ $label }}</span>
+            </label>
+          </li>
+        @endforeach
+      </ul>
+    </div>
+  </details>
+  @endif
 
   {{-- Categories (single-select radio) --}}
   @if ($hasCategories)

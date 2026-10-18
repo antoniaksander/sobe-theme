@@ -58,8 +58,14 @@ function initAnimationBus(root = document) {
   // does not re-scope. Callers needing a different root scope must call
   // destroyAnimationBus() first, then initAnimationBus(newRoot). This is the
   // explicit lifecycle pattern used by the registry and by AJAX refresh handlers.
+  const context = pageContext;
   requestAnimationFrame(() => {
-    pageContext.add(() => {
+    // A destroyAnimationBus() before this frame (page transition, AJAX grid
+    // refresh) reverted this context; its root is gone or rescanned by the
+    // init that followed, so skip instead of adding to a dead/new context.
+    if (pageContext !== context) return;
+
+    context.add(() => {
       initPageAnimations(root);
     });
   });

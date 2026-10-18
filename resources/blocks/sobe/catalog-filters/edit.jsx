@@ -8,6 +8,7 @@ export default function Edit({ attributes, setAttributes }) {
     showCategories,
     showBrands,
     showAttributes,
+    showStockStatus,
     showPriceRange,
     collapseByDefault,
   } = attributes;
@@ -36,6 +37,11 @@ export default function Edit({ attributes, setAttributes }) {
             label={__('Show Attributes', 'sobe')}
             checked={showAttributes}
             onChange={(val) => setAttributes({ showAttributes: val })}
+          />
+          <ToggleControl
+            label={__('Show Stock Status', 'sobe')}
+            checked={showStockStatus}
+            onChange={(val) => setAttributes({ showStockStatus: val })}
           />
           <ToggleControl
             label={__('Show Price Range', 'sobe')}
@@ -88,6 +94,18 @@ export default function Edit({ attributes, setAttributes }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#64748b' }}>
                 <span>€20</span><span>€180</span>
               </div>
+            </div>
+          )}
+
+          {showStockStatus && (
+            <div>
+              <p style={{ margin: '0 0 8px', fontWeight: 600, fontSize: '11px', color: '#0f172a', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{__('Availability', 'sobe')}</p>
+              {[__('In stock', 'sobe'), __('Out of stock', 'sobe')].map((item) => (
+                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '5px' }}>
+                  <div style={{ width: '13px', height: '13px', border: '1.5px solid #cbd5e1', borderRadius: '3px', flexShrink: 0 }} />
+                  <span style={{ fontSize: '12px', color: '#475569' }}>{item}</span>
+                </div>
+              ))}
             </div>
           )}
 
