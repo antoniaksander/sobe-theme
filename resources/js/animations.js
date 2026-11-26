@@ -1,6 +1,7 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { registerReinit } from './sobe-reinit.js';
+import { revealStart } from './reveal-start.js';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -135,7 +136,7 @@ function initPageAnimations(root = document) {
           {
             scrollTrigger: {
               trigger: el,
-              start: 'top 80%',
+              start: revealStart(el, 'top 80%'),
               toggleActions: 'play none none reverse',
             },
             y: 0,
@@ -156,7 +157,7 @@ function initPageAnimations(root = document) {
           {
             scrollTrigger: {
               trigger: el,
-              start: 'top 85%',
+              start: revealStart(el, 'top 85%'),
               toggleActions: 'play none none reverse',
             },
             y: 0,
@@ -183,7 +184,7 @@ function initPageAnimations(root = document) {
         {
           scrollTrigger: {
             trigger: el,
-            start: 'top 85%',
+            start: revealStart(el, 'top 85%'),
             toggleActions: 'play none none reverse',
           },
           y: 0,
